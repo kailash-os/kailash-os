@@ -12,6 +12,70 @@ the issue, steps to reproduce, and the affected version or commit. Reports are
 triaged within a few days; accepted issues receive a fix and a release. Honour
 responsible disclosure until an advisory is published.
 
+## Scope and authorised use
+
+Kailash **ships offensive AI-security tooling for authorised security work
+only** — red-team engagements with written authorisation, academic research,
+and defender validation of one's own systems. Tooling misuse is not a
+vulnerability in Kailash; build/safety defects that let tooling escape its
+gates *are*.
+
+High-value vulnerability classes here:
+
+- **Safety-gate bypass** — anything that lets an active-exploit tool run
+  without the double gate (explicit host opt-in + explicit shell opt-in), or
+  that flips `KAILASH_LAB_MODE` on implicitly. `KAILASH_LAB_MODE` defaults
+  off and no service auto-starts; a build that changes either property is a
+  security bug, not a packaging choice.
+- **Manifest/packaging compromise** — a tool entry that resolves to
+  something other than what its manifest record pins, or a
+  menu/category entry that diverges from the manifest that generates it.
+- **Supply-chain integrity** — any drift between what the flake lockfile
+  pins and what the built environment actually executes.
+
+## Deployment boundary
+
+Deploy and exercise the tooling only against systems you own or are
+authorised to test. Australian users: the Cyber Security Act 2024 (Cth) and
+Criminal Code Act 1995 (Cth) Div 474 apply; other jurisdictions have their
+own equivalents.
+
+## Secret hygiene
+
+- Secret scanning and push protection stay enabled in repo settings.
+- `detect-private-key` runs on every change via the pre-commit hook set.
+- Environment secrets (sops-nix) are read at runtime — never committed;
+  never paste decrypted secrets in issues or PRs.
+
+## How this repository maintains security hygiene
+
+**Supply-chain and dependency integrity**
+
+- Dependency Review — every PR is checked for license and vulnerability
+  differences versus its base
+  ([.github/workflows/dependency-review.yml](.github/workflows/dependency-review.yml)).
+- OpenSSF Scorecard — run on every change; results publish as a badge and
+  SARIF code-scanning upload.
+- Flake lockfile (`flake.lock` once KA-01 lands) pins the full tool closure;
+  menu and module trees are generated from the manifest, so the packaging
+  surface is reviewed as data, not hand-kept code.
+
+**Reproducibility controls**
+
+- All commits are GPG/SSH-signed; unsigned commits are not merged.
+- pre-commit hooks run the CI set locally before every commit/push.
+
+**Known boundaries, stated plainly**
+
+- The distribution is pre-release: CI gates prove build health and layout
+  integrity, not production readiness. Scope exclusions (what Kailash
+  deliberately does not ship) are documented in the project paper and PRD.
+
+Open a [general issue](https://github.com/kailash-os/kailash-os/issues/new) for
+non-sensitive questions; security reports follow the channels above.
+
+## OpenPGP key
+
 <details>
 <summary>OpenPGP public key — fingerprint 9CB1781DC2BB28D37A0155DCAAF8226F3F4C1712 (RSA 4096, no expiry)</summary>
 
@@ -175,61 +239,3 @@ kis=
 -----END PGP PUBLIC KEY BLOCK-----
 ```
 </details>
-
-## Special considerations for this project
-
-Kailash OS is a **TLS-inspection appliance**: it sits in the path of TLS traffic and
-holds decryption material by design. Vulnerabilities in it are high-value by
-nature. Keep that in mind when testing.
-
-- **This is a lab/testing appliance.** Deploy it only against networks and
-  clients you own or are authorised to test. Never point the edge at
-  third-party traffic.
-- **Interception material is sensitive.** The mitmproxy CA private key, the
-  OpenVPN CA and its PKI, and the JSONL decision log (which records hosts and
-  categories of browsed traffic) must all be treated as secret material.
-  Nothing is committed: PKI material lives in `./state/` (gitignored) or in
-  volumes. Do not commit or paste real key material in issues or PRs.
-- **Policy bypass is a vulnerability class here.** A bug that silently skips the
-  splice/bump verdict chain, blocks clamd from returning a verdict (fail-open),
-  or drops decision-log lines is a security bug, not a cosmetic one.
-
-## How this repository maintains security hygiene
-
-**Supply-chain and dependency integrity**
-
-- Everything is built by Nix from a lockfile (`flake.lock`) — no floating image
-  bases, no Dockerfile builds; CI publishes the same digests it built
-  ([.github/workflows/release-images.yml](.github/workflows/release-images.yml)).
-- Per-image SPDX SBOMs are generated on every release and attached as release
-  assets.
-- Dependency Review — every PR is checked for license and vulnerability
-  differences versus its base (add
-  [.github/workflows/dependency-review.yml](.github/workflows/dependency-review.yml)
-  via the ai-sec-lab workflow).
-- Dependabot — dependency manifests kept current; enable alerts in repo settings.
-
-**Secret hygiene**
-
-- Secret scanning and push protection — enable in repo settings (Settings →
-  Code security & analysis); blocked pushes containing credentials.
-- pre-commit runs `detect-private-key` on every change outside the legacy PKI
-  dirs ([.pre-commit-config.yaml](.pre-commit-config.yaml)).
-
-**Reproducibility controls**
-
-- pre-commit.ci runs the hook set on every PR — formatting, YAML/JSON validity,
-  large-file guards, secret detection.
-- The appliance is a pinned NixOS flake (`flake.lock`); the container images are
-  byte-identical derivations from the same nixpkgs.
-
-**Known boundaries, stated plainly**
-
-- The committed keys under the legacy directories are lab fixtures, generated
-  for this project's own test VPN — the README marks the whole appliance
-  *do not run unmodified in production*.
-- Transparent TCP interception in container mode is out of scope by design
-  (Docker bridges break TPROXY); use the NixOS appliance for that mode.
-
-Open a [general issue](https://github.com/kailash-os/kailash-os/issues/new) for
-non-sensitive questions; security reports follow the channels above.
