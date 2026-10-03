@@ -65,7 +65,7 @@ Authenticate/Decrypt packet error: packet HMAC authentication failed
 Cause: the client profile's static key (`<tls-auth>` block) or certs don't
 match the server's current PKI — the client kept a profile generated before
 a server-side renewal/re-init. Fix: re-export the client profile
-(`nix run .#vpn-getclient -- <new-cn>` — see [Troubleshooting](https://kailash.site/docs/troubleshooting.html))
+(`nix run .#vpn-getclient -- <new-cn>` — see [Troubleshooting](https://kailash.site (docs; TROUBLESHOOTING page lands with the site content build)))
 and re-import on
 the device. The CN-reuse guard means you may need a fresh CN; see issue #11
 for the renewal-workflow work that automates this.
