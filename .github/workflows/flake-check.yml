@@ -1,0 +1,25 @@
+name: flake-check
+# Scaffolded ahead of the KA-01 skeleton: the root flake lands in Phase 0;
+# until then this gate verifies the repository has the planned layout files.
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  layout-scaffold:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Planned layout present (scaffold gate until KA-01 lands the real flake)
+        run: |
+          test -f README.md
+          test -f CONTRIBUTING.md
+          test -f LICENSE
+      - name: "placeholder: replaced by nix flake check --all-systems --no-build in KA-15"
+        run: echo "flake lands with KA-01/KA-02"
