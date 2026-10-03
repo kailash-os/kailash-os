@@ -1,0 +1,34 @@
+# Repository settings — Probot Settings app schema
+# Applied by https://github.com/repository-settings/app (install once; keeps these declarative).
+# Standard: opensase ruleset protect-master (shsingh/opensase).
+
+repository:
+  allow_merge_commit: true
+  allow_squash_merge: true
+  allow_rebase_merge: true
+  allow_auto_merge: true
+  allow_update_branch: false
+  delete_branch_on_merge: true
+  squash_merge_commit_title: COMMIT_OR_PR_TITLE
+  squash_merge_commit_message: COMMIT_MESSAGES
+  web_commit_signoff_required: false
+
+# Branch protection (declarative). Ruleset equivalent (deletion/non-fast-forward blocking +
+# required signatures) is applied via REST API; see the tracking issue for the applied ruleset id.
+branches:
+  protect:
+    - context: ~DEFAULT_BRANCH
+      enforce_admins: false
+      required_status_checks:
+        strict: true
+        contexts:
+          - layout-scaffold
+          - dependency-review
+      required_pull_request_reviews:
+        require_code_owner_review: true
+        require_last_push_approval: false
+        required_approving_review_count: 0
+      restrictions: null
+      allow_force_pushes: false
+      allow_deletions: false
+      required_signatures: true
