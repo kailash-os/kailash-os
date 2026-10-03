@@ -3,6 +3,7 @@
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/kailash-os/kailash-os/badge)](https://scorecard.dev/viewer/?uri=github.com/kailash-os/kailash-os)
 [![kailash.site](https://img.shields.io/website?down_message=offline&up_message=live&url=https%3A%2F%2Fkailash.site&label=site)](https://kailash.site)
 [![Roadmap](https://img.shields.io/badge/roadmap-Kailash%20Roadmap-8A2BE2)](https://github.com/orgs/kailash-os/projects/1)
+[![flake-check](https://github.com/kailash-os/kailash-os/actions/workflows/flake-check.yml/badge.svg)](https://github.com/kailash-os/kailash-os/actions/workflows/flake-check.yml) [![Dependency Review](https://github.com/kailash-os/kailash-os/actions/workflows/dependency-review.yml/badge.svg)](https://github.com/kailash-os/kailash-os/actions/workflows/dependency-review.yml) [![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/kailash-os/kailash-os?label=OpenSSF%20Scorecard&style=flat)](https://scorecard.dev/viewer/?uri=github.com/kailash-os/kailash-os)
 
 [![License: GPL v2](https://img.shields.io/badge/licence-GPL--2.0-blue)](https://github.com/kailash-os/kailash-os/blob/main/LICENSE) [![kailash.site](https://img.shields.io/website?down_message=offline&up_message=live&url=https%3A%2F%2Fkailash.site&label=site)](https://kailash.site)
 
