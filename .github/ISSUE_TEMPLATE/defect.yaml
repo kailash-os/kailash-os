@@ -1,0 +1,18 @@
+name: Defect
+description: Something does not behave as specified
+labels: ['bug']
+body:
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed vs expected
+      description: "What happened and what the spec or design promised."
+    validations:
+      required: true
+  - type: textarea
+    id: repro-test
+    attributes:
+      label: Reproducing test (failing first)
+      description: "A repro test can be written as part of the fix; it fails before, passes after."
+    validations:
+      required: true
