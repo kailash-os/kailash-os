@@ -1,0 +1,24 @@
+name: Feature / build item
+description: New behaviour, module or component
+labels: []
+body:
+  - type: textarea
+    id: hypothesis
+    attributes:
+      label: Hypothesis
+      description: "Expected behaviour, assumed mechanism, and the observation that would falsify it."
+      placeholder: "We hypothesise X behaves as Y because Z - falsified if ..."
+    validations:
+      required: true
+  - type: textarea
+    id: test-plan
+    attributes:
+      label: Test plan (RED first)
+      description: "The failing test that will drive implementation, incl. edge and error paths. For kernel or cluster work, the acceptance step is run EXPECTED-FAIL first."
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance
+      description: What proves it works end to end.
