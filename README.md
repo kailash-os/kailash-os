@@ -1,6 +1,6 @@
 # Kailash OS
 
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/kailash-os/kailash-os/badge)](https://scorecard.dev/viewer/?uri=github.com/kailash-os/kailash-os)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/kailash-os/kailash-os/badge)](https://scorecard.dev/viewer/?uri=github.com/kailash-os/kailash-os) [![CII Best Practices](https://img.shields.io/badge/cii%20best%20practices-in%20progress-orange)](https://www.bestpractices.dev/projects/15182)
 [![kailash.site](https://img.shields.io/website?down_message=offline&up_message=live&url=https%3A%2F%2Fkailash.site&label=site)](https://kailash.site)
 [![Roadmap](https://img.shields.io/badge/roadmap-Kailash%20Roadmap-8A2BE2)](https://github.com/orgs/kailash-os/projects/1)
 [![flake-check](https://github.com/kailash-os/kailash-os/actions/workflows/flake-check.yml/badge.svg)](https://github.com/kailash-os/kailash-os/actions/workflows/flake-check.yml) [![Dependency Review](https://github.com/kailash-os/kailash-os/actions/workflows/dependency-review.yml/badge.svg)](https://github.com/kailash-os/kailash-os/actions/workflows/dependency-review.yml) [![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/kailash-os/kailash-os?label=OpenSSF%20Scorecard&style=flat)](https://scorecard.dev/viewer/?uri=github.com/kailash-os/kailash-os)
@@ -9,7 +9,7 @@
 
 Kailash is a Nix-OS based Linux operating system for use in Adversarial Machine Learning.
 
-## Project Status: 
+## Project Status:
 
 Contact [shain.singh@owasp.org](mailto:shain.singh@owasp.org) for more information.
 
@@ -20,7 +20,7 @@ A. The authors have been long-time users and fans of WHAX/SLAX, BackTrack/Knoppi
 Kailash is also the residence of Lord Shiva in Hindu scriptures.
 
 Q. Why is Kailash based on NixOS and not {Debian|Arch}? <br>
-A. The authors have only recently started learning Nix and NixOS and this project provided an opportunity to do a deep-dive. 
+A. The authors have only recently started learning Nix and NixOS and this project provided an opportunity to do a deep-dive.
 
 ## Acknowledgements
 
