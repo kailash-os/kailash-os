@@ -86,9 +86,9 @@ go here — [SECURITY.md](SECURITY.md) instead.
 
 ## Licence
 
-Contributions are made under **GPL-2.0** — the distribution's licence. By
-submitting a pull request you agree your work is licensed under the project's
-GPL-2.0 terms.
+The project is licensed under **BSD-3-Clause** — see [LICENSE](LICENSE).
+Contributions are made under **BSD-3-Clause**: by submitting a pull request you
+agree your work is licensed under the project's BSD-3-Clause terms.
 
 ## Engineering standard: hypothesis-first TDD
 
