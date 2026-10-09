@@ -7,6 +7,6 @@
     ./classic
     ./attack
     ./defence
-    ./build
+    ./ops
   ];
 }
