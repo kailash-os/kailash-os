@@ -92,7 +92,7 @@ agree your work is licensed under the project's BSD-3-Clause terms.
 
 ## Engineering standard: hypothesis-first TDD
 
-Every feature, fix and refactor follows **hypothesis → failing test → minimal implementation → refactor** (see #51 / #51 for the standing spec):
+Every feature, fix and refactor follows **hypothesis → failing test → minimal implementation → refactor** (see #119 for the scope clauses and #51 for the standing spec):
 
 1. State the hypothesis in the issue: expected behaviour, assumed mechanism, falsifying observation.
 2. **Commit the failing test first** on the feature branch; run it and paste the RED run's failure line into the PR.
@@ -100,6 +100,10 @@ Every feature, fix and refactor follows **hypothesis → failing test → minima
 4. Edge/error paths (overflow, malformed input, failure modes) are covered before close.
 
 Where unit tests cannot reach — kernel-attached code, live-cluster behaviour — the issue's acceptance criterion **is** the test: record the EXPECTED-FAIL run before building, re-run green after. Same discipline, different harness.
+
+**Harness before capability.** The check that gates a behaviour ships in the same PR as the behaviour; nothing merges ahead of the check that would catch its regression. Where a new gate surface is introduced, the negative case (the gate fails on defective input) is proven in CI, not asserted in prose. In roadmap terms: spec → test (RED) → feature (GREEN) → build (CI proves it on the runner).
+
+**GitHub Actions is the authoritative check and build surface.** The acceptance suite executes on hosted ubuntu runners (`nix flake check --all-systems`, derivation checks, VM tests); contributor machines run the same suite for development only and never as merge evidence. Self-hosted runners enter only for the disk-bound image builds (the KA-15 arrangement). Where a check can run in both places, Actions is the default.
 
 Exceptions require the user's explicit go-ahead in the issue before work starts.
 
