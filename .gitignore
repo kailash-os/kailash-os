@@ -1,0 +1,5 @@
+# Kailash OS (KA-01.1): build results are derivations, never committed.
+result*
+vmstate*
+.DS_Store
+.direnv/

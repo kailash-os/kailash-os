@@ -102,3 +102,27 @@ Every feature, fix and refactor follows **hypothesis → failing test → minima
 Where unit tests cannot reach — kernel-attached code, live-cluster behaviour — the issue's acceptance criterion **is** the test: record the EXPECTED-FAIL run before building, re-run green after. Same discipline, different harness.
 
 Exceptions require the user's explicit go-ahead in the issue before work starts.
+
+## Packaging gates (stub — filled by KA-01.1 follow-ons)
+
+Work that lands in `pkgs/` of the packages overlay or references bespoke
+derivations is expected to satisfy the gates below; the manifest
+(`manifest/tools.yaml`, kailash-packages) is the only hand-maintained
+registry, and anything packaged must be manifest-listed.
+
+- Packaging follows the three populations (nixpkgs-native pin /
+  stale-override / bespoke derivation) with the population recorded in the
+  manifest entry.
+- Bespoke derivations build clean under `nix build`, with import/smoke
+  checks appropriate to the package; test gates live beside the code.
+- `nvfetcher/_sources/` is committed; pinned sources never silently move.
+
+## Safety policy (stub — expanded by KA-18)
+
+Offensive tooling exists for authorised security work only: engagements
+with written authorisation, academic research, and defender validation of
+one's own systems (AU framing: Cyber Security Act 2024 (Cth); Criminal
+Code Act 1995 (Cth) Div 474). Tools tagged `exp` in the manifest are
+lab-gated — they refuse to run unless lab mode is explicitly enabled at
+both the host (profile) and shell (environment) level. No D-layer service
+auto-starts; enabling a lab-posture service is a deliberate act.
