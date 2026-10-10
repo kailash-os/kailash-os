@@ -14,6 +14,16 @@ Kailash is a Nix-OS based Linux operating system for use in Adversarial Machine 
 
 Contact [shain.singh@owasp.org](mailto:shain.singh@owasp.org) for more information.
 
+## Cadence and version scheme
+
+Releases run every **6 weeks**. The lockfile is the version: a release
+carries the `flake.lock` commit and a tag `vMAJOR.YYYYMM.<patch>` (for
+example `v1.202611.0`) — **versionScheme: `vMAJOR.YYYYMM.<patch>`**. A
+Kailash install never updates nix, nixpkgs, or tooling on its own;
+source pins and flake inputs move on explicit, documented schedules and
+`main` is never committed directly. The full policy:
+[`docs/guide/cadence.md`](docs/guide/cadence.md).
+
 ## FAQ
 
 Q. Why the name 'Kailash'?<br>
