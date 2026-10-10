@@ -133,18 +133,23 @@ website repos use `main`).
 
 ## Architecture Decision Records
 
-Structural changes carry an ADR in the same PR, following the
-[Coraza ADR standard](https://github.com/corazawaf/coraza/blob/main/docs/adr/README.md)
-format. The bar here is small: most slices are leaf-sized, so the issue's plan
-reference IS the design record — write an ADR only when **the change introduces
-a new persistent artifact** (a manifest schema field whose semantics lock,
-a profile contract, a wire format, a gate script) **or removes/changes one**.
+Structural changes carry an ADR in the same PR. Most slices are
+leaf-sized — the issue's plan reference IS the design record, no ADR
+needed — write one only when **the change introduces a new persistent
+artifact** (a manifest schema field whose semantics lock, a profile
+contract, a wire format, a gate script) **or removes/changes one**.
 
-Agent rules (borrowed from Coraza, same teeth):
+The record lives in [`docs/adr/`](docs/adr/):
+[`0000-architecture-decision-records.md`](docs/adr/0000-architecture-decision-records.md)
+explains the process and
+[`0001-record-format.md`](docs/adr/0001-record-format.md) fixes the
+format (NNNN-short-slug.md, numbered sequentially, one decision per
+file). Rules with teeth:
 
-- **Never invent discussion, deciders or quotes.** Cite commit/issue permalinks
-  or write "No substantive technical discussion recorded".
-- **Never rewrite an accepted ADR** to match a new change — supersede it.
+- **Accepted ADRs are immutable.** A change that contradicts an accepted
+  ADR supersedes it with a new one; never rewrite the accepted record.
+- **Never invent discussion, deciders or quotes.** Cite commit/issue
+  permalinks, or write "No substantive technical discussion recorded".
 - Dependency bumps, docs and CI tweaks don't need ADRs.
 
 ## Pull requests
