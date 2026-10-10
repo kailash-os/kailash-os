@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # tools/manifest-matrix.py — the manifest→matrix generator (KA-15.1 #88).
 #
-# MIRROR PAIR: an identical copy of this file lives in kailash-packages at
-# tools/manifest-matrix.py — keep the two byte-identical (cmp in verify).
+# MIRROR PAIR: this generator is vendored byte-identically in BOTH repos —
+# kailash-os/tools/manifest-matrix.py and
+# kailash-packages/tools/manifest-matrix.py. Keep the two byte-identical
+# (diff in verify); a change lands against both in the same cycle.
 #
 # Source of truth resolution, deterministically:
 #   * OS-mode (default): the flake.lock `kailash-packages` node rev is read
@@ -393,6 +395,11 @@ def main(argv):
         print("self-test OK")
         return 0
     args = list(argv)
+    if "--print-rev" in args:
+        # the pinned packages rev from the committed flake.lock (the same
+        # node the generator resolves its manifest from)
+        print(packages_rev_from_flake_lock(os.path.join(ROOT, "flake.lock")))
+        return 0
     manifest_dir = None
     if "--manifest-dir" in args:
         idx = args.index("--manifest-dir")
