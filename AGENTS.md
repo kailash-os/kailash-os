@@ -181,17 +181,16 @@ contract, not decoration.
 | Label | Meaning |
 | --- | --- |
 | `KA-XXn — <summary>` (in the TITLE, not a label) | issue/PR identity |
-| `area:ci|cli|docs|github|images|layer-attack|layer-classic|layer-defence|layer-ops|manifest|menu|nix|packaging|repo|safety|taxonomy|testing|website` | component |
-| `type:task` | a leaf-sized roadmap slice (RED→GREEN→merge) |
-| `type:feature|fix|docs|lab|research|test` | the slice's shape |
+| `area:ci|cli|docs|github|images|layer-attack|layer-classic|layer-defence|layer-ops|manifest|menu|nix|packaging|repo|safety|taxonomy|testing|website` | component (the current catalog) |
+| `type:task` | a leaf-sized roadmap slice (RED→GREEN→merge) — the only `type:*` label in the catalog today |
 | `target:v0.1|v0.2|backlog` | milestone |
 | `s:xs|s:s|s:m|s:l` | sprint effort (about one hour = `s:xs`/`s:s`) |
 | `bug`, `documentation`, `ci` | maintenance |
 
-Board status (`Todo` / `In Progress` / `Done`) is an org-project **field**, not
-a label: labels never encode progress. Agents applying labels mirror the area
+Board status (`Todo` / `In Progress` / `Done`) is an org-project **field**, not a label: labels never encode progress. Agents applying labels mirror the area
 from the directory the change lands in, and never invent new `area:*`/`type:*`
-names — the label catalog is the vocabulary.
+names — the label catalog is the vocabulary. Growing the catalog (a new
+`area:*` or shape label) is a deliberate catalog change, not agent improvisation.
 
 ## Security
 
