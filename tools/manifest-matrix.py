@@ -124,27 +124,71 @@ def _pkgs_fallback_names(pkg_repo_dir):
     return names
 
 
+def matrix_entries_from_tool_rows(tools):
+    """§5.2 tool rows → sortable overlay package names (os#135 contract).
+
+    Matrix entries are the overlay's buildable surface: bespoke rows
+    contribute their `packaging.derivation` dir (`pkgs/<dir>/default.nix`
+    → `<dir>`, single segment only); native rows are nixpkgs-provided
+    and never overlay buildables. Plain-string rows (the fixture-era
+    shape) pass through unchanged. Rows without a usable derivation
+    contribute nothing — callers existence-gate the result against the
+    pkgs/ auto-call dirs so the matrix never carries a phantom leg.
+    """
+    names = set()
+    for t in tools:
+        if isinstance(t, str):
+            names.add(t)
+            continue
+        if not isinstance(t, dict):
+            continue
+        packaging = t.get("packaging") or {}
+        if packaging.get("status") != "bespoke":
+            continue
+        drv = packaging.get("derivation")
+        if (
+            isinstance(drv, str)
+            and drv.startswith("pkgs/")
+            and drv.endswith("/default.nix")
+        ):
+            name = drv[len("pkgs/") : -len("/default.nix")]
+            if name and "/" not in name:
+                names.add(name)
+    return sorted(names)
+
+
 def manifest_dict_to_matrix(manifest, pkgs_names=None):
     """Pure core: manifest dict → GitHub Actions matrix dict.
 
-    A filled tools table maps every tool id over both systems. A
-    header-only manifest (empty tools list) falls back to the pkgs/
-    auto-call dir names when the caller supplies `pkgs_names` (the CLI
-    resolver supplies them; the pure function stays pure). When the
-    fallback is unavailable (`pkgs_names=None`) or empty (no pkgs dirs),
-    the matrix is empty — never invented rows. Deterministic: sorted
-    names, fixed SYSTEMS order.
+    A filled tools table maps entries over both systems — via
+    `matrix_entries_from_tool_rows` (bespoke derivations; os#135
+    contract). A header-only manifest (empty tools list) falls back to
+    the pkgs/ auto-call dir names when the caller supplies
+    `pkgs_names` (the CLI resolver supplies them; the pure function
+    stays pure). When the fallback is unavailable (`pkgs_names=None`)
+    or empty (no pkgs dirs), the matrix is empty — never invented rows.
+    Deterministic: sorted names, fixed SYSTEMS order.
     """
     tools = manifest.get("tools") or []
-    tools = sorted(str(t) for t in tools)
-    if not tools and pkgs_names:
-        tools = sorted(str(n) for n in pkgs_names)
+    names = matrix_entries_from_tool_rows(tools)
+    if not names and pkgs_names:
+        names = sorted(str(n) for n in pkgs_names)
     include = [
         {"package": name, "system": system}
-        for name in tools
+        for name in names
         for system in SYSTEMS
     ]
     return {"include": include}
+
+
+def matrix_json_for_names(names) -> str:
+    """Resolved package names → matrix JSON (sorted, deterministic)."""
+    include = [
+        {"package": name, "system": system}
+        for name in sorted(str(n) for n in names)
+        for system in SYSTEMS
+    ]
+    return json.dumps({"include": include}, sort_keys=True)
 
 
 def matrix_json(manifest, pkgs_names=None) -> str:
@@ -217,14 +261,33 @@ def manifest_and_pkgs_names_from_tarball(blob):
     return manifest_doc, sorted(pkgs_names)
 
 
+def matrix_names_for_build(manifest, auto_names):
+    """Manifest → the overlay's buildable package names, existence-gated.
+
+    `matrix_entries_from_tool_rows` derives the manifest's bespoke surface;
+    gating it against `auto_names` (the pkgs/ auto-call dirs at the same
+    tree state) keeps the matrix phantom-free while the KA-05/KA-05.x
+    waves land rows ahead of their Wave-5/6 derivations. A header-only
+    manifest falls back to the auto-call dirs (unchanged KA-15.1
+    contract); so does a filled manifest whose bespoke derivations are
+    not on disk yet — the overlay's real surface is what builds.
+    """
+    names = matrix_entries_from_tool_rows(manifest.get("tools") or [])
+    auto = sorted(str(n) for n in (auto_names or []))
+    if not names:
+        return auto
+    gated = [n for n in names if n in set(auto)]
+    if gated:
+        return gated
+    return auto
+
+
 def build_matrix_from_lock(lock_path, repo=REPO):
     """OS-mode: pinned rev from the committed flake.lock → matrix JSON."""
     rev = packages_rev_from_flake_lock(lock_path)
     blob = _http_get(_codeload_url(repo, rev))
     manifest, pkgs_names = manifest_and_pkgs_names_from_tarball(blob)
-    if manifest.get("tools"):
-        return matrix_json(manifest)
-    return matrix_json(manifest, pkgs_names=pkgs_names)
+    return matrix_json_for_names(matrix_names_for_build(manifest, pkgs_names))
 
 
 def build_matrix_from_manifest_dir(manifest_dir, fallback_repo_dir=None):
@@ -232,15 +295,17 @@ def build_matrix_from_manifest_dir(manifest_dir, fallback_repo_dir=None):
 
     `fallback_repo_dir` names the packages repo root the manifest dir
     lives in, for the pkgs/ fallback; when None the manifest-dir's parent
-    is used.
+    is used. The matrix is existence-gated against the pkgs/ auto-call
+    dirs at the same tree state (os#135) — bespoke rows ahead of their
+    derivations fall back to the real overlay surface.
     """
     tools_yaml = os.path.join(manifest_dir, "tools.yaml")
     with open(tools_yaml, encoding="utf-8") as fh:
         manifest, _mode = _load_yaml(fh.read())
-    if manifest.get("tools"):
-        return matrix_json(manifest)
     repo_dir = fallback_repo_dir or os.path.dirname(manifest_dir)
-    return matrix_json(manifest, pkgs_names=_pkgs_fallback_names(repo_dir))
+    return matrix_json_for_names(
+        matrix_names_for_build(manifest, _pkgs_fallback_names(repo_dir))
+    )
 
 
 def emit(lock_path=None, manifest_dir=None, repo=REPO, out=None):
@@ -387,6 +452,51 @@ def self_test() -> None:
         pass
     else:  # pragma: no cover - guard
         raise AssertionError("structured list entries must fail loudly in the fallback")
+    # 13. dict-row contract (§5.2 rows are dicts, KA-05.x): matrix entries
+    # derive from bespoke rows' packaging.derivation — native rows are
+    # nixpkgs-provided, not overlay buildables. RED probe of the dict
+    # shape KA-05.2 lands (current code stringifies whole dicts).
+    _rows = [
+        {"id": "subfinder", "packaging": {"status": "bespoke",
+         "derivation": "pkgs/subfinder/default.nix"}},
+        {"id": "nmap", "packaging": {"status": "native"}},
+    ]
+    assert manifest_dict_to_matrix({"tools": _rows}, None) == {
+        "include": [
+            {"package": "subfinder", "system": "x86_64-linux"},
+            {"package": "subfinder", "system": "aarch64-linux"},
+        ]
+    }, "dict rows must map bespoke derivations to matrix entries, got %r" % (
+        manifest_dict_to_matrix({"tools": _rows}, None),)
+    # 14. string rows (fixture-era shape) keep working — the pure core is
+    # row-shape agnostic at the call sites that pass plain names.
+    assert manifest_dict_to_matrix({"tools": ["subfinder"]}, None) == {
+        "include": [
+            {"package": "subfinder", "system": "x86_64-linux"},
+            {"package": "subfinder", "system": "aarch64-linux"},
+        ]
+    }
+    # 15. a bespoke row missing its derivation path contributes nothing
+    # (existence-gating rejects it inside the row walker; the pure core
+    # skips non-dict/derivation-less rows defensively).
+    _rows2 = [{"id": "lone", "packaging": {"status": "bespoke"}}]
+    assert manifest_dict_to_matrix({"tools": _rows2}, None) == {"include": []}
+    # 16. seam gate: bespoke derivations not on disk yet → the auto-call
+    # fallback (bespoke rows land in KA-05.x ahead of their Wave-5/6
+    # derivations; the matrix never carries a phantom leg).
+    _filled = {"tools": [
+        {"id": "spiderfoot", "packaging": {"status": "bespoke",
+         "derivation": "pkgs/spiderfoot/default.nix"}},
+        {"id": "subfinder", "packaging": {"status": "bespoke",
+         "derivation": "pkgs/subfinder/default.nix"}},
+    ]}
+    assert matrix_names_for_build(_filled, ["dnsrecon", "subfinder"]) == [
+        "subfinder"
+    ]
+    # 17. seam gate: header-only manifest → the auto-call dirs unchanged.
+    assert matrix_names_for_build({"tools": []}, ["dnsrecon", "subfinder"]) == [
+        "dnsrecon", "subfinder"
+    ]
 
 
 def main(argv):
