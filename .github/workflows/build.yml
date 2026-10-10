@@ -1,0 +1,108 @@
+name: build
+
+# KA-15.1 (#88, plan §8.3/§8.10): the manifest→matrix CI pipeline.
+#
+#   job1 manifest      — run the committed generator (tools/manifest-matrix.py)
+#                        against the PINNED packages rev (read from the committed
+#                        flake.lock; the codeload fetch is pinned to that rev — no
+#                        floating heads) and emit the build matrix
+#   job2 build-packages— one nix build leg per matrix entry (the packages overlay
+#                        flake carries the derivations: pkgs/ auto-call today,
+#                        manifest-driven at KA-05)
+#   job3 vm-tests      — PENDING placeholder (plan §8.2: per-category VM tests
+#                        land with KA-06/KA-13; needs a Linux VM gate, not this
+#                        hosted-runner shape)
+#
+# Cachix: the `kailash` cache push is included COMMENTED below — the
+# CACHIX_AUTH_TOKEN secret is not configured yet (verified empty in the
+# repo's actions secrets). Uncomment both blocks once the secret lands.
+# The attic fallback (plan §8.4) documents at cache.kailash.tools when
+# self-hosted.
+#
+# NOTE (pending, KA-15/KA-33 follow-up): the flake's `nixConfig`
+# (extra-substituters https://kailash.cachix.org + the cache's
+# trusted-public-keys, the nixified-ai pattern) lands once the `kailash`
+# Cachix cache exists — its public key is not fetchable today
+# (the cache returns 401), and an invented key would break `nix build`
+# signature checks for every consumer. The build.yml Cachix push step
+# below is commented for the same reason (CACHIX_AUTH_TOKEN unset).
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Generator self-test (the generator gates itself)
+        run: python3 tools/manifest-matrix.py --self-test
+      - name: Emit build matrix from the pinned packages rev
+        id: matrix
+        run: |
+          OUT="$(python3 tools/manifest-matrix.py)"
+          echo "matrix<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$OUT" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+      - name: Matrix summary
+        run: |
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          echo '${{ steps.matrix.outputs.matrix }}' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+
+  build-packages:
+    needs: manifest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.manifest.outputs.matrix) }}
+    runs-on: ${{ matrix.system == 'x86_64-linux' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+        with:
+          persist-credentials: false
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v23
+      - name: Resolve the pinned packages flake
+        id: pin
+        run: |
+          REV="$(python3 tools/manifest-matrix.py --print-rev)"
+          echo "rev=$REV" >> "$GITHUB_OUTPUT"
+          echo "Resolved kailash-packages pin: $REV"
+      - name: Build .#packages.<system>.<package> from the pinned overlay
+        run: |
+          nix build "github:kailash-os/kailash-packages/${{ steps.pin.outputs.rev }}#packages.${{ matrix.system }}.${{ matrix.package }}" -L
+      # --- Cachix push — PENDING SECRET (uncomment when CACHIX_AUTH_TOKEN
+      # --- is added to the repo's actions secrets; cache name `kailash`).
+      # - name: Cachix push (kailash)
+      #   uses: cachix/cachix-action@v17
+      #   with:
+      #     name: kailash
+      #     authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+
+  vm-tests:
+    needs: manifest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+        with:
+          persist-credentials: false
+      - name: PENDING (KA-15.1 #88, plan §8.2) — VM test harness lands with KA-06/KA-13
+        run: |
+          echo "vm-tests: placeholder — per-category VM tests (plan §8.2) land with KA-06/KA-13"
+          echo "This job exists to pin the pipeline position: manifest -> packages -> VM tests -> images."
