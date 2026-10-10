@@ -123,11 +123,9 @@ new gate's negative case is proven in CI, not asserted.
 ## Signing
 
 **Everything is GPG-signed, always.** Commits AND tags
-(`git config commit.gpgsign true`; signing key `AAF8226F3F4C1712` —
-authored and committed as `Shain.Singh@owasp.org`). PR CI enforces
-`required_signatures`; an unsigned or badly-attributed commit blocks the PR.
-Never use the f5-attributed key for kailash work — the signing key and the
-commit email must agree with the GitHub-verified identity or verification
+(`git config commit.gpgsign true`). PR CI enforces `required_signatures`;
+an unsigned or badly-attributed commit blocks the PR. The signing key and
+the commit email must agree with a GitHub-verified identity or verification
 fails with `bad_email` and the PR cannot merge.
 
 Note: this repository's default branch is **`master`** (the packages and
@@ -161,7 +159,7 @@ contract, not decoration.
   misses its target: verify content landed on the branch the squash merges to).
 - **One logical change per PR.** No drive-by refactors, formatting or dependency bumps.
 - TDD: watched RED committed before GREEN (see [Testing](#testing)).
-- All commits GPG-signed by `Shain.Singh@owasp.org` (see [Signing](#signing)).
+- All commits GPG-signed with a GitHub-verified identity (see [Signing](#signing)).
 
 ### Title and description
 
