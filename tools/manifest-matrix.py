@@ -16,10 +16,10 @@
 # (`include` entries each carrying `package` and `system`, over
 # x86_64-linux and aarch64-linux). Fallback: a header-only manifest (empty
 # tools list) yields the pkgs/ auto-call directories — during the census
-# fill (KA-05) the matrix must follow the real pkgs/ build surface instead
-# of emitting an empty matrix that silently skips CI. GREEN pending: the
-# fallback lands in the GREEN commit; until then a manifest-only source
-# yields an empty matrix (the watched RED, quoted in the RED commit).
+# fill (KA-05) the matrix follows the real pkgs/ build surface instead of
+# emitting an empty matrix that silently skips CI (watched RED: the
+# manifest-only source emitted `{"include": []}`; GREEN falls back to the
+# pkgs/ auto-call dirs).
 #
 # Python stdlib-first: PyYAML is used when importable; a stdlib fallback
 # parser covers the manifest's own header-only shape (flat scalars plus
@@ -99,15 +99,27 @@ def _load_yaml_fallback(text):
 
 
 def _pkgs_fallback_names(pkg_repo_dir):
-    """pkgs/ auto-call dirs for the fallback — GREEN pending.
+    """pkgs/ auto-call dirs (sorted): the fallback build surface.
 
-    Will read the auto-call surface the packages flake builds from: every
+    Reads the auto-call surface the packages flake builds from: every
     pkgs/<dir>/default.nix, excluding `.nocall` directories — the same
-    surface `pkgs/auto-call.nix` filters for. Until GREEN the fallback
-    yields nothing, so a manifest-only source emits an EMPTY matrix — the
-    watched RED quoted in the RED commit body.
+    surface `pkgs/auto-call.nix` filters for (KA-02.3). GREEN half of the
+    watched RED: with this wired, a header-only manifest yields the
+    auto-call dirs (subfinder, dnsrecon today) instead of an empty matrix.
     """
-    return []  # GREEN pending (KA-15.1): the pkgs-dir listing lands GREEN
+    pkgs_dir = os.path.join(pkg_repo_dir, DEFAULT_PKGS_DIR)
+    if not os.path.isdir(pkgs_dir):
+        return []
+    names = []
+    for name in sorted(os.listdir(pkgs_dir)):
+        tool_dir = os.path.join(pkgs_dir, name)
+        if (
+            os.path.isdir(tool_dir)
+            and os.path.isfile(os.path.join(tool_dir, "default.nix"))
+            and not os.path.isfile(os.path.join(tool_dir, ".nocall"))
+        ):
+            names.append(name)
+    return names
 
 
 def manifest_dict_to_matrix(manifest, pkgs_names=None):
@@ -269,11 +281,11 @@ def self_test() -> None:
         '{"include": [{"package": "garak", "system": "x86_64-linux"}, '
         '{"package": "garak", "system": "aarch64-linux"}]}'
     )
-    # 5. pkgs/ fallback resolver (the watched RED, env-independent): the
-    # resolver must list pkgs/ auto-call dirs from the given repo dir,
-    # excluding `.nocall` — the same surface pkgs/auto-call.nix filters
-    # for. Against the RED stub (yields nothing) this fails with the
-    # empty-vs-2-package delta the RED commit quotes.
+    # 5. pkgs/ fallback resolver (the GREEN half of the watched RED): the
+    # resolver lists pkgs/ auto-call dirs from the given repo dir,
+    # excluding `.nocall` and dirs without a derivation — the same
+    # surface pkgs/auto-call.nix filters for. RED ran this against the
+    # empty stub and failed with `got []`.
     import tempfile as tempfile_mod
 
     with tempfile_mod.TemporaryDirectory() as td:
@@ -288,12 +300,11 @@ def self_test() -> None:
             fh.write("\n")
         got = _pkgs_fallback_names(td)
         assert got == ["dnsrecon", "subfinder"], (
-            f"GREEN pending (watched RED): pkgs/ fallback must list the "
-            f"auto-call dirs, got {got!r} — a manifest-only source therefore "
-            f"emits an empty matrix"
+            f"pkgs/ fallback must list the auto-call dirs, got {got!r} — "
+            f"a manifest-only source would emit an empty matrix"
         )
-    # 6. end-to-end fallback: header-only manifest + real pkgs dirs ->
-    # the 2-package matrix (GREEN pending; empty at RED — the same delta)
+    # 6. end-to-end fallback: header-only manifest + real pkgs dirs -> the
+    # 2-package matrix (the GREEN output quoted in the GREEN commit body)
     assert manifest_dict_to_matrix(
         {"tools": []}, pkgs_names=["dnsrecon", "subfinder"]
     ) == {
