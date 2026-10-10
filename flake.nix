@@ -26,18 +26,37 @@
             , nixos-generators, disko, sops-nix, home-manager, ... }@inputs:
     let
       system = "x86_64-linux";
+      lib = nixpkgs.lib;
       pkgs = import nixpkgs {
         inherit system;
         config = {
           allowUnfree = true;
           allowInsecurePredicate = p: true;  # pentest tooling posture (RedNix heritage)
         };
-        overlays = [ kailash-packages.overlays.default ];
+        # The packages overlay wires in when the overlay flake grows
+        # overlays.default (packaging items); guarded so host evaluation
+        # stays green at revisions without it.
+        overlays = lib.optionals
+          (kailash-packages ? "overlays" && (kailash-packages.overlays ? "default"))
+          [ kailash-packages.overlays.default ];
       };
     in
     {
       nixosModules.kailash = { imports = [ ./modules ]; };
-      # nixosConfigurations (kailash-minimal etc.) land with KA-01.3 (#65);
-      # devShells per category with KA-09; images with the images wave.
+
+      # Host namespace: the minimal profile — the CORE substrate with zero
+      # categories enabled (KA-01.3). Higher profiles layer on top of it.
+      nixosConfigurations.kailash-minimal = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [ ./profiles/minimal.nix ];
+      };
+
+      # Eval gate: the profile evaluates through the module tree and produces
+      # a system closure derivation, exercised by `nix flake check`.
+      checks.${system}.kailash-minimal-toplevel =
+        self.nixosConfigurations.kailash-minimal.config.system.build.toplevel;
+
+      # devShells per category with KA-09; images with the images wave;
+      # remaining hosts (kailash-full etc.) land with their profile items.
     };
 }
