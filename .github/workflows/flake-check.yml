@@ -1,6 +1,12 @@
 name: flake-check
-# Scaffolded ahead of the KA-01 skeleton: the root flake lands in Phase 0;
-# until then this gate verifies the repository has the planned layout files.
+
+# The OS root flake's evaluation + host-composition gate on hosted runners
+# (replaces the layout scaffold once the flake landed — KA-01/KA-02 done,
+# 5c1fcd2). One runner per declared system: `nix flake check` (current-system
+# scope) on each, so both hosts evaluate and the
+# checks.x86_64-linux.kailash-minimal-toplevel system-closure derivation is
+# exercised on the hosted surface (the authoritative check per the
+# engineering standard; local runs are development evidence only).
 on:
   pull_request:
   push:
@@ -10,16 +16,22 @@ permissions:
   contents: read
 
 jobs:
-  layout-scaffold:
-    runs-on: ubuntu-latest
+  flake-check:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, system: x86_64-linux }
+          - { os: ubuntu-24.04-arm, system: aarch64-linux }
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
-      - name: Planned layout present (scaffold gate until KA-01 lands the real flake)
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v23
+      - name: Flake check (${{ matrix.system }})
+        run: nix flake check
+      - name: Minimum closure evaluates (${{ matrix.system }})
         run: |
-          test -f README.md
-          test -f CONTRIBUTING.md
-          test -f LICENSE
-      - name: "placeholder: replaced by nix flake check --all-systems --no-build in KA-15"
-        run: echo "flake lands with KA-01/KA-02"
+          nix eval .#nixosConfigurations.kailash-minimal.config.system.build.toplevel.drvPath
