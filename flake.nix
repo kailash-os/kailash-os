@@ -418,6 +418,43 @@ open(sys.argv[2], "w", encoding="utf-8").write(chr(10).join(gen) + chr(10))
             || { echo "redteam-ai o-04 setting did not survive the typed spine"; exit 1; }
           touch $out
         '';
+
+        # ---- O-3 docker-wrapper stores (KA-09.2, ko#111, §5.4 Shape 3) -----
+        #
+        # Each declared backend id stands up ONE oci-containers container
+        # (podman substrate), image pinned in the module, autoStart false
+        # (the operator starts heavy stores; no-auto-start posture §11.2).
+        # The posture is DOCUMENTED per store (the acceptance clause):
+        # docs/guide/o-03-docker-wrapper-stores.md carries image, port and
+        # wrapper-class lines per id, and the check cross-asserts the
+        # module's rendered container attrs against the documented posture.
+        # RED stub (KA-09.2): the posture doc is absent - the check fails
+        # until the GREEN commit lands the wrappers' per-store posture.
+        o-03-backends-doc = pkgs.runCommand "o-03-backends-doc" { } ''
+          f=${./docs/guide/o-03-docker-wrapper-stores.md}
+          test -f "$f" || { echo "the docker-wrapper posture doc is missing"; exit 1; }
+          grep -q "weaviate" "$f"
+          grep -q "milvus" "$f"
+          grep -q "elasticsearch" "$f"
+          touch $out
+        '';
+
+        o-03-backends-containers =
+          let
+            o3Host = (self.nixosConfigurations.kailash-redteam-ai.extendModules {
+              modules = [ { kailash.layers.ops.categories.o-03.backends = [ "weaviate" "milvus" "elasticsearch" ]; } ];
+            });
+            ctrs = o3Host.config.virtualisation.oci-containers.containers;
+          in
+          pkgs.runCommand "o-03-backends-containers" { } ''
+            test "${toString (builtins.attrNames ctrs)}" = "kailash-o-03-weaviate kailash-o-03-milvus kailash-o-03-elasticsearch" \
+              || { echo "wrapper container set mismatch"; exit 1; }
+            test "${toString o3Host.config.virtualisation.oci-containers.containers.kailash-o-03-weaviate.image}" = "semitechnologies/weaviate:1.39.2" \
+              || { echo "weaviate wrapper image pin mismatch"; exit 1; }
+            test "${toString o3Host.config.virtualisation.oci-containers.backend}" = "podman" \
+              || { echo "backend must be podman (rootless posture)"; exit 1; }
+            touch $out
+          '';
       };
 
 
