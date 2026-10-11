@@ -168,22 +168,27 @@ contract, not decoration.
 
 ### Title and description
 
-- Title carries the task id: `KA-XXn — summary [child of KA-XX]`; the PR body
-  links the child issue (`Closes #NN`) and notes the parent gate stays open.
+- Title follows Conventional Commits; roadmap slices carry the task id in
+  the subject — `type(scope): KA-XXn — summary` (e.g. `feat(safety): KA-18.1 —
+  safety-defaults.nix + lab-mode gate`). The PR body links the child issue
+  (`Closes #NN`) and notes the parent gate stays open. A CI title gate checks
+  the form. Issue titles are a separate surface: `KA-XXn — summary` in the
+  TITLE, not a label (issue identity — see [Labels](#labels)).
 - Description: **what** changed, **why** (issue), **how verified** (watched RED
   output + GREEN output + any run evidence). Reviewers should not have to read
   the diff to know something changed.
 
 ### Commits
 
-- Small, self-contained, same title style; no stray scratch files; probe files
-  and temp scripts are deleted before commit, not gitignored.
+- Small, self-contained, conventional-commit subjects (`type(scope): subject`);
+  no stray scratch files; probe files and temp scripts are deleted before
+  commit, not gitignored.
 
 ## Labels
 
 | Label | Meaning |
 | --- | --- |
-| `KA-XXn — <summary>` (in the TITLE, not a label) | issue/PR identity |
+| `KA-XXn — <summary>` (ISSUE titles carry it in the title, not a label; PR titles carry it in the conventional subject) | issue/PR identity |
 | `area:ci|cli|docs|github|images|layer-attack|layer-classic|layer-defence|layer-ops|manifest|menu|nix|packaging|repo|safety|taxonomy|testing|website` | component (the current catalog) |
 | `type:task` | a leaf-sized roadmap slice (RED→GREEN→merge) — the only `type:*` label in the catalog today |
 | `target:v0.1|v0.2|backlog` | milestone |

@@ -1,0 +1,34 @@
+name: pr-title-gate
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+
+permissions:
+  pull-requests: read
+
+jobs:
+  title:
+    name: PR title — Conventional Commits + KA id
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR title form
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          set -euo pipefail
+          # Conventional Commits: type(scope): subject (types/scopes per
+          # CONTRIBUTING.md; roadmap slices carry the KA-XX id in the
+          # subject). Bot surfaces (renovate dependency PRs as scoped
+          # chores, pre-commit.ci autoupdate) keep their canonical titles.
+          pat='^(feat|fix|docs|refactor|test|build|ci|chore|perf|revert)(\([a-z0-9/-]+\))?: .+$'
+          bot='^\[pre-commit\.ci\] pre-commit autoupdate$'
+          if [[ ! "$TITLE" =~ $pat && ! "$TITLE" =~ $bot ]]; then
+            echo "::error::PR title must match Conventional Commits:"
+            echo "  type(scope): subject  (roadmap slices: type(scope): KA-XX — subject)"
+            echo "  types: feat fix docs refactor test build ci chore perf revert"
+            echo "  (bot/dependency PRs exempt)"
+            echo "Got: $TITLE"
+            exit 1
+          fi
+          echo "Title OK: $TITLE"
