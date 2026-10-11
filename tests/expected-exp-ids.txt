@@ -1,0 +1,35 @@
+# tests/expected-exp-ids.txt — the real-surface exp-id snapshot (KA-19.2, kailash-os#95).
+#
+# The drift-alarm baseline for checks.safety-exp-parity-real: the sorted
+# safety:exp id set of the CURRENT kailash-packages main manifest
+# (generated once with tools/gen-exp-wrap.py --manifest-file
+# manifest/tools.yaml, kailash-packages e718725; 26 ids — 19 ATTACK,
+# 7 OPS). When a packages-side manifest merge legitimately moves the exp
+# surface, regenerate this file IN THE SAME CYCLE — the leg fails with
+# `exp surface drifted` until then.
+adversarial-clothing
+ai-gateway-bypass
+audio-voice-clone-injector
+data-exfil-via-poison
+headless-agent
+hexstrike-ai
+insecure-mcp-lab
+kailash-container
+kailash-mcp
+kserve-exploit
+malicious-mcp-poc
+mcp-kali-server
+mcp-unsafe-deser-probe
+mcpoison
+mlflow-bypass
+o-99-ghost-tool
+ollama-pwn
+poison-dataset-builder
+poisoned-skill-pack
+prompt-backdoor-tool
+torch-load-poc
+torchserve-pwn
+triton-pwn
+trojan-lm-toolkit
+vector-db-ripper
+vllm-pwn

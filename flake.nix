@@ -191,6 +191,85 @@ PY
           touch $out
         '';
 
+        # Real-surface parity + drift alarm (KA-19.2, kailash-os#95).
+        #
+        # The parity gate proper (safety-exp-wrap-parity above) checks the
+        # fixture host's wrap report against the FIXTURE manifest — the
+        # synthetic exp id is covered by construction. This leg is the
+        # REAL manifest's drift alarm: it reads the pinned packages
+        # manifest (through the flake input, never a hand-copy), runs the
+        # vendored byte-identical KA-19.1 generator
+        # (tools/gen-exp-wrap.py) against it, and requires the emitted
+        # exp surface to equal the committed snapshot
+        # tests/expected-exp-ids.txt — a packages-side merge that moves
+        # the exp surface turns this leg red with `exp surface drifted`
+        # until the snapshot is regenerated in the same cycle.
+        # Cross-checks inside the leg:
+        #   * the Nix scan (the module's manifestExpIds over the pinned
+        #     manifest, the same scanToolsYaml the gate installs from)
+        #     must equal the generator's PyYAML emit for the same file —
+        #     scanner-vs-generator dual-parse agreement (the
+        #     safety-require-exp-fixture contract, lifted to the real
+        #     pin);
+        #   * the fixture host's OWN wrap report still covers its own
+        #     declared exp id (wrappedIds ⊇ manifestExpIds of the
+        #     fixture manifest) — the os#95 negative case stays wired
+        #     next to the real-surface leg.
+        # NOT a coverage gate on the real exp ids against the fixture
+        # host: the fixture host declares only its synthetic tool; real
+        # coverage gates on the wrapped host's own declared surface.
+        safety-exp-parity-real = pkgs.runCommand "safety-exp-parity-real"
+          {
+            nativeBuildInputs = [ (pkgs.python3.withPackages (ps: [ ps.pyyaml ])) ];
+          } ''
+          MANIFEST=${kailash-packages.outPath + "/manifest/tools.yaml"}
+          SNAPSHOT=${./tests/expected-exp-ids.txt}
+          GOT="$(python3 ${./tools/gen-exp-wrap.py} --manifest-file "$MANIFEST")"
+          COUNT="$(python3 -c 'import json,sys; print(len(json.load(sys.stdin)["exp_ids"]))' <<<"$GOT")"
+          echo "real-manifest exp rows emitted from the pinned manifest: $COUNT"
+          test -n "$COUNT" && test "$COUNT" -gt 0 || { echo "safety-exp-parity-real: FAIL: generator emitted no exp rows from the pinned manifest"; exit 1; }
+          # Scan-vs-generator agreement: the module's eval-time scan of
+          # the SAME pinned manifest (manifest order, deduplicated) must
+          # equal the generator's sorted emit for the same file. The
+          # fixture's own synthetic exp id is filtered out of the scan —
+          # it rides the fixture manifest, never the packages pin.
+          SCAN="$(echo "${
+            lib.concatStringsSep ","
+              (lib.filter (i: i != "kailash-safety-fixture")
+                self.nixosConfigurations.kailash-fixture.config.kailash.safety.manifestExpIds)
+          }" | tr ',' '\n' | grep -c . || true)"
+          echo "module scan counted: $SCAN"
+          test "$SCAN" -eq "$COUNT" || { echo "safety-exp-parity-real: FAIL: module scan ($SCAN) != generator emit ($COUNT) — scan drift"; exit 1; }
+          GEN="$(python3 -c 'import json,sys; print(chr(10).join(json.load(sys.stdin)["exp_ids"]))' <<<"$GOT")"
+          # Drift alarm: the emitted surface must equal the committed
+          # snapshot exactly (missing AND extra ids are drift). The
+          # verifier prints the delta lines on stderr and exits 1 —
+          # the watched red prints them verbatim.
+          if python3 -c 'import sys
+gen = sorted(l for l in sys.stdin.read().splitlines() if l)
+snap = sorted(l for l in open(sys.argv[1], encoding="utf-8").read().splitlines() if l and not l.startswith("#"))
+missing = sorted(set(snap) - set(gen))
+extra = sorted(set(gen) - set(snap))
+if gen != snap:
+    if missing: print("missing-from-manifest: " + ",".join(missing))
+    if extra: print("new-in-manifest: " + ",".join(extra))
+    sys.exit(1)
+open(sys.argv[2], "w", encoding="utf-8").write(chr(10).join(gen) + chr(10))
+' "$SNAPSHOT" emitted-real-snapshot.txt <<<"$GEN" >delta.out 2>drift.err
+          then cp emitted-real-snapshot.txt "$out"
+          else echo "safety-exp-parity-real: FAIL: exp surface drifted"; cat delta.out drift.err; exit 1
+          fi
+          echo "drift alarm: real exp surface matches the committed snapshot ($COUNT ids)"
+          # The fixture host's own report still covers its own exp id
+          # (the os#95 negative case stays wired next to the alarm).
+          python3 ${./tools/safety-exp-wrap.py} \
+            --manifest-file ${./tests/safety-fixture-manifest.yaml} \
+            --wrapped-file ${self.nixosConfigurations.kailash-fixture.config.kailash.safety.wrappedReportFile} \
+            kailash-fixture
+          echo "safety-exp-parity-real: OK"
+          touch $out
+        '';
+
         # ---- No-auto-start standing audit (KA-18.2, os#93) ----------------
         #
         # The hostile fixture (lab gate ON, exp tool name, auto-starting
