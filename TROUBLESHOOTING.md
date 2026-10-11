@@ -179,7 +179,8 @@ through the edge**; expect the connection blocked and the log to show
 
 ## 6. Known current limitations (read before filing)
 
-- **GHCR `pull` fails with `not found`** → expected until #7 (v0.1.0) ships
+- **GHCR `pull` fails with `not found`** → expected until #7 (the first
+  staged cut, 2026.01-alpha.1) ships
   the first published images; build locally with `nix run .#load-images` or
   track #7.
 - OpenVPN Connect (iOS) forces `tls-auth` (not `tls-crypt`) — tracked as #12.
