@@ -10,16 +10,23 @@ gates enforce.
    branch, merged via pull request. Branch names follow
    `<type>/<short-description>` with kebab-case — e.g. `feat/taxonomy-layer`,
    `fix/flake-eval`, `docs/module-page`.
-2. **Conventional Commits.** Every commit message follows
+2. **Conventional Commits.** Every commit subject follows
    the [specification](https://www.conventionalcommits.org/en/v1.0.0):
    `type(scope): subject`.
-   - Types: `feat`, `fix`, `docs`, `refactor`, `test`, `build`, `ci`, `chore`.
+   - Types: `feat`, `fix`, `docs`, `refactor`, `test`, `build`, `ci`, `chore`,
+     `perf`, `revert`.
    - `scope` is a component: `nix` (flake/module), `taxonomy` (the four-layer
      category tree), `manifest` (tool entries, packaging), `cli` (kailash
      command surface), `menu` (menu definitions), `safety` (lab-mode and
      gating), `docs`, `ci`.
    - Subject: imperative, lowercase, no trailing period. Body (optional):
      what changed and why; wrap at 72 columns.
+   - PR titles follow the same form; roadmap-slice PRs carry the id in the
+     subject — `type(scope): KA-XX — subject`. Squash merges use the PR title
+     as the commit subject (`squash_merge_commit_title: COMMIT_OR_PR_TITLE`),
+     so the PR title is the commit record. A CI gate checks the form on every
+     PR; bot/dependency PRs (renovate, pre-commit.ci autoupdate) keep their
+     canonical titles.
 3. **Sign everything.** Commits must be GPG- or SSH-signed
    (`git config --global commit.gpgsign true`); releases are
    signed tags — unsigned commits and unsigned tags are
@@ -56,26 +63,32 @@ nix flake check --all-systems --no-build   # (KA-15) everything evaluates
 nix develop -c pre-commit run --all-files  # the hook set CI runs
 ```
 
-`nix flake check` becomes the full gate when the root flake lands (KA-01) and
-replaces the scaffold gate in KA-15; until then CI verifies the repository
-carries its planned layout. The hook set (trailing whitespace, YAML/JSON
-validity, large-file guards, `detect-private-key`, shellcheck on shell
-scripts) runs on every PR.
+`nix flake check --all-systems --no-build` evaluates everything (both
+declared systems); the `build` workflow runs the manifest→matrix build legs
+(after KA-15 the per-package matrix is live and the Cachix cache fronts the
+builds). The hook set (trailing whitespace, YAML/JSON validity, large-file
+guards, `detect-private-key`, shellcheck on shell scripts) runs on every PR.
 
 ## CI on every pull request
 
 | Check | What it does |
 |---|---|
-| `flake-check` | layout-scaffold gate now; `nix flake check` from KA-15 |
+| `flake-check` | `nix flake check --all-systems` on hosted runners |
+| `build` | the manifest→matrix build gate (KA-15) |
 | Dependency Review | flags vulnerable or licence-incompatible dependency changes |
 | OpenSSF Scorecard | publishes the security-posture score |
+| `PR title — Conventional Commits + KA id` | PR title checked against the Conventional Commits form |
 
 ## Commits and pull requests
 
 - Push your branch and open a PR against `master`; describe the what and the why.
 - Link the `KA-XX` issue the change implements; the project board
   is [kailash Roadmap](https://github.com/orgs/kailash-os/projects/1).
-- Releases are signed tags (`git tag -s vX.Y.Z`); unsigned tags are not published.
+- Releases are signed tags (`git tag -s 2026.01-alpha.1`); the release-naming
+  ladder — `YYYY.NN` release index, alpha/rc staging, bare `2026.01` reserved
+  for GA — lives on
+  [`docs/guide/releases.md`](docs/guide/releases.md). Unsigned tags are not
+  published; the v-series (`v0.1.0`) is retired (os#142).
 
 ## Reporting bugs
 
