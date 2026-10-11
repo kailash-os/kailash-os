@@ -47,6 +47,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Install pyyaml (the manifest job parses the pinned tools.yaml)
+        run: python3 -m pip install --quiet --disable-pip-version-check pyyaml
       - name: Generator self-test (the generator gates itself)
         run: python3 tools/manifest-matrix.py --self-test
       - name: Emit build matrix from the pinned packages rev
