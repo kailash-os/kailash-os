@@ -131,6 +131,7 @@
           fi
           cat run2.out
           echo "safety-exp-gate-run: OK"
+          touch $out
         '';
 
         # Gate leg 2 (positive): on the lab-on host the tool runs when BOTH
@@ -148,6 +149,7 @@
             *) echo "gate did not open with both keys set"; exit 1 ;;
           esac
           echo "safety-exp-gate-on: OK"
+          touch $out
         '';
 
         # Parity validator leg (the failure mode os#95 names, OS side): the
@@ -163,7 +165,7 @@
           } ''
           python3 ${./tools/safety-exp-wrap.py} \
             --manifest-file ${./tests/safety-fixture-manifest.yaml} \
-            --wrapped-file ${self.nixosConfigurations.kailash-fixture.config.kailash.safety.wrappedReport} \
+            --wrapped-file ${self.nixosConfigurations.kailash-fixture.config.kailash.safety.wrappedReportFile} \
             kailash-fixture
           touch $out
         '';
