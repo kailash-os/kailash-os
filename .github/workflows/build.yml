@@ -49,6 +49,14 @@ jobs:
         run: python3 -m pip install --quiet --disable-pip-version-check pyyaml
       - name: Generator self-test (the generator gates itself)
         run: python3 tools/manifest-matrix.py --self-test
+      # KA-20.1 (#116): the README category table is generated from the
+      # taxonomy (the no-hand-sync rule) — the gate asserts the committed
+      # README span matches categories.yaml exactly, failing with a
+      # unified diff on hand-drift. Default source = the live manifest
+      # (kailash-packages main HEAD), so a manifest merge that moves the
+      # census flips this leg red until the table is regenerated.
+      - name: README category-table drift gate (tools/generate-readme-table.py)
+        run: python3 tools/generate-readme-table.py --check
       - name: Emit build matrix from the pinned packages rev
         id: matrix
         run: |
