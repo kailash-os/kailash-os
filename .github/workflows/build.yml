@@ -85,6 +85,28 @@ jobs:
           persist-credentials: false
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v23
+        with:
+          # Trust the kailash cache as a substituter for THIS job. The
+          # pinned-packages flake's nixConfig.extra-substituters is
+          # ignored on hosted runners (run-log proof: "warning: ignoring
+          # untrusted flake configuration setting 'extra-substituters'"),
+          # so without these lines every leg rebuilds from source even
+          # when the cache holds the artifacts. The Cachix action below
+          # must also run BEFORE the build step: its daemon pushes paths
+          # via the post-build hook — ordering after the build (the old
+          # arrangement) started and stopped the daemon with zero paths
+          # pushed (art aarch64 leg of kailash-packages run 38131821227).
+          extra-conf: |
+            extra-substituters = https://kailash.cachix.org
+            extra-trusted-public-keys = kailash.cachix.org-1:HnASOtfS7XRjQBrH9umnPljPRjvHeJKDvwZDYXt+sKM=
+      # --- Cachix (kailash, plan §8.3) — BEFORE the build, not after: ---
+      # --- register the substituter (pull side) + run the push daemon
+      # --- (post-build hook) for everything this leg builds.
+      - name: Cachix (kailash) — substituter + push daemon
+        uses: cachix/cachix-action@v17
+        with:
+          name: kailash
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
       - name: Resolve the pinned packages flake
         id: pin
         run: |
@@ -94,13 +116,6 @@ jobs:
       - name: Build .#packages.<system>.<package> from the pinned overlay
         run: |
           nix build "github:kailash-os/kailash-packages/${{ steps.pin.outputs.rev }}#packages.${{ matrix.system }}.${{ matrix.package }}" -L
-      # --- Cachix push (kailash, plan §8.3) — enabled: CACHIX_AUTH_TOKEN
-      # --- org secret configured (org-level, both repos share it).
-      - name: Cachix push (kailash)
-        uses: cachix/cachix-action@v17
-        with:
-          name: kailash
-          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   vm-tests:
     needs: manifest
