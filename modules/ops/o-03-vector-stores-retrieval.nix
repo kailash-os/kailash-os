@@ -16,8 +16,9 @@
 #
 # Native ids at this pin (PROBED against the flake's locked nixpkgs
 # 8c3cede7ddc26bd659d2d383b5610efbd2c7a16e — never assumed id==attr):
-#   * chromadb  — pkgs.chromadb (the CLI package) + services.chromadb;
-#     the module's package default is pkgs.python3Packages.chromadb;
+#   * chromadb  — pkgs.python3Packages.chromadb (python 3.14 chromadb
+#     1.5.9; NO top-level chromadb attr — `pkgs.chroma` is alecthomas'
+#     syntax highlighter, an unrelated package) + services.chromadb;
 #   * qdrant    — pkgs.qdrant + services.qdrant;
 #   * pgvector  — postgresql.withPackages (postgresqlPackages.pgvector)
 #     wired into services.postgresql.package — the vector index ships as
@@ -59,28 +60,11 @@ let
 in
 
 {
+  # enable + packages are the §4.5 baseline members the layer tree
+  # declares (modules/base/layer-tree.nix); this module declares its
+  # EXTRA member only (backends — KA-09.2). mkIf cfg.enable drives the
+  # install below.
   options.kailash.layers.ops.categories.o-03 = {
-    enable = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-      description = ''
-        Enable the O-3 Vector Stores and Retrieval category (KA-09.1): the
-        native store tooling (chromadb, qdrant, the pgvector-backed
-        PostgreSQL, faiss, txtai, jina-embeddings-cli) and, with `backends`,
-        the docker-wrapper store containers (KA-09.2).
-      '';
-    };
-
-    packages = lib.mkOption {
-      type = lib.types.listOf lib.types.package;
-      default = [ ];
-      description = ''
-        The O-3 category's install set: the manifest's native rows the
-        module installs by default, extendable per host (hosts append;
-        never redefine).
-      '';
-    };
-
     backends = lib.mkOption {
       type = lib.types.listOf (
         lib.types.enum [
@@ -107,8 +91,7 @@ in
     # without it.
     kailash.layers.ops.categories.o-03.packages =
       [
-        pkgs.chromadb
-        pkgs.chromadb-cli
+        pkgs.python3Packages.chromadb
         pkgs.qdrant
         pkgs.faiss
         pkgs.python3Packages.txtai

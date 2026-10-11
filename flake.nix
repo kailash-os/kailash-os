@@ -357,6 +357,67 @@ open(sys.argv[2], "w", encoding="utf-8").write(chr(10).join(gen) + chr(10))
             || { echo "kailash-minimal-hardened must keep kailash.labMode = false"; exit 1; }
           touch $out
         '';
+
+        # ---- O-3 vector stores typed surface (KA-09.1, ko#110) -------------
+        #
+        # Eval assertions over the typed o-03 category options: the native
+        # install set (python-module chromadb + qdrant + faiss + txtai +
+        # the overlay's jina-embeddings-cli when composed) is non-empty on
+        # an o-03 host and services wire up (chromadb, qdrant, postgresql
+        # with the pgvector extension inside its package set). RED stub
+        # (KA-09.1): the assertions cannot evaluate while the typed
+        # surface is missing (`o-03.packages` does not exist) - the eval
+        # failure is the watched red; GREEN: the typed module and the
+        # spine land and every assertion passes through the SAME eval.
+        o-03-options =
+          let
+            o3Host = (self.nixosConfigurations.kailash-redteam-ai.extendModules {
+              modules = [ { kailash.layers.ops.categories.o-03.enable = true; } ];
+            });
+            pgExt = o3Host.config.services.postgresql.package.installedExtensions;
+          in
+          pkgs.runCommand "o-03-options" { } ''
+            set -- ${toString (map (p: p.pname or p.name) o3Host.config.kailash.layers.ops.categories.o-03.packages)}
+            for expected in chromadb qdrant faiss txtai; do
+              found=""
+              for got in "$@"; do [ "$got" = "$expected" ] && found=1; done
+              [ -n "$found" ] || { echo "o-03 install set missing $expected"; exit 1; }
+            done
+            echo "o-03 native install set: $*"
+            test "${toString o3Host.config.services.chromadb.enable}" = "1" \
+              || { echo "services.chromadb not wired by the o-03 module"; exit 1; }
+            test "${toString o3Host.config.services.qdrant.enable}" = "1" \
+              || { echo "services.qdrant not wired by the o-03 module"; exit 1; }
+            echo "postgresql extensions: ${lib.concatStringsSep "," pgExt}"
+            case "${lib.concatStringsSep "," pgExt}" in
+              *pgvector*) : ;;
+              *) echo "pgvector missing from the postgres package set"; exit 1 ;;
+            esac
+            touch $out
+          '';
+
+        # ---- O-4 local-LLM typed surface (KA-09.3, ko#112) ------------------
+        #
+        # redteam-ai-compat: the EXISTING freeform-path setting in
+        # profiles/redteam-ai.nix (sets
+        # kailash.layers.ops.categories.o-04.enable = true) must evaluate
+        # WITH the typed option tree present - the typed entry absorbs the
+        # profile's historical composition without a conflict (the §4.5
+        # contract: same path, typed + freeform-born entries merge).
+        # RED stub: fails while the typed spine is missing.
+        o-04-options = pkgs.runCommand "o-04-options" { } ''
+          test "${toString self.nixosConfigurations.kailash-redteam-ai.config.kailash.layers.ops.categories.o-04.enable}" = "1" \
+            || { echo "o-04 enable did not resolve through the typed tree"; exit 1; }
+          touch $out
+        '';
+
+        redteam-ai-compat = pkgs.runCommand "redteam-ai-compat" { } ''
+          # The historical freeform entry (profiles/redteam-ai.nix) must
+          # resolve through the TYPED tree - enable true, no conflict.
+          test "${toString self.nixosConfigurations.kailash-redteam-ai.config.kailash.layers.ops.categories.o-04.enable}" = "1" \
+            || { echo "redteam-ai o-04 setting did not survive the typed spine"; exit 1; }
+          touch $out
+        '';
       };
 
 
