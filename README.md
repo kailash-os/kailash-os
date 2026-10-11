@@ -112,14 +112,14 @@ Contact [shain.singh@owasp.org](mailto:shain.singh@owasp.org) for more informati
 ## Cadence and version scheme
 
 Releases run every **6 weeks**. The lockfile is the version: a release
-carries the `flake.lock` commit and a tag `vMAJOR.YYYYMM.<patch>` (for
-example `v1.202611.0`) — **versionScheme: `vMAJOR.YYYYMM.<patch>`**. A
-Kailash install never updates nix, nixpkgs, or tooling on its own;
-source pins and flake inputs move on explicit, documented schedules and
-`main` is never committed directly. The full policy:
-[`docs/guide/cadence.md`](docs/guide/cadence.md). A calendar-versioning
-amendment to the scheme is tracked in
-[kailash-os#142](https://github.com/kailash-os/kailash-os/issues/142).
+carries the `flake.lock` commit and a calendar tag — the first staged
+cut of the first train is `2026.01-alpha.1`, the bare tag `2026.01` is
+reserved for general availability (**versionScheme: `2026.xx`**, the
+`YYYY.NN` release-index scheme). A Kailash install never updates nix,
+nixpkgs, or tooling on its own; source pins and flake inputs move on
+explicit, documented schedules and `main` is never committed directly.
+The full policy, including the staged-cut → GA → re-cut ladder:
+[`docs/guide/releases.md`](docs/guide/releases.md).
 
 ## FAQ
 

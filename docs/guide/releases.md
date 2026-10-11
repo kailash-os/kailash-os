@@ -4,7 +4,10 @@ Policy record for how Kailash updates — sources, locks, releases — and
 how a release gets its version number. Companion record: the Renovate
 configuration in this repo and in
 [`kailash-packages`](https://github.com/kailash-os/kailash-packages/blob/main/renovate.json)
-(cadence roadmap child KA-16.1; this document is KA-16.2).
+(cadence roadmap child KA-16.1; this document is KA-16.2, recorded as
+[kailash-packages#134](https://github.com/kailash-os/kailash-packages/issues/134) —
+renamed and extended by the release-naming amendment
+[kailash-os#142](https://github.com/kailash-os/kailash-os/issues/142)).
 
 ## Never on its own: a Kailash install does not update nix
 
@@ -64,27 +67,63 @@ and a signed changelog generated from the lock delta. Between releases
 `main` moves freely; the six-week cycle is the only thing that moves a
 user's lock.
 
-## Version scheme: `vMAJOR.YYYYMM.<patch>`
+## Version scheme: `YYYY.NN` (release index within the year)
 
-The version number is derived from the lock, not hand-edited:
+**versionScheme: `2026.xx`.** The version number is a calendar year plus
+a release **index** within that year — the number of the year's release
+train, not the month of the year. The first train of 2026 is `2026.01`,
+the second is `2026.02`, and so on; a year holds anywhere from 8 to 10
+releases at the six-week cadence, so month-numbering would break
+(`2026.13`); release-index numbering never collides, sorts forever, and
+the year prefix answers "how old is this install?" at a glance.
 
-- **MAJOR** — bumps on taxonomy or content-shape changes (categories,
-  safety model); it is not a marketing number.
-- **YYYYMM** — the release month; it encodes which lock reality a
-  release is.
-- **patch** — within-month lock corrections only.
+- **YYYY** — the year the train belongs to; it encodes which lock
+  reality a release is.
+- **NN** — the release index within the year, not the month of the
+  year.
+- The tag says which train; the release date says when. `2026.02` may
+  ship in January 2027 and still be `2026.02` — train identity, not
+  date.
 
 Worked example:
 
 | Event | Version |
 | --- | --- |
-| November 2026 release train ships | `v1.202611.0` |
-| a wrong pin is corrected before the next train | `v1.202611.1` |
-| a category is added to the taxonomy (content shape changed) | `v2.202612.0` |
+| the year's first release train stages its first cut | `2026.01-alpha.1` |
+| the same train ships general availability | `2026.01` |
+| a shipped GA artefact changes before the next train | `2026.01.1` |
+| the next train stages, in the same year | `2026.02-alpha.1` → `2026.02` |
+| the year rolls: the first cut of the new calendar year | `2027.01-alpha.1` |
 
 There are no fictional stable APIs to number: the scheme exists to
 answer "how fresh is this system" at a glance and to make two machines
 with the same version agree on the lock.
+
+## The release ladder: staged cut → GA → material re-cut
+
+Within one scheme family, a release's tags move through three stages.
+The ladder is per-year: `2027.01-alpha.1` is 2027's first staging, and
+the year's GA is `2027.01`.
+
+| Stage | Tag form | Meaning | Example |
+| --- | --- | --- | --- |
+| Staged development cut | `2026.xx-<stage>.<n>` | pre-GA milestones off the main track; the tag carries stage + increment so the staged-ness is visible in `git tag -v` output | `2026.01-alpha.1`, `2026.01-rc.1` |
+| GA | `2026.01` | the general-availability release for the train, full artefact matrix + review posture | `2026.01` — kept as the reserved name, **not used until GA** |
+| Material re-cut of a shipped GA | `2026.01.1` | only if a shipped GA artefact actually changes | `2026.01.1` |
+
+Rules:
+
+- **Reserved bare tag.** A bare `2026.xx` reads as general availability,
+  so the bare form is reserved — no `2026.01` tag lands until GA, with
+  its full artefact matrix + review posture. No tags are burned by
+  staging names.
+- **Re-cut rule.** A material re-cut of a shipped GA posts `2026.xx.1`
+  **only if a shipped artefact changed**; changelog-notes-only re-cuts
+  keep the tag.
+- **No gaps, no renames.** An RC that slips renumbers nothing: the index
+  is the train's identity, not the date it shipped.
+- **CHANGELOG groups by train** (`## 2026.01 — <date>`), matching the
+  six-week release cadence above.
 
 ## Branch policy
 
