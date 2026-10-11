@@ -643,6 +643,69 @@ PY
           echo "o-02-generated-drift: OK (generator == committed)"
           touch $out
         '';
+
+        # ---- O-3 docker-wrapper stores (KA-09.2, ko#111, §5.4 Shape 3) -----
+        #
+        # Each declared backend id stands up ONE oci-containers container
+        # (podman substrate), image pinned in the module, autoStart false
+        # (the operator starts heavy stores; no-auto-start posture §11.2).
+        # The posture is DOCUMENTED per store (the acceptance clause):
+        # docs/guide/o-03-docker-wrapper-stores.md carries image, port and
+        # wrapper-class lines per id, and the check cross-asserts the
+        # module's rendered container attrs against the documented posture.
+        # RED stub (KA-09.2): the posture doc is absent - the check fails
+        # until the GREEN commit lands the wrappers' per-store posture.
+        o-03-backends-doc = pkgs.runCommand "o-03-backends-doc" { }
+          ''
+          f=${./docs/guide/o-03-docker-wrapper-stores.md}
+          test -f "$f" || { echo "the docker-wrapper posture doc is missing"; exit 1; }
+          grep -q "weaviate" "$f"
+          grep -q "milvus" "$f"
+          grep -q "elasticsearch" "$f"
+          touch $out
+        '';
+
+        o-03-backends-containers =
+          let
+            o3Host = (self.nixosConfigurations.kailash-redteam-ai.extendModules {
+              modules = [
+                {
+                  kailash.layers.ops.categories.o-03.enable = true;
+                  kailash.layers.ops.categories.o-03.backends = [
+                    "weaviate"
+                    "milvus"
+                    "elasticsearch"
+                  ];
+                }
+              ];
+            });
+            ctrNames = builtins.attrNames o3Host.config.virtualisation.oci-containers.containers;
+          in
+          pkgs.runCommand "o-03-backends-containers" { } ''
+            got="${lib.concatStringsSep " " ctrNames}"
+            echo "wrapper containers: $got"
+            for expected in kailash-o-03-weaviate kailash-o-03-milvus kailash-o-03-elasticsearch; do
+              case " $got " in
+                *" $expected "*) : ;;
+                *) echo "wrapper container missing: $expected"; exit 1 ;;
+              esac
+            done
+            test "${toString o3Host.config.virtualisation.oci-containers.containers.kailash-o-03-weaviate.image}" = "semitechnologies/weaviate:1.39.2" \
+              || { echo "weaviate wrapper image pin mismatch"; exit 1; }
+            test "${toString o3Host.config.virtualisation.oci-containers.containers.kailash-o-03-milvus.image}" = "milvusdb/milvus:v2.6.7" \
+              || { echo "milvus wrapper image pin mismatch"; exit 1; }
+            test "${toString o3Host.config.virtualisation.oci-containers.containers.kailash-o-03-elasticsearch.image}" = "docker.elastic.co/elasticsearch/elasticsearch:7.17.27" \
+              || { echo "elasticsearch wrapper image pin mismatch"; exit 1; }
+            test "${toString o3Host.config.virtualisation.oci-containers.backend}" = "podman" \
+              || { echo "backend must be podman (rootless posture)"; exit 1; }
+            test "${lib.boolToString o3Host.config.virtualisation.oci-containers.containers.kailash-o-03-weaviate.autoStart}" = "false" \
+              || { echo "no-auto-start posture: wrapper containers must be autoStart = false"; exit 1; }
+            test "${lib.boolToString o3Host.config.virtualisation.oci-containers.containers.kailash-o-03-milvus.autoStart}" = "false" \
+              || { echo "no-auto-start posture: milvus wrapper must be autoStart = false"; exit 1; }
+            test "${lib.boolToString o3Host.config.virtualisation.oci-containers.containers.kailash-o-03-elasticsearch.autoStart}" = "false" \
+              || { echo "no-auto-start posture: elasticsearch wrapper must be autoStart = false"; exit 1; }
+            touch $out
+          '';
       };
 
 
