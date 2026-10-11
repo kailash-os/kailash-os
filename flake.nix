@@ -250,12 +250,19 @@ PY
         kailash-redteam-ai-toplevel =
           self.nixosConfigurations.kailash-redteam-ai.config.system.build.toplevel;
 
+        # Hardened-minimal host closure (KA-17.2, os#115): the hardened
+        # profile evaluates AND builds — the toplevel derivation is the
+        # flake-check gate (nix flake check builds every check).
+        kailash-minimal-hardened-toplevel =
+          self.nixosConfigurations.kailash-minimal-hardened.config.system.build.toplevel;
+
         kailash-redteam-ai-options = pkgs.runCommand
           "kailash-redteam-ai-options" { } ''
           test "${toString self.nixosConfigurations.kailash-redteam-ai.config.kailash.layers.attack.enable}" = "1"
           test "${toString self.nixosConfigurations.kailash-redteam-ai.config.kailash.layers.ops.categories.o-04.enable}" = "1"
           touch $out
         '';
+
         # ---- Lab-gate OFF on the minimal profiles (KA-17.2, os#115) -------
         #
         # Both minimal-profile hosts must carry the lab-mode host key OFF —
@@ -304,6 +311,16 @@ PY
       nixosConfigurations.kailash-redteam-ai = nixpkgs.lib.nixosSystem {
         inherit system pkgs;
         modules = [ ./profiles/redteam-ai.nix ];
+      };
+
+      # Hardened minimal profile (KA-17.2, os#115): the CORE substrate
+      # floor with the hardening posture pinned — labMode OFF explicitly;
+      # the §8.3 hardening module (sysctl, firewall default-deny,
+      # wheel-only sudo) rides the base fold. Zero categories, like
+      # minimal — the named, reviewable not-a-lab-host posture.
+      nixosConfigurations.kailash-minimal-hardened = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [ ./profiles/minimal-hardened.nix ];
       };
 
       # devShells per category with KA-09; images with the images wave;
