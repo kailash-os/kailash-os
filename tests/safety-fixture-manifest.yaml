@@ -1,0 +1,26 @@
+# Safety-fixture tool manifest (KA-18.1, os#92) — synthetic RED/GREEN data.
+#
+# NOT product manifest data: this file exists so the exp-wrap parity gate
+# has a safety:exp row that exists regardless of the kailash-packages pin
+# (the OS flake.lock pin is census-empty until the KA-05 lineage advances).
+# The parity validator and the fixture checks consume the declared
+# `kailash.safety.manifests` paths — the module scans whatever a host
+# declares, so this file rides the same contract product wiring will use.
+schema_version: 1
+
+tools:
+  - id: kailash-safety-fixture
+    layer: OPS
+    category: o-07-agent-mcp-operability
+    name: kailash-safety-fixture
+    description: Synthetic safety:exp fixture for the lab-mode gate checks
+    source:
+      vcs_owner: kailash-os
+      repo: kailash-os
+      vcs_url: "https://github.com/kailash-os/kailash-os"
+    license: MIT
+    packaging:
+      status: bespoke
+    safety:
+      level: exp
+    tags: [fixture, safety]
