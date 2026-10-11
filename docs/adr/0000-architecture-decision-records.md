@@ -10,6 +10,7 @@ what was decided, why, and what it supersedes.
 | --- | --- | --- |
 | [0000](0000-architecture-decision-records.md) | Architecture decision records (this process) | accepted |
 | [0001](0001-record-format.md) | ADR record format | accepted |
+| [0002](0002-safety-defaults-base-fold.md) | Safety defaults as base-fold data gates | accepted |
 
 ## When an ADR is required
 
