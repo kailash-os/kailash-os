@@ -189,6 +189,7 @@ PY
           echo "$got" | tr ',' '\n' | grep -qx "kailash-safety-fixture"
           echo "manifest exp ids: $got"
           touch $out
+        '';
 
         # ---- No-auto-start standing audit (KA-18.2, os#93) ----------------
         #
@@ -240,7 +241,8 @@ PY
           grep -q "Criminal Code Act 1995" "$f"
           grep -q "Division 474" "$f"
           echo "responsible-use-file: OK (AU provisions present, statutes by name)"
-          touch $out;
+          touch $out
+        '';
       };
 
       # ---- Audit hostile fixture (KA-18.2, os#93) --------------------------
