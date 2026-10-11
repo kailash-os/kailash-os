@@ -256,6 +256,21 @@ PY
           test "${toString self.nixosConfigurations.kailash-redteam-ai.config.kailash.layers.ops.categories.o-04.enable}" = "1"
           touch $out
         '';
+        # ---- Lab-gate OFF on the minimal profiles (KA-17.2, os#115) -------
+        #
+        # Both minimal-profile hosts must carry the lab-mode host key OFF —
+        # the baseline substrate (kailash-minimal, the KA-01.3 floor) and
+        # the hardened profile (kailash-minimal-hardened, the named,
+        # reviewable posture this item lands). A profile or a later edit
+        # that flips kailash.labMode on a minimal host turns CI red here.
+        kailash-minimal-labmode-pinned = pkgs.runCommand
+          "kailash-minimal-labmode-pinned" { } ''
+          test "${lib.boolToString self.nixosConfigurations.kailash-minimal.config.kailash.labMode}" = "false" \
+            || { echo "kailash-minimal must keep kailash.labMode = false"; exit 1; }
+          test "${lib.boolToString self.nixosConfigurations.kailash-minimal-hardened.config.kailash.labMode}" = "false" \
+            || { echo "kailash-minimal-hardened must keep kailash.labMode = false"; exit 1; }
+          touch $out
+        '';
       };
 
 
