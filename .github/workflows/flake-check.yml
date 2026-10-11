@@ -30,6 +30,16 @@ jobs:
           persist-credentials: false
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@v23
+        with:
+          # Trust the kailash cache (plan §8.4): the flake's
+          # nixConfig.extra-substituters is ignored on hosted runners
+          # ("ignoring untrusted flake configuration setting"), so
+          # every check run rebuilds tool derivations the cache
+          # already holds. Lining it up here makes flake-check pull
+          # before it builds.
+          extra-conf: |
+            extra-substituters = https://kailash.cachix.org
+            extra-trusted-public-keys = kailash.cachix.org-1:HnASOtfS7XRjQBrH9umnPljPRjvHeJKDvwZDYXt+sKM=
       - name: Flake check (${{ matrix.system }})
         run: nix flake check
       - name: Minimum closure evaluates (${{ matrix.system }})
