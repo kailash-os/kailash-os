@@ -243,7 +243,21 @@ PY
           echo "responsible-use-file: OK (AU provisions present, statutes by name)"
           touch $out
         '';
+
+        # The red-team profile's gates (KA-17.1): the host's system closure
+        # evaluates, and the layer intent survives composition (attack ON,
+        # O-4 ON — the pairing-thesis composition).
+        kailash-redteam-ai-toplevel =
+          self.nixosConfigurations.kailash-redteam-ai.config.system.build.toplevel;
+
+        kailash-redteam-ai-options = pkgs.runCommand
+          "kailash-redteam-ai-options" { } ''
+          test "${toString self.nixosConfigurations.kailash-redteam-ai.config.kailash.layers.attack.enable}" = "1"
+          test "${toString self.nixosConfigurations.kailash-redteam-ai.config.kailash.layers.ops.categories.o-04.enable}" = "1"
+          touch $out
+        '';
       };
+
 
       # ---- Audit hostile fixture (KA-18.2, os#93) --------------------------
       #
@@ -266,6 +280,15 @@ PY
             };
           }
         ];
+      };
+
+      # Layer-ATTACK red-team profile (KA-17.1, os#114): CORE floor + Layer
+      # ATTACK full + O-4 (local inference labs). Evaluates through the
+      # module tree with the flat option spine until the Wave-5
+      # per-category wiring lands (see the profile header note).
+      nixosConfigurations.kailash-redteam-ai = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [ ./profiles/redteam-ai.nix ];
       };
 
       # devShells per category with KA-09; images with the images wave;
