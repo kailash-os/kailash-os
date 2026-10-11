@@ -442,17 +442,42 @@ open(sys.argv[2], "w", encoding="utf-8").write(chr(10).join(gen) + chr(10))
         o-03-backends-containers =
           let
             o3Host = (self.nixosConfigurations.kailash-redteam-ai.extendModules {
-              modules = [ { kailash.layers.ops.categories.o-03.backends = [ "weaviate" "milvus" "elasticsearch" ]; } ];
+              modules = [
+                {
+                  kailash.layers.ops.categories.o-03.enable = true;
+                  kailash.layers.ops.categories.o-03.backends = [
+                    "weaviate"
+                    "milvus"
+                    "elasticsearch"
+                  ];
+                }
+              ];
             });
-            ctrs = o3Host.config.virtualisation.oci-containers.containers;
+            ctrNames = builtins.attrNames o3Host.config.virtualisation.oci-containers.containers;
           in
           pkgs.runCommand "o-03-backends-containers" { } ''
-            test "${toString (builtins.attrNames ctrs)}" = "kailash-o-03-weaviate kailash-o-03-milvus kailash-o-03-elasticsearch" \
-              || { echo "wrapper container set mismatch"; exit 1; }
+            got="${lib.concatStringsSep " " ctrNames}"
+            echo "wrapper containers: $got"
+            for expected in kailash-o-03-weaviate kailash-o-03-milvus kailash-o-03-elasticsearch; do
+              case " $got " in
+                *" $expected "*) : ;;
+                *) echo "wrapper container missing: $expected"; exit 1 ;;
+              esac
+            done
             test "${toString o3Host.config.virtualisation.oci-containers.containers.kailash-o-03-weaviate.image}" = "semitechnologies/weaviate:1.39.2" \
               || { echo "weaviate wrapper image pin mismatch"; exit 1; }
+            test "${toString o3Host.config.virtualisation.oci-containers.containers.kailash-o-03-milvus.image}" = "milvusdb/milvus:v2.6.7" \
+              || { echo "milvus wrapper image pin mismatch"; exit 1; }
+            test "${toString o3Host.config.virtualisation.oci-containers.containers.kailash-o-03-elasticsearch.image}" = "docker.elastic.co/elasticsearch/elasticsearch:7.17.27" \
+              || { echo "elasticsearch wrapper image pin mismatch"; exit 1; }
             test "${toString o3Host.config.virtualisation.oci-containers.backend}" = "podman" \
               || { echo "backend must be podman (rootless posture)"; exit 1; }
+            test "${lib.boolToString o3Host.config.virtualisation.oci-containers.containers.kailash-o-03-weaviate.autoStart}" = "false" \
+              || { echo "no-auto-start posture: wrapper containers must be autoStart = false"; exit 1; }
+            test "${lib.boolToString o3Host.config.virtualisation.oci-containers.containers.kailash-o-03-milvus.autoStart}" = "false" \
+              || { echo "no-auto-start posture: milvus wrapper must be autoStart = false"; exit 1; }
+            test "${lib.boolToString o3Host.config.virtualisation.oci-containers.containers.kailash-o-03-elasticsearch.autoStart}" = "false" \
+              || { echo "no-auto-start posture: elasticsearch wrapper must be autoStart = false"; exit 1; }
             touch $out
           '';
       };
