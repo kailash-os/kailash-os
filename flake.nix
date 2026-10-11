@@ -190,6 +190,82 @@ PY
           echo "manifest exp ids: $got"
           touch $out
         '';
+
+        # ---- No-auto-start standing audit (KA-18.2, os#93) ----------------
+        #
+        # The hostile fixture (lab gate ON, exp tool name, auto-starting
+        # exp service) proves the scanner bites; the audit-clean leg
+        # requires the finding list EMPTY on the minimal profile on every
+        # PR, so a later service module that auto-starts exp tooling turns
+        # CI red here. RED stub: the scanner reports nothing and the
+        # hostile check fails ("autostart not caught") until the GREEN
+        # commit implements the scan.
+
+        audit-hostile-fixture = pkgs.runCommand "audit-hostile-fixture"
+          {
+            nativeBuildInputs = [ pkgs.bash ];
+          } ''
+          found="${lib.concatStringsSep "|" self.nixosConfigurations.kailash-audit-hostile.config.kailash.audit.autoStart.violations}"
+          echo "hostile fixture findings: $found"
+          case "$found" in
+            *exp-tool-by-audit-fixture*) ;;
+            *) echo "audit-hostile-fixture: autostart not caught — the scanner must fail this fixture"; exit 1 ;;
+          esac
+          touch $out
+        '';
+
+        audit-auto-start-clean = pkgs.runCommand "audit-auto-start-clean"
+          {
+            nativeBuildInputs = [ pkgs.bash ];
+          } ''
+          found="${lib.concatStringsSep "|" self.nixosConfigurations.kailash-minimal.config.kailash.audit.autoStart.violations}"
+          if [ -n "$found" ]; then
+            echo "audit-auto-start-clean: VIOLATIONS on kailash-minimal: $found"
+            exit 1
+          fi
+          echo "audit-auto-start-clean: no auto-start of exp tooling on kailash-minimal"
+          touch $out
+        '';
+
+        # The responsible-use statement is data: profiles and gates
+        # reference docs/responsible-use.md — the file must exist and carry
+        # the AU provisions the plan §11.1 names (statutes by name, never
+        # invented legal text).
+        responsible-use-file = pkgs.runCommand "responsible-use-file"
+          {
+            nativeBuildInputs = [ pkgs.bash ];
+          } ''
+          f=${./docs/responsible-use.md}
+          test -f "$f"
+          grep -q "Cyber Security Act 2024" "$f"
+          grep -q "Criminal Code Act 1995" "$f"
+          grep -q "Division 474" "$f"
+          echo "responsible-use-file: OK (AU provisions present, statutes by name)"
+          touch $out
+        '';
+      };
+
+      # ---- Audit hostile fixture (KA-18.2, os#93) --------------------------
+      #
+      # A synthetic host that VIOLATES the no-auto-start contract on
+      # purpose: an exp-class tool wanted via a systemd service with the
+      # lab shell key pre-set. NOT a product profile; consumed only by the
+      # audit-hostile-fixture check (the negative case proven in CI).
+      nixosConfigurations.kailash-audit-hostile = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          {
+            networking.hostName = lib.mkForce "kailash-audit-hostile";
+            kailash.audit.autoStart.expToolNames = [ "exp-tool-by-audit-fixture" ];
+            systemd.services.kailash-audit-hostile-fixture = {
+              description = "Synthetic exp auto-start violator (audit fixture)";
+              wantedBy = [ "multi-user.target" ];
+              serviceConfig.ExecStart =
+                "!/bin/sh -c 'KAILASH_LAB_MODE=1 exec exp-tool-by-audit-fixture'";
+            };
+          }
+        ];
       };
 
       # devShells per category with KA-09; images with the images wave;
