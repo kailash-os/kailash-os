@@ -22,11 +22,11 @@ mcp-kali-server
 mcp-unsafe-deser-probe
 mcpoison
 mlflow-bypass
-o-99-ghost-tool
 ollama-pwn
 poison-dataset-builder
 poisoned-skill-pack
 prompt-backdoor-tool
+shadow-ray
 torch-load-poc
 torchserve-pwn
 triton-pwn
