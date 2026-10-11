@@ -19,13 +19,11 @@ name: build
 # The attic fallback (plan §8.4) documents at cache.kailash.tools when
 # self-hosted.
 #
-# NOTE (pending, KA-15/KA-33 follow-up): the flake's `nixConfig`
-# (extra-substituters https://kailash.cachix.org + the cache's
-# trusted-public-keys, the nixified-ai pattern) lands once the `kailash`
-# Cachix cache exists — its public key is not fetchable today
-# (the cache returns 401), and an invented key would break `nix build`
-# signature checks for every consumer. The build.yml Cachix push step
-# below is commented for the same reason (CACHIX_AUTH_TOKEN unset).
+# NOTE: the `kailash` cache is LIVE and public (kailash.cachix.org;
+# public key kailash.cachix.org-1:HnASOtfS7XRjQBrH9umnPljPRjvHeJKDvwZDYXt+
+# sKM=, verified from the cachix API). CACHIX_AUTH_TOKEN is an org-level
+# secret shared by both repos; the flake's nixConfig carries the
+# substituter + key (the nixified-ai pattern, plan §8.3).
 
 on:
   pull_request:
@@ -88,13 +86,13 @@ jobs:
       - name: Build .#packages.<system>.<package> from the pinned overlay
         run: |
           nix build "github:kailash-os/kailash-packages/${{ steps.pin.outputs.rev }}#packages.${{ matrix.system }}.${{ matrix.package }}" -L
-      # --- Cachix push — PENDING SECRET (uncomment when CACHIX_AUTH_TOKEN
-      # --- is added to the repo's actions secrets; cache name `kailash`).
-      # - name: Cachix push (kailash)
-      #   uses: cachix/cachix-action@v17
-      #   with:
-      #     name: kailash
-      #     authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+      # --- Cachix push (kailash, plan §8.3) — enabled: CACHIX_AUTH_TOKEN
+      # --- org secret configured (org-level, both repos share it).
+      - name: Cachix push (kailash)
+        uses: cachix/cachix-action@v17
+        with:
+          name: kailash
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
 
   vm-tests:
     needs: manifest

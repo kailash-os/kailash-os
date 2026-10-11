@@ -1,6 +1,11 @@
 {
   description = "Kailash OS - NixOS for AI Security";
 
+  nixConfig = {
+    extra-substituters = "https://kailash.cachix.org";
+    extra-trusted-public-keys = "kailash.cachix.org-1:HnASOtfS7XRjQBrH9umnPljPRjvHeJKDvwZDYXt+sKM=";
+  };
+
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     kailash-packages = {
