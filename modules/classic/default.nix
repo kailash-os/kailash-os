@@ -10,5 +10,7 @@
     ./c-03-web-application-assessment.nix
     ./c-04-database-assessment.nix
     ./c-06-reverse-engineering.nix
+    ./c-07-signal-sdr.nix
+    ./c-05-password-offline-credential.nix
   ];
 }

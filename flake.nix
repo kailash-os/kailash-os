@@ -660,6 +660,72 @@ PY
           touch $out
         '';
 
+        # ---- C-5 offline-credential + C-7 opt-in posture (KA-07.2, ko#100) -
+        #
+        # RED stub (this commit): the c-05 category module CONSUMES
+        # NOTHING (modules/classic/c-05-password-offline-credential.nix
+        # mounts no config, the RED stub), so the enabled c-05
+        # composition here resolves an EMPTY install set and this leg
+        # fails on the non-empty + flagship assertions — the watched
+        # red, same shape as the c-01-exemplar leg. GREEN: the module's
+        # manifest-generated binding table fills the mount and the SAME
+        # assertions pass through the SAME eval (host composition).
+        #
+        # Wordlists posture (asserted as data below once the pack lane
+        # lands): seclists is a manifest status:data row — the generator
+        # excludes it from categories.c-05.installable, so the category
+        # module can never install it; the wordlists pack rides the
+        # opt-in kailash-data.wordlists-mega derivation in
+        # kailash-packages (ko#100), never a category-module row.
+        c-05-options =
+          let
+            c05Host = (self.nixosConfigurations.kailash-minimal.extendModules {
+              modules = [ { kailash.layers.classic.categories.c-05.enable = true; } ];
+            });
+          in
+          pkgs.runCommand
+            "c-05-options" { } ''
+            echo "--- c-05: the enabled composition installs the offline-credential set"
+            C05="${toString (builtins.length
+              c05Host.config.kailash.layers.classic.categories.c-05.packages)}"
+            echo "c-05 install-set count: $C05"
+            test "$C05" -gt 0 \
+              || { echo "c-05-options: the enabled c-05 category installs NOTHING (the module's install wiring is missing)"; exit 1; }
+            NAMES="${lib.concatStringsSep " " (map (p: p.pname or (builtins.parseDrvName p.name).name) c05Host.config.kailash.layers.classic.categories.c-05.packages)}"
+            echo "c-05 install set: $NAMES"
+            case " $NAMES " in
+              *" hashcat "*) : ;;
+              *) echo "c-05 install set missing hashcat (the hash-cracking flagship)"; exit 1 ;;
+            esac
+            echo "c-05-options: OK"
+            touch $out
+          '';
+
+        # C-7 posture leg (GREEN from RED by design — it pins the
+        # posture, it does not watch a fix): C-7 ships as the
+        # kailash-data.sdr-tools opt-in data pack (ko#100), the stub
+        # module declares nothing, and enable stays default-false on
+        # every host — C-7 absent from minimal/standard/full (the ko#100
+        # acceptance; "standard" is the CORE substrate here: the
+        # minimal floor is the standard profile and full builds on it).
+        # A later edit that flips c-07.enable on any CORE-derived
+        # profile turns this leg red.
+        c-07-optin-posture = pkgs.runCommand
+          "c-07-optin-posture" { } ''
+          echo "--- c-07: the opt-in data-pack posture (off everywhere by default)"
+          test "${lib.boolToString self.nixosConfigurations.kailash-minimal.config.kailash.layers.classic.categories.c-07.enable}" = "false" \
+            || { echo "c-07 must stay OFF on the CORE substrate (kailash-minimal) — the sdr-tools pack is opt-in"; exit 1; }
+          test "${lib.boolToString self.nixosConfigurations.kailash-full.config.kailash.layers.classic.categories.c-07.enable}" = "false" \
+            || { echo "c-07 must stay OFF on the full profile — C-7 is absent from minimal/standard/full (ko#100 acceptance)"; exit 1; }
+          MIN_C07="${toString (builtins.length self.nixosConfigurations.kailash-minimal.config.kailash.layers.classic.categories.c-07.packages)}"
+          FULL_C07="${toString (builtins.length self.nixosConfigurations.kailash-full.config.kailash.layers.classic.categories.c-07.packages)}"
+          test "$MIN_C07" = "0" \
+            || { echo "c-07 packages is NON-EMPTY on kailash-minimal ($MIN_C07) — the stub must mount nothing"; exit 1; }
+          test "$FULL_C07" = "0" \
+            || { echo "c-07 packages is NON-EMPTY on kailash-full ($FULL_C07) — the stub must mount nothing"; exit 1; }
+          echo "c-07-optin-posture: OK (enable false on minimal+full, empty mounts)"          touch $out
+        '';
+
         # ---- O-2 legs (KA-08.2) — same shape as the O-1 legs ----
         o-02-options = pkgs.runCommand
           "o-02-options" { } ''
