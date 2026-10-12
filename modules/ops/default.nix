@@ -11,11 +11,17 @@
 # module (the pairing-thesis target — enable defaults false, loopback
 # bind default, the lab-default unauth binding documented never
 # defaulted — plan §9 Phase 3).
+#
+# KA-09.4 (ko#113): the O-6 Docs & Authoring category module (the
+# publishing/authoring stack; texlive-full stays the opt-in data row,
+# dradis/pwndoc-ng the module rows — both never in the install set).
 { lib, ... }: {
   imports = [
     ./o-01-mlops-ml-engineering.nix
     ./o-03-vector-stores-retrieval.nix
+    ./o-04-local-llm-inference-labs.nix
     ./mlflow-service.nix
     ./o-02-compute-serving-infrastructure.nix
+    ./o-06-documentation-reporting-authoring.nix
   ];
 }

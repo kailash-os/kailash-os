@@ -26,10 +26,20 @@
 #   * faiss     — pkgs.faiss (similarity-search library);
 #   * txtai     — pkgs.python3Packages.txtai (the embeddings DB is a
 #     python-module attr at this pin, no top-level attr);
-#   * jina-embeddings-cli — pkgs.jina-embeddings-cli, the packages-repo
-#     bespoke derivation (manifest pkgs/jina-embeddings-cli/default.nix)
-#     riding the overlay the OS flake composes — guarded by `?` so host
-#     evaluation stays green at revisions without it.
+#   * jina-embeddings-cli — the packages-repo bespoke derivation
+#     (manifest pkgs/jina-embeddings-cli/default.nix) riding the overlay
+#     the OS flake composes; resolved through the generated list's
+#     bespoke rows (guarded-by-id in the resolver, so host evaluation
+#     stays green at revisions without it).
+#
+# DATA CONTRACT (KA-09.1): the install set is the GENERATED,
+# manifest-driven list — modules/ops/generated/o-03-vector-stores-
+# retrieval.nix is pure generator emit (tools/gen-category-packages.py
+# against the PINNED packages manifest; the generator's NATIVE_ATTRS
+# table carries the id→attr divergence this probed list records:
+# chromadb/txtai resolve through python3Packages at this pin), and the
+# committed file is drift-checked EVERY PR by
+# checks.x86_64-linux.o-03-generated-drift — never hand-edited.
 #
 # The GREEN part of this file is the typed spine in
 # modules/base/layer-tree.nix: `categories` upgrades from the freeform
@@ -57,6 +67,33 @@ let
     milvus = "milvusdb/milvus:v2.6.7";
     elasticsearch = "docker.elastic.co/elasticsearch/elasticsearch:7.17.27";
   };
+
+  # The generator's committed emit = pure structure (no package attrs).
+  # RED stub (KA-09.1): modules/ops/generated/o-03-vector-stores-
+  # retrieval.nix does not exist yet — the import throws at eval, the
+  # watched red (every o-03 check leg + host composition fails while
+  # the generated list is missing; the GREEN commit lands the file).
+  generated =
+    (import ./generated/o-03-vector-stores-retrieval.nix {
+      inherit lib;
+    }).o-03-vector-stores-retrieval;
+
+  # Resolver, §4.5: every attr path ?-guarded (green eval at revisions
+  # where the overlay is absent or a native attr moves).
+  resolveNative = path:
+    if lib.attrByPath path null pkgs != null then [ (lib.getAttrFromPath path pkgs) ] else [ ];
+  resolveBespoke = row:
+    if lib.attrByPath [ row.id ] null pkgs != null
+    then [ (lib.getAttrFromPath [ row.id ] pkgs) ]
+    else [ ];
+
+  # The manifest-driven install set = the generated rows resolved.
+  # Hosts compose/append on the spine option; never redefine — and never
+  # a config-assignment of cfg.packages back into the tree (a mkIf
+  # self-assignment re-enters the layers merge mid-collection,
+  # eval-probed at this pin).
+  installSet = lib.flatten
+    (map resolveNative generated.native ++ map resolveBespoke generated.bespoke);
 in
 
 {
@@ -85,18 +122,10 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    # Native rows (KA-09.1). jina-embeddings-cli resolves only when the
-    # packages overlay is composed (manifest pkgs/jina-embeddings-cli/
-    # default.nix); the ?? guard keeps host evaluation green at revisions
-    # without it.
-    kailash.layers.ops.categories.o-03.packages =
-      [
-        pkgs.python3Packages.chromadb
-        pkgs.qdrant
-        pkgs.faiss
-        pkgs.python3Packages.txtai
-      ]
-      ++ lib.optionals (pkgs ? jina-embeddings-cli) [ pkgs.jina-embeddings-cli ];
+    # The manifest-driven install set = the generated rows resolved (the
+    # let-bound installSet; RED stub, KA-09.1: the generated file is
+    # missing — the let import throws at eval, the watched red).
+    kailash.layers.ops.categories.o-03.packages = installSet;
 
     environment.systemPackages = cfg.packages;
 

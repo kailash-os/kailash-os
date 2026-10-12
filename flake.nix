@@ -396,6 +396,32 @@ open(sys.argv[2], "w", encoding="utf-8").write(chr(10).join(gen) + chr(10))
             touch $out
           '';
 
+        # o-03-generated-drift (KA-09.1): the committed o-03 generated
+        # package list == the generator emit from the PINNED packages
+        # manifest through the flake input (never a hand-copy) — the o-02
+        # leg's exact shape. RED stub: the generated list is ABSENT at
+        # this commit (modules/ops/generated/o-03-vector-stores-
+        # retrieval.nix) — the leg's flake-input eval of the module tree
+        # throws (file not found) and this leg fails: the watched red.
+        # GREEN: the generator-emit file lands and `cmp` proves byte
+        # identity at every later revision.
+        o-03-generated-drift = pkgs.runCommand "o-03-generated-drift"
+          {
+            nativeBuildInputs = [ (pkgs.python3.withPackages (ps: [ ps.pyyaml ])) ];
+          } ''
+          python3 ${./tools/gen-category-packages.py} \
+            --manifest-file ${kailash-packages.outPath + "/manifest/tools.yaml"} \
+            --category o-03-vector-stores-retrieval > gen-o-03.nix
+          GENERATED=${./modules/ops/generated/o-03-vector-stores-retrieval.nix}
+          if ! cmp -s gen-o-03.nix "$GENERATED"; then
+            echo "o-03 generated list DRIFTED from the generator emit:"
+            diff -u "$GENERATED" gen-o-03.nix || true
+            exit 1
+          fi
+          echo "o-03-generated-drift: OK (generator == committed)"
+          touch $out
+          '';
+
         # ---- O-4 local-LLM typed surface (KA-09.3, ko#112) ------------------
         #
         # redteam-ai-compat: the EXISTING freeform-path setting in
@@ -416,6 +442,41 @@ open(sys.argv[2], "w", encoding="utf-8").write(chr(10).join(gen) + chr(10))
           # resolve through the TYPED tree - enable true, no conflict.
           test "${toString self.nixosConfigurations.kailash-redteam-ai.config.kailash.layers.ops.categories.o-04.enable}" = "1" \
             || { echo "redteam-ai o-04 setting did not survive the typed spine"; exit 1; }
+          touch $out
+        '';
+
+        # O-4 services leg (KA-09.3, ko#112). RED stub → GREEN: with the
+        # typed tree present but NO o-04 category module on the fold, an
+        # o-04-ON host (kailash-redteam-ai — the profile opts in via the
+        # §4.5 category switch) kept services.ollama at its upstream
+        # FALSE default — that was the watched RED. GREEN (the o-04
+        # module on the ops fold): the service wiring asserts through the
+        # SAME eval — ollama ON (the category switch is the opt-in), webui
+        # ON (default-with-category sibling toggle), loopback binds on
+        # both (the §11.2 posture recorded at the module), the webui
+        # environment pointed at the loopback Ollama API (the ko#112
+        # pairing), loadModels EMPTY (the module never auto-pulls — the
+        # tiny test model is an operator step, documented in the module
+        # header), and the off-host posture: an o-04-OFF host (CORE
+        # substrate) keeps BOTH services FALSE (opt-in by default).
+        o-04-services = pkgs.runCommand "o-04-services" { } ''
+          test "${toString self.nixosConfigurations.kailash-redteam-ai.config.services.ollama.enable}" = "1" \
+            || { echo "o-04 module missing: services.ollama.enable stays FALSE on an enabled o-04 host (KA-09.3 watched RED - modules/ops/o-04-local-llm-inference-labs.nix lands in the GREEN cycle, ko#112)"; exit 1; }
+          test "${toString self.nixosConfigurations.kailash-redteam-ai.config.services.open-webui.enable}" = "1" \
+            || { echo "webui toggle did not wire services.open-webui on the o-04 host"; exit 1; }
+          test "${self.nixosConfigurations.kailash-redteam-ai.config.services.ollama.host}" = "127.0.0.1" \
+            || { echo "ollama host is not the loopback default"; exit 1; }
+          test "${self.nixosConfigurations.kailash-redteam-ai.config.services.open-webui.host}" = "127.0.0.1" \
+            || { echo "open-webui host is not the loopback default"; exit 1; }
+          test "${self.nixosConfigurations.kailash-redteam-ai.config.services.open-webui.environment.OLLAMA_API_BASE_URL}" = "http://127.0.0.1:11434" \
+            || { echo "open-webui is not pointed at the loopback ollama API"; exit 1; }
+          test "${toString (builtins.length self.nixosConfigurations.kailash-redteam-ai.config.services.ollama.loadModels)}" = "0" \
+            || { echo "the o-04 module must NEVER auto-pull models (loadModels stays empty - the tiny model is an operator step)"; exit 1; }
+          test "${lib.boolToString self.nixosConfigurations.kailash-minimal.config.services.ollama.enable}" = "false" \
+            || { echo "o-04-OFF host must keep services.ollama off (opt-in by default)"; exit 1; }
+          test "${lib.boolToString self.nixosConfigurations.kailash-minimal.config.services.open-webui.enable}" = "false" \
+            || { echo "o-04-OFF host must keep services.open-webui off (opt-in by default)"; exit 1; }
+          echo "o-04-services: ollama+open-webui wired on the o-04-ON host (loopback, webui->loopback ollama, no auto-pull), both off on the CORE substrate"
           touch $out
         '';
 
@@ -617,6 +678,155 @@ PY
           touch $out
         '';
 
+        # ---- C-3 Web Application Assessment (KA-07.1, ko#99) ----------------
+        #
+        # The §4.5 category module for the tenth CLASSIC manifest category,
+        # mounted by modules/classic/c-03-web-application-assessment.nix on
+        # the same spine the exemplar defined. The leg:
+        #   * asserts the spine's §4.5 posture on THIS category: c-03
+        #     enable defaults FALSE on the CORE substrate (nothing on PATH
+        #     until the category switch is on — opt-in by default);
+        #   * the composition host (kailash-c-03-composition: the CORE
+        #     floor with c-03 enabled) must resolve a NON-EMPTY install
+        #     set AND carry the flagship — OWASP ZAP — on the composed
+        #     PATH (RED stub: the module consumes NOTHING yet — an empty
+        #     config — so the host installs nothing and both assertions
+        #     are the watched red);
+        #   * GREEN: the module's reviewed binding table resolves the
+        #     generated id list (generated/manifest-ids.json,
+        #     c-03-web-application-assessment — the c-01-exemplar leg owns
+        #     the artifact parity for ALL categories) and the SAME
+        #     assertions pass through the SAME eval.
+        #
+        # Watched RED (KA-07.1): with the stub module imported the host
+        # evaluates but installs NOTHING —
+        #   `c-03-options: the enabled c-03 category installs NOTHING`
+        #   / `c-03-options: the composed PATH is missing the flagship zap`
+        # — while every pre-existing leg stays green.
+        c-03-options = pkgs.runCommand "c-03-options" { } ''
+          echo "--- c-03 category enable defaults FALSE on the CORE substrate"
+          test "${lib.boolToString self.nixosConfigurations.kailash-minimal.config.kailash.layers.classic.categories.c-03.enable}" = "false" \
+            || { echo "c-03 categories.enable is not FALSE-default"; exit 1; }
+          PKGS="${toString self.nixosConfigurations.kailash-c-03-composition.config.kailash.layers.classic.categories.c-03.packages}"
+          echo "c-03 install set: ${lib.concatStringsSep " " (map (p: p.pname or p.name) self.nixosConfigurations.kailash-c-03-composition.config.kailash.layers.classic.categories.c-03.packages)}"
+          test -n "$PKGS" || { echo "c-03-options: the enabled c-03 category installs NOTHING (the module's install wiring is missing)"; exit 1; }
+          NAMES="${lib.concatStringsSep " " (map (p: p.pname or (builtins.parseDrvName p.name).name) self.nixosConfigurations.kailash-c-03-composition.config.environment.systemPackages)}"
+          for tool in zap burpsuite caido-desktop graphw00f; do
+            case " $NAMES " in
+              *" $tool "*) ;;
+              *) { echo "c-03-options: the composed PATH is missing the flagship $tool (the C-3 web assessment surface must compose)"; exit 1; } ;;
+            esac
+          done
+          echo "c-03-options: OK"
+          touch $out
+        '';
+
+        # ---- C-5 offline-credential + C-7 opt-in posture (KA-07.2, ko#100) -
+        #
+        # GREEN (this commit): the c-05 module's manifest-generated
+        # binding table fills the mount
+        # (modules/classic/c-05-password-offline-credential.nix) and the
+        # SAME assertions (non-empty set, hashcat present) pass through
+        # the SAME eval (host composition). The watched-red history: the
+        # RED stub commit landed the module consuming NOTHING — an
+        # enabled c-05 composition resolved an EMPTY install set and
+        # this leg failed on the non-empty assertion (the same shape as
+        # the c-01-exemplar red, ko#96); this commit flipped the verdict
+        # through one and the same eval.
+        #
+        # Wordlists posture (asserted as data below once the pack lane
+        # lands): seclists is a manifest status:data row — the generator
+        # excludes it from categories.c-05.installable, so the category
+        # module can never install it; the wordlists pack rides the
+        # opt-in kailash-data.wordlists-mega derivation in
+        # kailash-packages (ko#100), never a category-module row.
+        c-05-options =
+          let
+            c05Host = (self.nixosConfigurations.kailash-minimal.extendModules {
+              modules = [ { kailash.layers.classic.categories.c-05.enable = true; } ];
+            });
+          in
+          pkgs.runCommand
+            "c-05-options" { } ''
+            echo "--- c-05: the enabled composition installs the offline-credential set"
+            C05="${toString (builtins.length
+              c05Host.config.kailash.layers.classic.categories.c-05.packages)}"
+            echo "c-05 install-set count: $C05"
+            test "$C05" -gt 0 \
+              || { echo "c-05-options: the enabled c-05 category installs NOTHING (the module's install wiring is missing)"; exit 1; }
+            NAMES="${lib.concatStringsSep " " (map (p: p.pname or (builtins.parseDrvName p.name).name) c05Host.config.kailash.layers.classic.categories.c-05.packages)}"
+            echo "c-05 install set: $NAMES"
+            case " $NAMES " in
+              *" hashcat "*) : ;;
+              *) echo "c-05 install set missing hashcat (the hash-cracking flagship)"; exit 1 ;;
+            esac
+            echo "c-05-options: OK"
+            touch $out
+          '';
+
+        # C-7 posture leg (GREEN from RED by design — it pins the
+        # posture, it does not watch a fix): C-7 ships as the
+        # kailash-data.sdr-tools opt-in data pack (ko#100), the stub
+        # module declares nothing, and enable stays default-false on
+        # every host — C-7 absent from minimal/standard/full (the ko#100
+        # acceptance; "standard" is the CORE substrate here: the
+        # minimal floor is the standard profile and full builds on it).
+        # A later edit that flips c-07.enable on any CORE-derived
+        # profile turns this leg red.
+        c-07-optin-posture = pkgs.runCommand
+          "c-07-optin-posture" { } ''
+          echo "--- c-07: the opt-in data-pack posture (off everywhere by default)"
+          test "${lib.boolToString self.nixosConfigurations.kailash-minimal.config.kailash.layers.classic.categories.c-07.enable}" = "false" \
+            || { echo "c-07 must stay OFF on the CORE substrate (kailash-minimal) — the sdr-tools pack is opt-in"; exit 1; }
+          test "${lib.boolToString self.nixosConfigurations.kailash-full.config.kailash.layers.classic.categories.c-07.enable}" = "false" \
+            || { echo "c-07 must stay OFF on the full profile — C-7 is absent from minimal/standard/full (ko#100 acceptance)"; exit 1; }
+          MIN_C07="${toString (builtins.length self.nixosConfigurations.kailash-minimal.config.kailash.layers.classic.categories.c-07.packages)}"
+          FULL_C07="${toString (builtins.length self.nixosConfigurations.kailash-full.config.kailash.layers.classic.categories.c-07.packages)}"
+          test "$MIN_C07" = "0" \
+            || { echo "c-07 packages is NON-EMPTY on kailash-minimal ($MIN_C07) — the stub must mount nothing"; exit 1; }
+          test "$FULL_C07" = "0" \
+            || { echo "c-07 packages is NON-EMPTY on kailash-full ($FULL_C07) — the stub must mount nothing"; exit 1; }
+          echo "c-07-optin-posture: OK (enable false on minimal+full, empty mounts)"
+          touch $out
+        '';
+
+        # ---- C-10 Runtime AppSec for AI (KA-07.4, ko#102) -----------------
+        #
+        # Same-shape leg off the O-1 options pattern: (1) the c-10 switch
+        # defaults FALSE on the CORE substrate (opt-in posture, the §4.5
+        # floor's nothing-enabled invariant); (2) the composition host —
+        # c-10 ENABLED on kailash-minimal — resolves a NON-EMPTY install
+        # set with the PRIMARY flagship mitmproxy present.
+        #
+        # Watched RED (KA-07.4): at the stub commit the c-10 module
+        # consumes NOTHING (an empty packages default), so assertion (2)
+        # fails while (1) stays green. GREEN: the module's reviewed
+        # binding table consumes the generated id list and both halves
+        # pass through the SAME eval path.
+        #
+        # The manifest surface (5 installable + 2 excluded data rows at
+        # this pin) is owned by the c-01-exemplar parity leg (generator
+        # emit vs the committed artifact, all categories) — this leg
+        # asserts the c-10 resolution only.
+        c-10-options = pkgs.runCommand
+          "c-10-options" { } ''
+          echo "--- c-10 category enable defaults FALSE on the CORE substrate"
+          test "${lib.boolToString self.nixosConfigurations.kailash-minimal.config.kailash.layers.classic.categories.c-10.enable}" = "false" \
+            || { echo "c-10 categories.enable is not FALSE-default"; exit 1; }
+          echo "--- c-10 enabled composition resolves a non-empty install set"
+          C10="${toString self.nixosConfigurations.kailash-c-10-enabled.config.kailash.layers.classic.categories.c-10.packages}"
+          echo "c-10 install set: ${lib.concatStringsSep " " (map (p: p.pname or (builtins.parseDrvName p.name).name) self.nixosConfigurations.kailash-c-10-enabled.config.kailash.layers.classic.categories.c-10.packages)}"
+          test -n "$C10" || { echo "c-10-options: the enabled c-10 category installs NOTHING (the module's install wiring is missing - the watched red)"; exit 1; }
+          echo "--- c-10 primary flagship mitmproxy present in the composed set"
+          C10NAMES="${lib.concatStringsSep " " (map (p: p.pname or (builtins.parseDrvName p.name).name) self.nixosConfigurations.kailash-c-10-enabled.config.kailash.layers.classic.categories.c-10.packages)}"
+          case " $C10NAMES " in
+            *" mitmproxy "*) ;;
+            *) { echo "c-10-options: mitmproxy (the c-10 PRIMARY flagship) missing from the install set; got: $C10NAMES"; exit 1; } ;;
+          esac
+          echo "c-10-options: OK"
+          touch $out
+        '';
+
         # ---- O-2 legs (KA-08.2) — same shape as the O-1 legs ----
         o-02-options = pkgs.runCommand
           "o-02-options" { } ''
@@ -779,6 +989,333 @@ PY
               || { echo "no-auto-start posture: elasticsearch wrapper must be autoStart = false"; exit 1; }
             touch $out
           '';
+
+        # ---- §4.5 ATTACK category modules (KA-13.1, ko#103) ----------------
+        #
+        # The A-1/A-2 legs, the same shape as the c-01-exemplar / O-x legs:
+        # eval-only, no new builds. RED→GREEN chain (watched in CI):
+        # the RED stub (7862ce8) carries the legs + fixtures with the
+        # ATTACK fold still empty — the enabled-fixture hosts resolve
+        # EMPTY categories and both legs print the empty-set failure and
+        # exit 1 (locally evidenced: both fixture evals render `[]` with
+        # the fold stub). GREEN (11204cc) mounts the two category
+        # modules and the SAME assertions pass through the SAME eval.
+        # Hosted record: the RED stub's own CI never ran standalone (a
+        # lane push-sequencing miss — the GREEN commit was already
+        # stacked when the push landed); CI evidence of the watched
+        # flip is the 11204cc run, where the a-02 leg FAILED on an
+        # unquoted render (exit 127) while a-01 passed the full
+        # non-empty assertion, and the eae564e run is all-green on both
+        # systems (runs 38207178583 → 38207722006).
+        #
+        #   * a-01 — enable defaults FALSE on the CORE substrate; an enabled
+        #     a-01 host resolves a NON-EMPTY install set.
+        #   * a-02 — enable defaults FALSE; non-empty enabled install set;
+        #     the garak flagship (the pinned packages overlay at 7374e7a
+        #     probes it present — never assumed): the ko#103 acceptance
+        #     check (`nix build .#checks.x86_64-linux.a-02`).
+        #   * The garak VM probe (`garak --list-probes` in the VM) is
+        #     KA-13.2's wave (ko#104) — this item stays eval-surface.
+        #   * No ATTACK categories are enabled on any product profile here —
+        #     the redteam-ai profile keeps the flat attack.enable only;
+        #     per-category profile flips ride KA-13 closure.
+        a-01 = pkgs.runCommand "a-01-options" { } ''
+          echo "--- a-01 category enable defaults FALSE on the CORE substrate"
+          test "${lib.boolToString self.nixosConfigurations.kailash-minimal.config.kailash.layers.attack.categories.a-01.enable}" = "false" \
+            || { echo "a-01 categories.enable is not FALSE-default"; exit 1; }
+          echo "--- an enabled a-01 host resolves a NON-EMPTY install set"
+          A01PKGS="${toString self.nixosConfigurations.kailash-a-01-enabled.config.kailash.layers.attack.categories.a-01.packages}"
+          echo "a-01 install set: ${lib.concatStringsSep " " (map (p: p.pname or p.name) self.nixosConfigurations.kailash-a-01-enabled.config.kailash.layers.attack.categories.a-01.packages)}"
+          test -n "$A01PKGS" || { echo "a-01: the enabled a-01 category installs NOTHING (the module's install wiring is missing)"; exit 1; }
+          echo "a-01: OK"
+          touch $out
+        '';
+
+        a-02 = pkgs.runCommand "a-02-options" { } ''
+          echo "--- a-02 category enable defaults FALSE on the CORE substrate"
+          test "${lib.boolToString self.nixosConfigurations.kailash-minimal.config.kailash.layers.attack.categories.a-02.enable}" = "false" \
+            || { echo "a-02 categories.enable is not FALSE-default"; exit 1; }
+          echo "--- an enabled a-02 host resolves a NON-EMPTY install set with the garak flagship present"
+          A02PKGS="${toString self.nixosConfigurations.kailash-a-02-enabled.config.kailash.layers.attack.categories.a-02.packages}"
+          A02NAMES="${lib.concatStringsSep " " (map (p: p.pname or p.name) self.nixosConfigurations.kailash-a-02-enabled.config.kailash.layers.attack.categories.a-02.packages)}"
+          echo "a-02 install set: $A02NAMES"
+          test -n "$A02PKGS" || { echo "a-02: the enabled a-02 category installs NOTHING (the module's install wiring is missing)"; exit 1; }
+          case " $A02NAMES " in
+            *" garak "*) : ;;
+            *) echo "a-02: the garak flagship is missing from the enabled install set (the pinned packages overlay probes it present at 7374e7a)"; exit 1 ;;
+          esac
+          echo "a-02: OK"
+          touch $out
+        '';
+
+        # ---- A-2 data packs + trufflehog cross-list (KA-13.2, ko#104) ----
+        #
+        # Leg 1 (pins, the watched RED→GREEN): every a-02 DATA pack the
+        # lane ships must EXIST as an overlay derivation and be
+        # sha256-PINNED to a fixed upstream rev — the derivation text is
+        # read from the PACKAGES PIN (the flake input, never a
+        # hand-copy) and must carry fetchFromGitHub + a 40-hex rev + a
+        # sha256 hash. RED stub: at the pre-lane packages pin the three
+        # pack dirs do not exist → the leg exits 1 ("no derivation for
+        # data pack … at the packages pin"); GREEN: with the pin bumped
+        # to the KA-13.2 packages side, all three derivations read and
+        # pin-match. The fourth a-02 data row (llm-red-team-col) stays
+        # UNPACKAGED on purpose — its upstream is a 404 (kailash-os#104
+        # lane record); a derivation appearing for it while this leg is
+        # green is the tripwire that forces the record's revisit.
+        a-02-data-packs-pins = pkgs.runCommand "a-02-data-packs-pins"
+          {
+            nativeBuildInputs = [ pkgs.bash ];
+          } ''
+          PKGSRC=${kailash-packages.outPath}
+          for id in jailbreak-payloads libertas-prompts llm-jailbreak-bench; do
+            f="$PKGSRC/pkgs/$id/default.nix"
+            if [ ! -f "$f" ]; then
+              echo "a-02-data-packs-pins: FAIL: no derivation for data pack $id at the packages pin"
+              exit 1
+            fi
+            grep -q 'fetchFromGitHub' "$f" || { echo "a-02-data-packs-pins: FAIL: $id is not a pinned fetch (fetchFromGitHub missing)"; exit 1; }
+            grep -Eq 'rev = "[0-9a-f]{40}"' "$f" || { echo "a-02-data-packs-pins: FAIL: $id carries no fixed 40-hex rev pin"; exit 1; }
+            grep -Eq 'hash = "sha256-[A-Za-z0-9+/=]+" ?' "$f" || { echo "a-02-data-packs-pins: FAIL: $id carries no sha256 hash pin"; exit 1; }
+            echo "pack pinned: $id"
+          done
+          if [ -f "$PKGSRC/pkgs/llm-red-team-col/default.nix" ]; then
+            echo "a-02-data-packs-pins: FAIL: llm-red-team-col has a derivation but its upstream was a 404 (kailash-os#104 record) — revisit the lane record"
+            exit 1
+          fi
+          echo "llm-red-team-col: no derivation (upstream 404, recorded) — correct at this pin"
+          echo "a-02-data-packs-pins: OK"
+          touch $out
+        '';
+
+
+        # ---- O-6 Docs & Authoring legs (KA-09.4) ------------------------------
+        #
+        # RED stub (watched RED): the o-06 category module has NOT landed —
+        # config.kailash.layers.ops.categories.o-06.packages is the spine's
+        # empty default, so the composition assertions below THROW at
+        # evaluation with their named message while every older leg stays
+        # green through the SAME eval. GREEN lands the module (the
+        # generated, manifest-driven install set) and the SAME assertions
+        # pass through the SAME eval. Routing: texlive-full (status: data —
+        # the opt-in TeX data pack) NEVER enters the list; pwndoc-ng +
+        # dradis (status: module) are excluded by construction — the
+        # service-module ledger owns them, per the manifest rows.
+        o-06-options =
+          let
+            o6Host = (self.nixosConfigurations.kailash-minimal.extendModules {
+              modules = [ { kailash.layers.ops.categories.o-06.enable = true; } ];
+            });
+            o6PkgNames =
+              map (p: p.pname or (builtins.parseDrvName p.name).name)
+                o6Host.config.kailash.layers.ops.categories.o-06.packages;
+            require = cond: msg: if cond then true else throw msg;
+            # FORCED via the derivation attr below (toString coerces every
+            # element): a missing install set fails THIS check at EVAL with
+            # its named message — never a silent vacuous touch.
+            _evalProofs = [
+              (require (o6PkgNames != [ ])
+                "o-06-options: install set EMPTY — the o-06 category module has not landed (KA-09.4 GREEN)")
+              (require (lib.elem "quarto" o6PkgNames)
+                "o-06-options: install set missing the quarto flagship (KA-09.4 GREEN)")
+              (require (lib.elem "typst" o6PkgNames)
+                "o-06-options: install set missing typst (KA-09.4 GREEN)")
+            ];
+          in
+          pkgs.runCommand "o-06-options"
+            {
+              proofs = toString _evalProofs;
+            }
+            ''
+              echo "o-06 install set (pnames): ${toString o6PkgNames}"
+              echo "o-06-options: ${toString (lib.length _evalProofs)} eval proofs passed [${toString _evalProofs}]"
+              touch $out
+            '';
+
+        # The generated-list drift leg (mirror of o-01/o-02): the committed
+        # modules/ops/generated/o-06-*.nix must equal the generator's emit
+        # against the PINNED packages manifest through the flake input.
+        # RED stub: the committed emit does not exist yet — the path
+        # interpolation fails at eval ("path does not exist" = the watched
+        # red, the ka-09.2 posture-doc pattern). GREEN lands it and cmp
+        # passes.
+        o-06-generated-drift = pkgs.runCommand "o-06-generated-drift"
+          {
+            nativeBuildInputs = [ (pkgs.python3.withPackages (ps: [ ps.pyyaml ])) ];
+          } ''
+          python3 ${./tools/gen-category-packages.py} \
+            --manifest-file ${kailash-packages.outPath + "/manifest/tools.yaml"} \
+            --category o-06-documentation-reporting-authoring > gen-o-06.nix
+          GENERATED=${./modules/ops/generated/o-06-documentation-reporting-authoring.nix}
+          if ! cmp -s gen-o-06.nix "$GENERATED"; then
+            echo "o-06 generated list DRIFTED from the generator emit:"
+            diff -u "$GENERATED" gen-o-06.nix || true
+            exit 1
+          fi
+          echo "o-06-generated-drift: OK (generator == committed)"
+          touch $out
+        '';
+
+        # ---- per-category devShells (KA-09.4: `nix develop .#<category>`) -----
+        #
+        # ONE shell per SHIPPED category: the category enabled on the CORE
+        # minimal floor (extendModules — the §4.5 typed spine is the only
+        # wiring) and the composed install set AS the shell packages.
+        # Shipped = the categories whose modules carry install sets on
+        # master: the four Wave-5 CLASSIC (c-01, c-02, c-04, c-06) + the OPS
+        # modules landed so far (o-01, o-02, o-03) + o-06 (this item).
+        # o-04 joins when KA-09.3's module lands its install set; o-05 /
+        # o-07 join with their wave items. RED stub: the devShells output
+        # does not exist yet — every id probe throws its named eval failure.
+        category-devshells =
+          let
+            shipped = {
+              c-01 = "classic";
+              c-02 = "classic";
+              c-04 = "classic";
+              c-06 = "classic";
+              o-01 = "ops";
+              o-02 = "ops";
+              o-03 = "ops";
+              o-06 = "ops";
+            };
+            shells = (self.devShells or { }).${system} or { };
+            devShellPkgs = layer: id:
+              (self.nixosConfigurations.kailash-minimal.extendModules {
+                modules = [ { kailash.layers.${layer}.categories.${id}.enable = true; } ];
+              }).config.kailash.layers.${layer}.categories.${id}.packages;
+            pnamesOf = list: map (p: p.pname or (builtins.parseDrvName p.name).name) list;
+            require = cond: msg: if cond then true else throw msg;
+            # FORCED via the derivation attr below (toString coerces every
+            # element): a missing devShell id fails THIS check at EVAL with
+            # its named message.
+            _evalProofs =
+              lib.mapAttrsToList
+                (id: layer:
+                  require (builtins.hasAttr id shells)
+                    "category-devshells: devShells.${system}.${id} MISSING — the per-category devShells have not landed (KA-09.4 GREEN)")
+                shipped
+              ++ [
+                (require (lib.elem "quarto" (pnamesOf (devShellPkgs "ops" "o-06")))
+                  "category-devshells: the o-06 devShell set does not carry quarto (KA-09.4 GREEN)")
+                (require (lib.elem "typst" (pnamesOf (devShellPkgs "ops" "o-06")))
+                  "category-devshells: the o-06 devShell set does not carry typst (KA-09.4 GREEN)")
+                (require (lib.elem "nmap" (pnamesOf (devShellPkgs "classic" "c-01")))
+                  "category-devshells: the c-01 devShell set does not carry nmap")
+                (require (pnamesOf (devShellPkgs "ops" "o-06") != [ ])
+                  "category-devshells: the o-06 devShell install set is EMPTY (KA-09.4 GREEN)")
+              ];
+          in
+          pkgs.runCommand "category-devshells"
+            {
+              proofs = toString _evalProofs;
+            }
+            ''
+              echo "category-devshells: ${toString (lib.length _evalProofs)} eval proofs passed (shipped ids: ${builtins.concatStringsSep " " (builtins.attrNames shipped)}) [${toString _evalProofs}]"
+              touch $out
+            '';
+
+        # Leg 2 (composition, eval-only): the §4.5 sibling composition
+        # option `packs.enable` defaults FALSE on the CORE floor (the
+        # licences-uncertain research corpora never ride a default
+        # profile — the manifest banner's data-pack rule), and a synthetic
+        # host with the a-02 category + packs ON carries the landed pack
+        # set appended to the typed a-02 surface. RED stub: with the
+        # pre-lane pin the overlay lacks the pack attrs → the composed
+        # set is empty → the names/count assertions fail; GREEN (with
+        # the pin bump): the three packs compose through the overlay.
+        # Install wiring deliberately stays with the KA-13.1 A-2
+        # category module (this lane appends to the typed surface only).
+        a-02-data-packs-compose = pkgs.runCommand "a-02-data-packs-compose"
+          {
+            nativeBuildInputs = [ pkgs.bash ];
+          } ''
+          MIN_ENABLED="${lib.boolToString self.nixosConfigurations.kailash-minimal.config.kailash.layers.attack.categories.a-02.enable}"
+          test "$MIN_ENABLED" = "false" \
+            || { echo "a-02 category enable must default FALSE on the CORE floor"; exit 1; }
+          MIN_PACKS="${lib.boolToString self.nixosConfigurations.kailash-minimal.config.kailash.layers.attack.categories.a-02.packs}"
+          test "$MIN_PACKS" = "false" \
+            || { echo "packs option must default FALSE on the CORE floor"; exit 1; }
+          MIN_N="${toString (builtins.length self.nixosConfigurations.kailash-minimal.config.kailash.layers.attack.categories.a-02.packages)}"
+          test "$MIN_N" -ge "3" \
+            || { echo "a-02 mount must carry the module's manifest set (garak+promptfoo+pyrit at this pin), got $MIN_N"; exit 1; }
+          MIN_PKG_NAMES_A02="${lib.concatStringsSep " " (map (p: p.pname or (builtins.parseDrvName p.name).name) self.nixosConfigurations.kailash-minimal.config.kailash.layers.attack.categories.a-02.packages)}"
+          for pack in jailbreak-payloads libertas-prompts llm-jailbreak-bench; do
+            case " $MIN_PKG_NAMES_A02 " in
+              *" $pack "*) { echo "a-02: $pack must NOT ride the packs-off mount (defaults-false posture)"; exit 1; } ;;
+            esac
+          done
+          PACK_NAMES="${lib.concatStringsSep " " (map (p: p.pname or (builtins.parseDrvName p.name).name) self.nixosConfigurations.kailash-a-02-packs.config.kailash.layers.attack.categories.a-02.packages)}"
+          N="${toString (builtins.length self.nixosConfigurations.kailash-a-02-packs.config.kailash.layers.attack.categories.a-02.packages)}"
+          echo "composed a-02 pack set: $PACK_NAMES"
+          test "$N" -ge 3 \
+            || { echo "a-02-data-packs-compose: FAIL: expected the 3 landed packs in the composed a-02 surface, got $N (overlay attrs missing at this packages pin?)"; exit 1; }
+          for expected in jailbreak-payloads libertas-prompts llm-jailbreak-bench; do
+            case " $PACK_NAMES " in
+              *" $expected "*) : ;;
+              *) echo "a-02-data-packs-compose: FAIL: pack missing from the composed surface: $expected"; exit 1 ;;
+            esac
+          done
+          MIN_PKG_NAMES="${lib.concatStringsSep " " (map (p: p.pname or (builtins.parseDrvName p.name).name) self.nixosConfigurations.kailash-minimal.config.environment.systemPackages)}"
+          for pack in jailbreak-payloads libertas-prompts llm-jailbreak-bench; do
+            case " $MIN_PKG_NAMES " in
+              *" $pack "*) { echo "a-02-data-packs-compose: FAIL: $pack leaked onto the CORE floor's PATH"; exit 1; } ;;
+            esac
+          done
+          echo "a-02-data-packs-compose: OK (defaults-false, no leakage, packs compose)"
+          touch $out
+        '';
+
+        # Leg 3 (cross-list visibility, ko#104's acceptance clause): the
+        # trufflehog dual-use cross-list (primary A-1, secondary C-8 by
+        # the secondary-tags rule) must be VISIBLE — two independent
+        # reads of the SAME pinned manifest must agree, and the
+        # packaged CLI's `kailash search` must surface the row from the
+        # secondary id (the pinned CLI source from the flake input, the
+        # §7.3 env bake pointed at the pinned manifest):
+        #   * PyYAML read: exactly one trufflehog row, primary
+        #     a-01-ai-recon, secondary_categories carries
+        #     c-08-exploitation-post-exploitation;
+        #   * CLI read: `kailash search
+        #     c-08-exploitation-post-exploitation` exits 0 and prints
+        #     trufflehog (RED stub: the pinned CLI haystack omits
+        #     secondary_categories → exit 1 "no results" — the watched
+        #     red until the packages-side haystack change rides the pin).
+        trufflehog-cross-list = pkgs.runCommand "trufflehog-cross-list"
+          {
+            nativeBuildInputs = [ (pkgs.python3.withPackages (ps: [ ps.pyyaml ])) ];
+          } ''
+          MANIFEST=${kailash-packages.outPath + "/manifest/tools.yaml"}
+          CLISRC=${kailash-packages.outPath + "/cli"}
+          python3 - "$MANIFEST" <<'PY' || exit 1
+import sys, yaml
+doc = yaml.safe_load(open(sys.argv[1]))
+rows = [t for t in doc["tools"] if t.get("id") == "trufflehog"]
+if len(rows) != 1:
+    print("trufflehog-cross-list: FAIL: expected exactly 1 trufflehog row, got %d" % len(rows))
+    sys.exit(1)
+r = rows[0]
+if r.get("category") != "a-01-ai-recon":
+    print("trufflehog-cross-list: FAIL: primary category %r != a-01-ai-recon" % r.get("category"))
+    sys.exit(1)
+sec = r.get("secondary_categories") or []
+if "c-08-exploitation-post-exploitation" not in sec:
+    print("trufflehog-cross-list: FAIL: secondary_categories %r misses c-08-exploitation-post-exploitation" % sec)
+    sys.exit(1)
+print("manifest row: trufflehog primary=a-01-ai-recon secondary=%s" % ",".join(sec))
+PY
+          OUT="$(KAILASH_MANIFEST="$MANIFEST" PYTHONPATH="$CLISRC" python3 -c 'import sys; from kailash import cli; sys.exit(cli.main(["search", "c-08-exploitation-post-exploitation"]))' 2>&1)"
+          if [ $? -ne 0 ]; then
+            echo "trufflehog-cross-list: FAIL: kailash search over the secondary id did not surface trufflehog (haystack lacks secondary_categories at this pin?):"
+            echo "$OUT"
+            exit 1
+          fi
+          echo "$OUT" | grep -q "trufflehog" \
+            || { echo "trufflehog-cross-list: FAIL: search output does not name trufflehog:"; echo "$OUT"; exit 1; }
+          echo "cross-list visible: kailash search c-08-… → trufflehog"
+          echo "trufflehog-cross-list: OK"
+          touch $out
+        '';
       };
 
 
@@ -818,6 +1355,45 @@ PY
         ];
       };
 
+      # The C-3 composition host (KA-07.1, ko#99): the CORE floor with C-3
+      # Web Application Assessment enabled. RED stub: the c-03 module
+      # installs nothing yet (the binding-table wiring lands GREEN), so
+      # the host carries an EMPTY c-03 install set and the c-03-options
+      # check's non-empty + flagship assertions are the watched red.
+      nixosConfigurations.kailash-c-03-composition = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          { kailash.layers.classic.categories.c-03.enable = true; }
+        ];
+      };
+
+
+      nixosConfigurations.kailash-c-10-enabled = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          { kailash.layers.classic.categories.c-10.enable = true; }
+        ];
+      };
+
+      # The A-2 data-pack composition fixture (KA-13.2, ko#104): the CORE
+      # floor with the a-02 category AND the sibling `packs` composition
+      # option ON. NOT a product profile; eval-gated by the
+      # a-02-data-packs-compose check (packs ride the typed a-02 surface
+      # from the overlay; the KA-13.1 A-2 category module owns install
+      # wiring when it lands). The floor host (kailash-minimal) proves
+      # the defaults-false + no-leakage halves of the same leg.
+      nixosConfigurations.kailash-a-02-packs = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          {
+            kailash.layers.attack.categories.a-02.enable = true;
+            kailash.layers.attack.categories.a-02.packs = true;
+          }
+        ];
+      };
       # The FULL profile host (KA-06.2, ko#97): the CORE floor + the four
       # shipped CLASSIC categories (c-01, c-02, c-04, c-06) — the §4.5
       # composition profile. Eval-gated (the classic-four-eval check
@@ -906,7 +1482,65 @@ PY
         ];
       };
 
+      # §4.5 category-install fixtures (KA-13.1, ko#103): synthetic hosts
+      # with an ATTACK category ENABLED — prove "enabling a test host
+      # installs without breaking eval" for A-1 and A-2 (the same not-a-
+      # product-profile pattern the kailash-o-01-enabled fixture owns).
+      nixosConfigurations.kailash-a-01-enabled = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          {
+            networking.hostName = lib.mkForce "kailash-a-01-enabled";
+            kailash.layers.attack.categories.a-01.enable = true;
+          }
+        ];
+      };
+
+      nixosConfigurations.kailash-a-02-enabled = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          {
+            networking.hostName = lib.mkForce "kailash-a-02-enabled";
+            kailash.layers.attack.categories.a-02.enable = true;
+          }
+        ];
+      };
+
       # devShells per category with KA-09; images with the images wave;
-      # remaining hosts (kailash-full etc.) land with their profile items.
+
+      # ---- per-category devShells (KA-09.4, ko#113): `nix develop .#<category>` ---
+      #
+      # ONE shell per SHIPPED category (a category with an install-set
+      # module on master): the category's INSTALL SET as the shell
+      # packages — read through the §4.5 typed spine itself (extendModules
+      # of the CORE minimal floor with the category enable, then the
+      # category's own `packages` option, never the host's whole
+      # systemPackages — the shell carries the category, mkShell adds the
+      # standard toolchain). Generated over the shipped map (mapAttrs),
+      # new shipped categories join the map (o-04 with KA-09.3's module,
+      # o-05/o-07 with their wave items). Every id and its package set is
+      # additionally asserted by the checks.category-devshells leg.
+      devShells.${system} = builtins.mapAttrs
+        (id: layer: pkgs.mkShell {
+          name = "kailash-${id}-devshell";
+          packages =
+            (self.nixosConfigurations.kailash-minimal.extendModules {
+              modules = [ { kailash.layers.${layer}.categories.${id}.enable = true; } ];
+            }).config.kailash.layers.${layer}.categories.${id}.packages;
+        })
+        {
+          c-01 = "classic";
+          c-02 = "classic";
+          c-04 = "classic";
+          c-06 = "classic";
+          o-01 = "ops";
+          o-02 = "ops";
+          o-03 = "ops";
+          o-06 = "ops";
+        };
+
+      # devShells with KA-09 (landed: KA-09.4); images with the images wave;      # remaining hosts (kailash-full etc.) land with their profile items.
     };
 }
