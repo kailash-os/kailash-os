@@ -949,6 +949,46 @@ PY
           touch $out
         '';
 
+        # ---- A-2 data packs + trufflehog cross-list (KA-13.2, ko#104) ----
+        #
+        # Leg 1 (pins, the watched RED→GREEN): every a-02 DATA pack the
+        # lane ships must EXIST as an overlay derivation and be
+        # sha256-PINNED to a fixed upstream rev — the derivation text is
+        # read from the PACKAGES PIN (the flake input, never a
+        # hand-copy) and must carry fetchFromGitHub + a 40-hex rev + a
+        # sha256 hash. RED stub: at the pre-lane packages pin the three
+        # pack dirs do not exist → the leg exits 1 ("no derivation for
+        # data pack … at the packages pin"); GREEN: with the pin bumped
+        # to the KA-13.2 packages side, all three derivations read and
+        # pin-match. The fourth a-02 data row (llm-red-team-col) stays
+        # UNPACKAGED on purpose — its upstream is a 404 (kailash-os#104
+        # lane record); a derivation appearing for it while this leg is
+        # green is the tripwire that forces the record's revisit.
+        a-02-data-packs-pins = pkgs.runCommand "a-02-data-packs-pins"
+          {
+            nativeBuildInputs = [ pkgs.bash ];
+          } ''
+          PKGSRC=${kailash-packages.outPath}
+          for id in jailbreak-payloads libertas-prompts llm-jailbreak-bench; do
+            f="$PKGSRC/pkgs/$id/default.nix"
+            if [ ! -f "$f" ]; then
+              echo "a-02-data-packs-pins: FAIL: no derivation for data pack $id at the packages pin"
+              exit 1
+            fi
+            grep -q 'fetchFromGitHub' "$f" || { echo "a-02-data-packs-pins: FAIL: $id is not a pinned fetch (fetchFromGitHub missing)"; exit 1; }
+            grep -Eq 'rev = "[0-9a-f]{40}"' "$f" || { echo "a-02-data-packs-pins: FAIL: $id carries no fixed 40-hex rev pin"; exit 1; }
+            grep -Eq 'hash = "sha256-[A-Za-z0-9+/=]+" ?' "$f" || { echo "a-02-data-packs-pins: FAIL: $id carries no sha256 hash pin"; exit 1; }
+            echo "pack pinned: $id"
+          done
+          if [ -f "$PKGSRC/pkgs/llm-red-team-col/default.nix" ]; then
+            echo "a-02-data-packs-pins: FAIL: llm-red-team-col has a derivation but its upstream was a 404 (kailash-os#104 record) — revisit the lane record"
+            exit 1
+          fi
+          echo "llm-red-team-col: no derivation (upstream 404, recorded) — correct at this pin"
+          echo "a-02-data-packs-pins: OK"
+          touch $out
+        '';
+
 
         # ---- O-6 Docs & Authoring legs (KA-09.4) ------------------------------
         #
@@ -1074,7 +1114,110 @@ PY
             ''
               echo "category-devshells: ${toString (lib.length _evalProofs)} eval proofs passed (shipped ids: ${builtins.concatStringsSep " " (builtins.attrNames shipped)}) [${toString _evalProofs}]"
               touch $out
-            '';      };
+            '';
+
+        # Leg 2 (composition, eval-only): the §4.5 sibling composition
+        # option `packs.enable` defaults FALSE on the CORE floor (the
+        # licences-uncertain research corpora never ride a default
+        # profile — the manifest banner's data-pack rule), and a synthetic
+        # host with the a-02 category + packs ON carries the landed pack
+        # set appended to the typed a-02 surface. RED stub: with the
+        # pre-lane pin the overlay lacks the pack attrs → the composed
+        # set is empty → the names/count assertions fail; GREEN (with
+        # the pin bump): the three packs compose through the overlay.
+        # Install wiring deliberately stays with the KA-13.1 A-2
+        # category module (this lane appends to the typed surface only).
+        a-02-data-packs-compose = pkgs.runCommand "a-02-data-packs-compose"
+          {
+            nativeBuildInputs = [ pkgs.bash ];
+          } ''
+          MIN_ENABLED="${lib.boolToString self.nixosConfigurations.kailash-minimal.config.kailash.layers.attack.categories.a-02.enable}"
+          test "$MIN_ENABLED" = "false" \
+            || { echo "a-02 category enable must default FALSE on the CORE floor"; exit 1; }
+          MIN_PACKS="${lib.boolToString self.nixosConfigurations.kailash-minimal.config.kailash.layers.attack.categories.a-02.packs}"
+          test "$MIN_PACKS" = "false" \
+            || { echo "packs option must default FALSE on the CORE floor"; exit 1; }
+          MIN_N="${toString (builtins.length self.nixosConfigurations.kailash-minimal.config.kailash.layers.attack.categories.a-02.packages)}"
+          test "$MIN_N" -ge "3" \
+            || { echo "a-02 mount must carry the module's manifest set (garak+promptfoo+pyrit at this pin), got $MIN_N"; exit 1; }
+          MIN_PKG_NAMES_A02="${lib.concatStringsSep " " (map (p: p.pname or (builtins.parseDrvName p.name).name) self.nixosConfigurations.kailash-minimal.config.kailash.layers.attack.categories.a-02.packages)}"
+          for pack in jailbreak-payloads libertas-prompts llm-jailbreak-bench; do
+            case " $MIN_PKG_NAMES_A02 " in
+              *" $pack "*) { echo "a-02: $pack must NOT ride the packs-off mount (defaults-false posture)"; exit 1; } ;;
+            esac
+          done
+          PACK_NAMES="${lib.concatStringsSep " " (map (p: p.pname or (builtins.parseDrvName p.name).name) self.nixosConfigurations.kailash-a-02-packs.config.kailash.layers.attack.categories.a-02.packages)}"
+          N="${toString (builtins.length self.nixosConfigurations.kailash-a-02-packs.config.kailash.layers.attack.categories.a-02.packages)}"
+          echo "composed a-02 pack set: $PACK_NAMES"
+          test "$N" -ge 3 \
+            || { echo "a-02-data-packs-compose: FAIL: expected the 3 landed packs in the composed a-02 surface, got $N (overlay attrs missing at this packages pin?)"; exit 1; }
+          for expected in jailbreak-payloads libertas-prompts llm-jailbreak-bench; do
+            case " $PACK_NAMES " in
+              *" $expected "*) : ;;
+              *) echo "a-02-data-packs-compose: FAIL: pack missing from the composed surface: $expected"; exit 1 ;;
+            esac
+          done
+          MIN_PKG_NAMES="${lib.concatStringsSep " " (map (p: p.pname or (builtins.parseDrvName p.name).name) self.nixosConfigurations.kailash-minimal.config.environment.systemPackages)}"
+          for pack in jailbreak-payloads libertas-prompts llm-jailbreak-bench; do
+            case " $MIN_PKG_NAMES " in
+              *" $pack "*) { echo "a-02-data-packs-compose: FAIL: $pack leaked onto the CORE floor's PATH"; exit 1; } ;;
+            esac
+          done
+          echo "a-02-data-packs-compose: OK (defaults-false, no leakage, packs compose)"
+          touch $out
+        '';
+
+        # Leg 3 (cross-list visibility, ko#104's acceptance clause): the
+        # trufflehog dual-use cross-list (primary A-1, secondary C-8 by
+        # the secondary-tags rule) must be VISIBLE — two independent
+        # reads of the SAME pinned manifest must agree, and the
+        # packaged CLI's `kailash search` must surface the row from the
+        # secondary id (the pinned CLI source from the flake input, the
+        # §7.3 env bake pointed at the pinned manifest):
+        #   * PyYAML read: exactly one trufflehog row, primary
+        #     a-01-ai-recon, secondary_categories carries
+        #     c-08-exploitation-post-exploitation;
+        #   * CLI read: `kailash search
+        #     c-08-exploitation-post-exploitation` exits 0 and prints
+        #     trufflehog (RED stub: the pinned CLI haystack omits
+        #     secondary_categories → exit 1 "no results" — the watched
+        #     red until the packages-side haystack change rides the pin).
+        trufflehog-cross-list = pkgs.runCommand "trufflehog-cross-list"
+          {
+            nativeBuildInputs = [ (pkgs.python3.withPackages (ps: [ ps.pyyaml ])) ];
+          } ''
+          MANIFEST=${kailash-packages.outPath + "/manifest/tools.yaml"}
+          CLISRC=${kailash-packages.outPath + "/cli"}
+          python3 - "$MANIFEST" <<'PY' || exit 1
+import sys, yaml
+doc = yaml.safe_load(open(sys.argv[1]))
+rows = [t for t in doc["tools"] if t.get("id") == "trufflehog"]
+if len(rows) != 1:
+    print("trufflehog-cross-list: FAIL: expected exactly 1 trufflehog row, got %d" % len(rows))
+    sys.exit(1)
+r = rows[0]
+if r.get("category") != "a-01-ai-recon":
+    print("trufflehog-cross-list: FAIL: primary category %r != a-01-ai-recon" % r.get("category"))
+    sys.exit(1)
+sec = r.get("secondary_categories") or []
+if "c-08-exploitation-post-exploitation" not in sec:
+    print("trufflehog-cross-list: FAIL: secondary_categories %r misses c-08-exploitation-post-exploitation" % sec)
+    sys.exit(1)
+print("manifest row: trufflehog primary=a-01-ai-recon secondary=%s" % ",".join(sec))
+PY
+          OUT="$(KAILASH_MANIFEST="$MANIFEST" PYTHONPATH="$CLISRC" python3 -c 'import sys; from kailash import cli; sys.exit(cli.main(["search", "c-08-exploitation-post-exploitation"]))' 2>&1)"
+          if [ $? -ne 0 ]; then
+            echo "trufflehog-cross-list: FAIL: kailash search over the secondary id did not surface trufflehog (haystack lacks secondary_categories at this pin?):"
+            echo "$OUT"
+            exit 1
+          fi
+          echo "$OUT" | grep -q "trufflehog" \
+            || { echo "trufflehog-cross-list: FAIL: search output does not name trufflehog:"; echo "$OUT"; exit 1; }
+          echo "cross-list visible: kailash search c-08-… → trufflehog"
+          echo "trufflehog-cross-list: OK"
+          touch $out
+        '';
+      };
 
 
       # ---- Audit hostile fixture (KA-18.2, os#93) --------------------------
@@ -1132,6 +1275,24 @@ PY
         modules = [
           ./profiles/minimal.nix
           { kailash.layers.classic.categories.c-10.enable = true; }
+        ];
+      };
+
+      # The A-2 data-pack composition fixture (KA-13.2, ko#104): the CORE
+      # floor with the a-02 category AND the sibling `packs` composition
+      # option ON. NOT a product profile; eval-gated by the
+      # a-02-data-packs-compose check (packs ride the typed a-02 surface
+      # from the overlay; the KA-13.1 A-2 category module owns install
+      # wiring when it lands). The floor host (kailash-minimal) proves
+      # the defaults-false + no-leakage halves of the same leg.
+      nixosConfigurations.kailash-a-02-packs = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          {
+            kailash.layers.attack.categories.a-02.enable = true;
+            kailash.layers.attack.categories.a-02.packs = true;
+          }
         ];
       };
       # The FULL profile host (KA-06.2, ko#97): the CORE floor + the four

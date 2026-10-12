@@ -82,11 +82,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1791708558,
-        "narHash": "sha256-xWemeQ7Cxt+zJJg0ntLsvoMVJ3NkkO6WbbsmJKWzgoM=",
+        "lastModified": 1791782308,
+        "narHash": "sha256-VZ09ex62Rc8BowTzXPjrbEFf+YnjKc2+1V84LNwjjak=",
         "owner": "kailash-os",
         "repo": "kailash-packages",
-        "rev": "7374e7a7650513bdaed11863a2fcb076041a890c",
+        "rev": "ef70ec4b96d98b5268456ff940c8473b182b125f",
         "type": "github"
       },
       "original": {
