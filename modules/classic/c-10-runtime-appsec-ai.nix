@@ -1,34 +1,67 @@
 # Layer CLASSIC — C-10 Runtime AppSec for AI Systems (KA-07.4, ko#102;
 # plan §4.5).
 #
-# WATCHED RED STUB — this commit deliberately installs NOTHING: the
-# manifest-generated id list is not yet consumed, so an enabled c-10 host
-# resolves an EMPTY install set and the flake's c-10-options leg (the
-# non-empty assertion) fails — the watched red this lane drives GREEN in
-# the next commit, same shape as the ko#96 exemplar's red.
+# The fifth §4.5 category module off the KA-06.1 exemplar (same shape —
+# spine-owned typed surface, config-only install mount, mkIf enable).
+# ais IS the category primary per §3.2 (ai-scanner, the AISVS-scoped
+# runtime surface); mitmproxy is the install-set flagship at this pin
+# (the primary's derivation has not landed in the packages overlay yet).
 #
-# The §4.5 category-module shape it completes (config-only mount; the
-# KA-09.1 spine owns the enable/packages baseline members on
-# kailash.layers.classic.categories.c-10):
-#   * installable ids flow from generated/manifest-ids.json
-#     (categories.c-10-runtime-appsec-ai.installable), produced by
-#     tools/gen-categories.py + `make gen-categories`, never hand-maintained;
-#   * the reviewed binding table maps id → pkgs attr at the pinned
-#     packages rev (probed per entry, never assumed id==attr);
-#   * `mkIf enable` installs — opt-in by default, the §4.5 posture;
-#   * the zaproxy row stays OUT: its PRIMARY home is c-03 (the c-10
-#     secondary-home note is recorded in the GREEN binding table header —
-#     the generator keys packages by primary category only).
+# Binding table (probed at nixpkgs 8c3cede + packages pin 7374e7a — never
+# assumed id==attr):
+#   * mitmproxy → pkgs.mitmproxy (bare; native row — the install-set
+#     flagship at this pin);
+#   * oauth-mcp-prober, sdl3-stream-fuzzer, llm-fuzzer, ais →
+#     manifest-bespoke rows through the packages overlay; their
+#     derivations have NOT landed at this pin (pkgs/ carries art,
+#     auto-call, counterfit, dnsrecon, garak, kailash, promptfoo, pyrit,
+#     subfinder) → they drop through the bare guard and return when
+#     their packaging lanes land (the exemplar's overlay-pending rule);
+#   * ais IS the c-10 primary per the manifest — the bare-guard miss is
+#     an overlay-pending drop (returns when the derivation lands), not a
+#     data-row exclusion;
+#   * zaproxy (OWASP ZAP; pkgs.zap at this nixpkgs, v2.17.0) stays OUT:
+#     its PRIMARY home is C-3 Web Application Assessment and the
+#     generator keys package lists by primary category — c-10's
+#     secondary-home row is recorded HERE (binding-table note), never
+#     mounted twice.
+#
+# GREEN (this commit): the watched-RED stub (installs NOTHING) becomes
+# the manifest-driven install set (mitmproxy at this pin; the four
+# bespokes return via the guard); the SAME c-10-options assertions
+# (FALSE-default floor, non-empty enabled composition, mitmproxy
+# present) pass through the SAME eval.
 { config, lib, pkgs, ... }:
 
 let
   cfg = config.kailash.layers.classic.categories.c-10;
+
+  ids = (builtins.fromJSON (builtins.readFile ../../generated/manifest-ids.json))
+    .categories.c-10-runtime-appsec-ai.installable;
+
+  # The binding table: mitmproxy binds bare at this pin; the four
+  # bespoke rows fall to the bare guard (pkgs."<id>" or null), resolve
+  # null and drop WITHOUT breaking eval — the overlay row returns them.
+  attrFor = id:
+    {
+      "mitmproxy" = pkgs.mitmproxy or null;
+    }."${id}" or (pkgs."${id}" or null);
+
+  # Bind → drop the null (overlay-pending at this pin) and the
+  # broken-marked rows; dedupe (one primary slot, one install).
+  installSet = lib.unique
+    (lib.filter
+      (p: p != null && !(p.meta.broken or false))
+      (map attrFor ids));
 in
 {
   config = {
-    # RED: consumes nothing yet — the install set stays empty and the
-    # c-10-options leg fails until the GREEN commit lands.
-    kailash.layers.classic.categories.c-10.packages = lib.mkForce [ ];
+    # The manifest-driven install set (1 of the 5 installable ids at
+    # this pin: mitmproxy native; oauth-mcp-prober, sdl3-stream-fuzzer,
+    # llm-fuzzer, ais overlay-pending; the vulnerable-llm-apps and
+    # asvs-verification-toolkit data rows are excluded by the generator —
+    # data-packs never ride a package list).
+    kailash.layers.classic.categories.c-10.packages = installSet;
 
     environment.systemPackages = lib.mkIf cfg.enable cfg.packages;
   };
