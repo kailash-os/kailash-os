@@ -51,20 +51,25 @@
           "status": "data"
         }
       ],
+      "exp": [
+        "mcp-unsafe-deser-probe",
+        "mcpoison"
+      ],
       "installable": [
         "mcp-scan",
         "mcp-guardian",
         "mcp-remote",
-        "mcp-unsafe-deser-probe",
         "langchain-vuln-hunter",
         "llm-agent-fuzzer",
-        "mcpoison",
         "agent-dojo"
       ]
     },
     "a-04-model-supply-chain": {
       "count": 8,
       "excluded": [],
+      "exp": [
+        "torch-load-poc"
+      ],
       "installable": [
         "guarddog",
         "picklescan",
@@ -72,8 +77,7 @@
         "gguf-template-inspector",
         "safetensors-checker",
         "hf-repo-inspector",
-        "namespace-reuse-check",
-        "torch-load-poc"
+        "namespace-reuse-check"
       ]
     },
     "a-05-model-extraction-inversion": {
@@ -99,17 +103,19 @@
           "status": "data"
         }
       ],
+      "exp": [
+        "adversarial-clothing",
+        "audio-voice-clone-injector"
+      ],
       "installable": [
         "vlm-image-injector",
-        "adversarial-clothing",
-        "audio-voice-clone-injector",
         "camera-adversarial-toolkit"
       ]
     },
     "a-07-ai-system-exploitation": {
       "count": 9,
       "excluded": [],
-      "installable": [
+      "exp": [
         "mlflow-bypass",
         "triton-pwn",
         "torchserve-pwn",
@@ -119,17 +125,20 @@
         "shadow-ray",
         "vector-db-ripper",
         "ai-gateway-bypass"
-      ]
+      ],
+      "installable": []
     },
     "a-08-data-poisoning": {
       "count": 6,
       "excluded": [],
-      "installable": [
+      "exp": [
         "poison-dataset-builder",
-        "trojai-toolkit",
         "trojan-lm-toolkit",
         "prompt-backdoor-tool",
-        "data-exfil-via-poison",
+        "data-exfil-via-poison"
+      ],
+      "installable": [
+        "trojai-toolkit",
         "split-view-replay"
       ]
     },
@@ -717,12 +726,14 @@
           "status": "data"
         }
       ],
-      "installable": [
+      "exp": [
         "hexstrike-ai",
         "mcp-kali-server",
         "kailash-mcp",
         "kailash-container",
-        "headless-agent",
+        "headless-agent"
+      ],
+      "installable": [
         "mcp-inspector"
       ]
     }
