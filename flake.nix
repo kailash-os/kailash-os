@@ -1595,6 +1595,105 @@ PY
           echo "trufflehog-cross-list: OK"
           touch $out
         '';
+
+        # ---- §4.5 ATTACK long tail (KA-22, ko#22): A-3 + A-4 legs ------------
+        #
+        # RED stub (watched RED, the KA-08.3/KA-13.1 pattern): the a-03 /
+        # a-04 category modules have NOT landed — the typed spine's
+        # empty defaults mean the composition assertions below THROW at
+        # evaluation with their named message while every older leg stays
+        # green through the SAME eval. GREEN lands the two category
+        # modules + the generator's exp-ledger extension + the
+        # regenerated manifest-ids artifact, and the SAME assertions pass
+        # through the SAME eval.
+        #
+        #   * a-03 (9 rows, 1 data-pack excluded, 3 safety:exp):
+        #     mcp-unsafe-deser-probe + mcpoison are exp — the §11.2
+        #     double-key gate owns them (NEVER a package-list surface);
+        #     poisoned-skill-pack is a status:data row (generator-
+        #     excluded, D7); the six remaining installable rows compose
+        #     through the packages overlay ?-guarded by id (overlay rows
+        #     land with their packaging wave — mcp-inspector, the §3.1
+        #     primary, is an o-07 row composed by the OPS module, not
+        #     duplicated here).
+        #   * a-04 (8 rows, none data, 1 exp): torch-load-poc is exp
+        #     (lab-gated); the seven safe rows compose through the
+        #     packages overlay ?-guarded (modelscan is the NATIVE row —
+        #     it binds the bare top-level nixpkgs attr, 0.8.8 at this
+        #     pin, probed).
+        a-03-options =
+          let
+            a3Host = (self.nixosConfigurations.kailash-minimal.extendModules {
+              modules = [ { kailash.layers.attack.categories.a-03.enable = true; } ];
+            });
+            a3PkgNames =
+              map (p: p.pname or (builtins.parseDrvName p.name).name)
+                a3Host.config.kailash.layers.attack.categories.a-03.packages;
+            a3Ledger = (builtins.fromJSON (builtins.readFile ./generated/manifest-ids.json))
+              .categories.a-03-agentic-mcp-tool-use;
+            require = cond: msg: if cond then true else throw msg;
+            # FORCED via the derivation attr below (toString coerces every
+            # element): a missing install set fails THIS check at EVAL with
+            # its named message — never a silent vacuous touch.
+            _evalProofs = [
+              (require (a3Ledger.exp == [ "mcp-unsafe-deser-probe" "mcpoison" ])
+                "a-03-options: the generator's exp ledger does not record exactly [mcp-unsafe-deser-probe, mcpoison] (KA-22 GREEN)")
+              (require (lib.elem "mcp-unsafe-deser-probe" a3Ledger.excluded) || lib.elem "mcpoison" a3Ledger.excluded
+                "a-03-options: the exp rows did not leave the installable set (KA-22 GREEN)")
+              (require (a3PkgNames != [ ])
+                "a-03-options: install set EMPTY — the a-03 category module has not landed (KA-22 GREEN)")
+              (require (!(lib.elem "mcp-unsafe-deser-probe" a3PkgNames) && !(lib.elem "mcpoison" a3PkgNames))
+                "a-03-options: a safety:exp row reached the a-03 package list — the §11.2 gate owns that surface (KA-22)")
+              (require (a3Ledger.installable == lib.subtractLists [ "mcp-unsafe-deser-probe" "mcpoison" ] a3Ledger.installable
+                  && !(lib.elem "poisoned-skill-pack" (a3Ledger.installable ++ a3Ledger.exp)))
+                "a-03-options: the data row poisoned-skill-pack leaked into the a-03 installable/exp ledgers (D7)")
+            ];
+          in
+          pkgs.runCommand "a-03-options"
+            {
+              proofs = toString _evalProofs;
+            }
+            ''
+              echo "a-03 install set (pnames): ${toString a3PkgNames}"
+              echo "a-03 exp ledger (lab-mode-gated, never installed): ${toString a3Ledger.exp}"
+              echo "a-03-options: ${toString (lib.length _evalProofs)} eval proofs passed [${toString _evalProofs}]"
+              touch $out
+            '';
+
+        a-04-options =
+          let
+            a4Host = (self.nixosConfigurations.kailash-minimal.extendModules {
+              modules = [ { kailash.layers.attack.categories.a-04.enable = true; } ];
+            });
+            a4PkgNames =
+              map (p: p.pname or (builtins.parseDrvName p.name).name)
+                a4Host.config.kailash.layers.attack.categories.a-04.packages;
+            a4Ledger = (builtins.fromJSON (builtins.readFile ./generated/manifest-ids.json))
+              .categories.a-04-model-supply-chain;
+            require = cond: msg: if cond then true else throw msg;
+            _evalProofs = [
+              (require (a4Ledger.exp == [ "torch-load-poc" ])
+                "a-04-options: the generator's exp ledger does not record exactly [torch-load-poc] (KA-22 GREEN)")
+              (require (!(lib.elem "torch-load-poc" a4Ledger.installable))
+                "a-04-options: the exp row torch-load-poc still rides the a-04 installable set (KA-22 GREEN)")
+              (require (a4PkgNames != [ ])
+                "a-04-options: install set EMPTY — the a-04 category module has not landed (KA-22 GREEN)")
+              (require (!(lib.elem "torch-load-poc" a4PkgNames))
+                "a-04-options: a safety:exp row reached the a-04 package list — the §11.2 gate owns that surface (KA-22)")
+              (require (lib.elem "modelscan" a4PkgNames)
+                "a-04-options: the a-04 category module did not bind the NATIVE modelscan row (KA-22 GREEN)")
+            ];
+          in
+          pkgs.runCommand "a-04-options"
+            {
+              proofs = toString _evalProofs;
+            }
+            ''
+              echo "a-04 install set (pnames): ${toString a4PkgNames}"
+              echo "a-04 exp ledger (lab-mode-gated, never installed): ${toString a4Ledger.exp}"
+              echo "a-04-options: ${toString (lib.length _evalProofs)} eval proofs passed [${toString _evalProofs}]"
+              touch $out
+            '';
       };
 
 
@@ -1827,6 +1926,23 @@ PY
         ];
       };
 
+      # §4.5 category-install fixtures (KA-22, ko#22): synthetic hosts with
+      # an ATTACK long-tail category ENABLED — the same not-a-product-
+      # profile pattern the kailash-a-01/02-enabled fixtures own (the A-3
+      # host carries exp-class manifest rows: the §11.2 routing keeps them
+      # OFF the package list entirely — the check leg rides the eval
+      # tripwire below; no labMode flip is involved in the fixture).
+      nixosConfigurations.kailash-a-03-enabled = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          {
+            networking.hostName = lib.mkForce "kailash-a-03-enabled";
+            kailash.layers.attack.categories.a-03.enable = true;
+          }
+        ];
+      };
+
       nixosConfigurations.kailash-d-04-enabled = nixpkgs.lib.nixosSystem {
         inherit system pkgs;
         modules = [
@@ -1847,6 +1963,17 @@ PY
             kailash.layers.defence.categories = lib.genAttrs
               [ "d-01" "d-02" "d-03" "d-04" "d-05" "d-06" "d-07" ]
               (_: { enable = true; });
+          }
+        ];
+      };
+
+      nixosConfigurations.kailash-a-04-enabled = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          {
+            networking.hostName = lib.mkForce "kailash-a-04-enabled";
+            kailash.layers.attack.categories.a-04.enable = true;
           }
         ];
       };
