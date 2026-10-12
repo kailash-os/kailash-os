@@ -1,0 +1,31 @@
+{
+  "_comment": "KA-28 (kailash-os#28): the derivation-level closure-name census counts per \u00a78.1 image target, committed snapshot. The eval-side budget leg (flake.nix images-size-census) re-derives the count and asserts equality \u2014 drift (a manifest merge or a pin bump adding/removing heavy rows) turns CI red until scripts/gen-image-census.sh regenerates this file in the same cycle. The heavy-token exclusion assertions (seclists / gnuradio / gqrx / hackrf-tools / sox / librosa / texlive + kailash-data|sdr-tools|wordlists prefixed rows) ride the same leg; the MASS budgets (MB numbers, images/kailash-images-table.nix) are enforced by the build-side images-budget legs against real closureInfo NarSize sums and are NOT carried here.",
+  "generatedBy": "scripts/gen-image-census.sh (the eval-side walker: images/closure-walk.nix)",
+  "system": "x86_64-linux",
+  "targets": {
+    "iso-full": {
+      "count": 20
+    },
+    "iso-headless-agent": {
+      "count": 20
+    },
+    "iso-minimal": {
+      "count": 20
+    },
+    "iso-redteam-ai": {
+      "count": 20
+    },
+    "qemu-full": {
+      "count": 20
+    },
+    "qemu-headless-agent": {
+      "count": 20
+    },
+    "qemu-minimal": {
+      "count": 20
+    },
+    "qemu-redteam-ai": {
+      "count": 20
+    }
+  }
+}
