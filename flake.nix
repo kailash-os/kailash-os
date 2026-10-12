@@ -764,6 +764,43 @@ PY
           touch $out
         '';
 
+        # ---- C-10 Runtime AppSec for AI (KA-07.4, ko#102) -----------------
+        #
+        # Same-shape leg off the O-1 options pattern: (1) the c-10 switch
+        # defaults FALSE on the CORE substrate (opt-in posture, the §4.5
+        # floor's nothing-enabled invariant); (2) the composition host —
+        # c-10 ENABLED on kailash-minimal — resolves a NON-EMPTY install
+        # set with the PRIMARY flagship mitmproxy present.
+        #
+        # Watched RED (KA-07.4): at the stub commit the c-10 module
+        # consumes NOTHING (an empty packages default), so assertion (2)
+        # fails while (1) stays green. GREEN: the module's reviewed
+        # binding table consumes the generated id list and both halves
+        # pass through the SAME eval path.
+        #
+        # The manifest surface (5 installable + 2 excluded data rows at
+        # this pin) is owned by the c-01-exemplar parity leg (generator
+        # emit vs the committed artifact, all categories) — this leg
+        # asserts the c-10 resolution only.
+        c-10-options = pkgs.runCommand
+          "c-10-options" { } ''
+          echo "--- c-10 category enable defaults FALSE on the CORE substrate"
+          test "${lib.boolToString self.nixosConfigurations.kailash-minimal.config.kailash.layers.classic.categories.c-10.enable}" = "false" \
+            || { echo "c-10 categories.enable is not FALSE-default"; exit 1; }
+          echo "--- c-10 enabled composition resolves a non-empty install set"
+          C10="${toString self.nixosConfigurations.kailash-c-10-enabled.config.kailash.layers.classic.categories.c-10.packages}"
+          echo "c-10 install set: ${lib.concatStringsSep " " (map (p: p.pname or (builtins.parseDrvName p.name).name) self.nixosConfigurations.kailash-c-10-enabled.config.kailash.layers.classic.categories.c-10.packages)}"
+          test -n "$C10" || { echo "c-10-options: the enabled c-10 category installs NOTHING (the module's install wiring is missing - the watched red)"; exit 1; }
+          echo "--- c-10 primary flagship mitmproxy present in the composed set"
+          C10NAMES="${lib.concatStringsSep " " (map (p: p.pname or (builtins.parseDrvName p.name).name) self.nixosConfigurations.kailash-c-10-enabled.config.kailash.layers.classic.categories.c-10.packages)}"
+          case " $C10NAMES " in
+            *" mitmproxy "*) ;;
+            *) { echo "c-10-options: mitmproxy (the c-10 PRIMARY flagship) missing from the install set; got: $C10NAMES"; exit 1; } ;;
+          esac
+          echo "c-10-options: OK"
+          touch $out
+        '';
+
         # ---- O-2 legs (KA-08.2) — same shape as the O-1 legs ----
         o-02-options = pkgs.runCommand
           "o-02-options" { } ''
@@ -963,6 +1000,14 @@ PY
         ];
       };
 
+
+      nixosConfigurations.kailash-c-10-enabled = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          { kailash.layers.classic.categories.c-10.enable = true; }
+        ];
+      };
       # The FULL profile host (KA-06.2, ko#97): the CORE floor + the four
       # shipped CLASSIC categories (c-01, c-02, c-04, c-06) — the §4.5
       # composition profile. Eval-gated (the classic-four-eval check
