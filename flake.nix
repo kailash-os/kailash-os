@@ -1089,6 +1089,105 @@ PY
         '';
 
 
+        # ---- DEFENCE legs (KA-24, kailash-os#24) ------------------------------
+        #
+        # The §4.5 DEFENCE category modules (D-1…D-7) land with this item.
+        # RED stub (watched RED): the modules/defence fold is EMPTY at this
+        # commit — the fixture hosts and the packages-surface proofs below
+        # THROW at evaluation with their named messages while every older
+        # leg stays green through the SAME eval. GREEN lands the seven
+        # category modules and the SAME assertions pass through the SAME
+        # eval (the KA-13.1 flip shape).
+        #
+        #   * defaults — every d-01…d-07 category enable is FALSE on the
+        #     CORE substrate (kailash-minimal): nothing on PATH until the
+        #     category switch is ON;
+        #   * enabled fixtures — the D-3/D-4 hosts resolve NON-EMPTY
+        #     install sets with the pinned flagships present:
+        #     d-03 → evaluate (huggingface-evaluate via
+        #     python3Packages.evaluate) + lm-eval (lm-eval-harness via
+        #     python3Packages.lm-eval, the KA-24 probe-receipt row);
+        #     d-04 → cosign, syft, grype, trivy, cyclonedx-cli, cdxgen
+        #     (bare nixpkgs) + model-signing (modelsign via
+        #     python3Packages.model-signing, the probe-receipt row);
+        #   * the all-categories fixture (d-01…d-07 ON simultaneously)
+        #     evaluates through the same spine — the seven config-only
+        #     mounts MERGE (the §4.5 tree contract) and its d-04 surface
+        #     carries cosign;
+        #   * the empty-surface categories (d-01, d-02, d-05, d-06, d-07 —
+        #     every installable row overlay-pending at this pin, the
+        #     binding tables name them per module header) assert the
+        #     OPT-IN posture BOTH directions: empty install sets are
+        #     CORRECT here — the rows return when their derivation lanes
+        #     land, and a row arriving DOES NOT flip these assertions.
+        # The evalProofs are FORCED via the derivation attr (toString
+        # coerces every element): a missing fixture or an empty flagged
+        # set fails THIS check at EVAL with its named message — never a
+        # silent vacuous touch.
+        defence-options =
+          let
+            require = cond: msg: if cond then true else throw msg;
+            catEnable = id:
+              self.nixosConfigurations.kailash-minimal.config.kailash.layers.defence.categories.${id}.enable;
+            hostOr = name: self.nixosConfigurations.${name} or null;
+            d03Host = hostOr "kailash-d-03-enabled";
+            d04Host = hostOr "kailash-d-04-enabled";
+            dAllHost = hostOr "kailash-defence-enabled";
+            namesOf = list:
+              map (p: p.pname or (builtins.parseDrvName p.name).name) list;
+            d03Names = namesOf d03Host.config.kailash.layers.defence.categories.d-03.packages;
+            d04Names = namesOf d04Host.config.kailash.layers.defence.categories.d-04.packages;
+            dAllNames = namesOf dAllHost.config.kailash.layers.defence.categories.d-04.packages;
+            _evalProofs = [
+              (require (d03Host != null)
+                "defence-options: the fixture host kailash-d-03-enabled is missing (its nixosConfigurations entry has not landed — KA-24 RED)")
+              (require (d04Host != null)
+                "defence-options: the fixture host kailash-d-04-enabled is missing (its nixosConfigurations entry has not landed — KA-24 RED)")
+              (require (dAllHost != null)
+                "defence-options: the fixture host kailash-defence-enabled is missing (its nixosConfigurations entry has not landed — KA-24 RED)")
+              (require (lib.all (id: !catEnable id)
+                [ "d-01" "d-02" "d-03" "d-04" "d-05" "d-06" "d-07" ])
+                "defence-options: a DEFENCE category enable is not FALSE-default on the CORE substrate")
+              (require (d03Names != [ ])
+                "defence-options: the enabled d-03 category installs NOTHING (the module's install wiring is missing — KA-24 GREEN)")
+              (require (lib.elem "evaluate" d03Names)
+                "defence-options: the enabled d-03 install set does not carry evaluate (huggingface-evaluate via python3Packages.evaluate)")
+              (require (lib.elem "lm-eval" d03Names)
+                "defence-options: the enabled d-03 install set does not carry lm-eval (lm-eval-harness via python3Packages.lm-eval)")
+              (require (d04Names != [ ])
+                "defence-options: the enabled d-04 category installs NOTHING (the module's install wiring is missing — KA-24 GREEN)")
+              (require (lib.elem "cosign" d04Names)
+                "defence-options: the enabled d-04 install set does not carry the cosign flagship")
+              (require (lib.elem "syft" d04Names)
+                "defence-options: the enabled d-04 install set does not carry syft")
+              (require (lib.elem "grype" d04Names)
+                "defence-options: the enabled d-04 install set does not carry grype")
+              (require (lib.elem "trivy" d04Names)
+                "defence-options: the enabled d-04 install set does not carry trivy")
+              (require (lib.elem "cyclonedx-cli" d04Names)
+                "defence-options: the enabled d-04 install set does not carry cyclonedx-cli")
+              (require (lib.elem "cdxgen" d04Names)
+                "defence-options: the enabled d-04 install set does not carry cdxgen")
+              (require (lib.elem "model-signing" d04Names)
+                "defence-options: the enabled d-04 install set does not carry model-signing (modelsign via python3Packages.model-signing)")
+              (require (lib.elem "cosign" dAllNames)
+                "defence-options: the all-categories fixture's d-04 surface does not carry cosign (the seven-module MERGE is not composing)")
+            ];
+          in
+          pkgs.runCommand "defence-options"
+            {
+              proofs = toString _evalProofs;
+            }
+            ''
+              echo "defence install sets (pnames):"
+              echo "  d-03: ${toString d03Names}"
+              echo "  d-04: ${toString d04Names}"
+              echo "  all:  ${toString dAllNames}"
+              echo "defence-options: ${toString (lib.length _evalProofs)} eval proofs passed [${toString _evalProofs}]"
+              touch $out
+            '';
+
+
         # ---- O-6 Docs & Authoring legs (KA-09.4) ------------------------------
         #
         # RED stub (watched RED): the o-06 category module has NOT landed —
@@ -1252,6 +1351,10 @@ PY
               o-03 = "ops";
               o-05 = "ops";
               o-06 = "ops";
+              # DEFENCE joins with KA-24 (os#24) — d-03 + d-04 (the
+              # categories whose install sets bind at the pin).
+              d-03 = "defence";
+              d-04 = "defence";
             };
             shells = (self.devShells or { }).${system} or { };
             devShellPkgs = layer: id:
@@ -1586,6 +1689,49 @@ PY
         ];
       };
 
+      # §4.5 DEFENCE category-install fixtures (KA-24, os#24): synthetic
+      # hosts with DEFENCE categories ENABLED — prove "enabling a test
+      # host installs without breaking eval" for the two categories whose
+      # install surfaces bind at the pin (d-03, d-04) and the
+      # all-categories MERGE (d-01…d-07 ON simultaneously — the seven
+      # config-only mounts compose through the same spine). The same
+      # not-a-product-profile pattern the kailash-a-01-enabled fixture
+      # owns; never product profiles.
+      nixosConfigurations.kailash-d-03-enabled = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          {
+            networking.hostName = lib.mkForce "kailash-d-03-enabled";
+            kailash.layers.defence.categories.d-03.enable = true;
+          }
+        ];
+      };
+
+      nixosConfigurations.kailash-d-04-enabled = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          {
+            networking.hostName = lib.mkForce "kailash-d-04-enabled";
+            kailash.layers.defence.categories.d-04.enable = true;
+          }
+        ];
+      };
+
+      nixosConfigurations.kailash-defence-enabled = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          {
+            networking.hostName = lib.mkForce "kailash-defence-enabled";
+            kailash.layers.defence.categories = lib.genAttrs
+              [ "d-01" "d-02" "d-03" "d-04" "d-05" "d-06" "d-07" ]
+              (_: { enable = true; });
+          }
+        ];
+      };
+
       # devShells per category with KA-09; images with the images wave;
 
       # ---- per-category devShells (KA-09.4, ko#113): `nix develop .#<category>` ---
@@ -1618,6 +1764,16 @@ PY
           o-03 = "ops";
           o-05 = "ops";
           o-06 = "ops";
+          # DEFENCE joins with KA-24 (os#24): the categories with
+          # install sets that BIND at the pin — d-03 (evaluate +
+          # lm-eval via python3Packages) and d-04 (cosign/syft/grype/
+          # trivy/cyclonedx-cli/cdxgen bare + model-signing via
+          # python3Packages.model-signing). The empty-surface
+          # categories (d-01, d-02, d-05, d-06, d-07 — every installable
+          # row overlay-pending at this pin) ship NO shell yet: a shell
+          # of zero packages is the lie the shipped map refuses.
+          d-03 = "defence";
+          d-04 = "defence";
         };
 
       # devShells with KA-09 (landed: KA-09.4); images with the images wave;      # remaining hosts (kailash-full etc.) land with their profile items.
