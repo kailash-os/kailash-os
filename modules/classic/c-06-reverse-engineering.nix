@@ -11,6 +11,12 @@
 #   * edb-debugger → pkgs.edb (the nixpkgs attr name);
 #   * bespoke rows through the packages overlay (peda, javasnoop,
 #     jd-gui, unipacker, pyinstaller-extractor at this pin);
+#   * angr → eval-resolves (python3Packages.angr) but the BUILD fails
+#     on x86_64 at this pin ("angr requires setuptools-rust to build" —
+#     the nixpkgs packaging's dep gap; hosted flake-check job
+#     114623996385): a named drop with the run evidence, the same rule
+#     as a broken mark — the row returns when the packaging gains the
+#     build dep;
 #   * pwndbg, smali → NOT at this pin (no nixpkgs attr, no overlay row
 #     yet): they drop through the bare guard and return when their
 #     derivation lanes land (the exemplar's guard rule);
@@ -26,24 +32,35 @@ let
   ids = (builtins.fromJSON (builtins.readFile ../../generated/manifest-ids.json))
     .categories.c-06-reverse-engineering.installable;
 
+  # Named drops WITH reasons (build-evidenced at this pin): angr's
+  # nixpkgs packaging lacks setuptools-rust. Same rule as broken-marked:
+  # the row returns when the packaging gains the build dep.
+  namedDrops = [
+    "angr"
+  ];
+
   attrFor = id:
     {
       "cstool" = pkgs.capstone or null;
-      "angr" = pkgs.python3Packages.angr or null;
       "qiling" = pkgs.python3Packages.qiling or null;
       "edb-debugger" = pkgs.edb or null;
     }."${id}" or (pkgs."${id}" or null);
 
-  # Bind → drop the null (missing-at-pin) AND the broken-marked rows
-  # (qiling at this pin); dedupe (cstool + capstone bind the SAME
-  # capstone derivation — one primary slot, one install).
+  # Bind → drop the null (missing-at-pin), the named drops (the
+  # build-evidenced list above), AND the broken-marked rows (qiling at
+  # this pin); dedupe (cstool + capstone bind the SAME capstone
+  # derivation — one primary slot, one install).
+  boundIds = lib.filter (id: !(lib.elem id namedDrops)) ids;
   installSet = lib.unique
-    (lib.filter (p: p != null && !(p.meta.broken or false)) (map attrFor ids));
+    (lib.filter
+      (p: p != null && !(p.meta.broken or false))
+      (map attrFor boundIds));
 in
 {
   config = {
-    # The manifest-driven install set (24 of the 26 rows at this pin;
-    # pwndbg + smali are bespoke-pending — the named drops).
+    # The manifest-driven install set (17 of the 26 ids at this pin:
+    # 7 overlay-pending drops, angr build-evidenced drop, qiling
+    # broken-marked drop, cstool+capstone dedupe to one derivation).
     kailash.layers.classic.categories.c-06.packages = installSet;
 
     environment.systemPackages = lib.mkIf cfg.enable cfg.packages;
