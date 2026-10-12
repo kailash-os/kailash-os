@@ -15,8 +15,17 @@
 {
   o-02-compute-serving-infrastructure = {
     native = [
+      [ "k3s" ]
+      [ "kind" ]
+      [ "minikube" ]
+      [ "nvidia-container-toolkit" ]
+      [ "podman" ]
+      [ "vllm" ]
     ];
     bespoke = [
+      { id = "kserve"; derivation = "pkgs/kserve/default.nix"; }
+      { id = "tgi"; derivation = "pkgs/tgi/default.nix"; }
+      { id = "torchserve"; derivation = "pkgs/torchserve/default.nix"; }
     ];
   };
 }
