@@ -19,5 +19,6 @@
     ./secrets-hygiene.nix
     ./hardening.nix
     ./agent-grants.nix
+    ./kailash-data.nix
   ];
 }
