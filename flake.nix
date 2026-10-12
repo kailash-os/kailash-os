@@ -710,14 +710,20 @@ PY
         # ---- §4.5 ATTACK category modules (KA-13.1, ko#103) ----------------
         #
         # The A-1/A-2 legs, the same shape as the c-01-exemplar / O-x legs:
-        # eval-only, no new builds. RED stub (this commit): the ATTACK fold
-        # (modules/attack/) imports NO category module yet, so the two
-        # enabled-fixture hosts resolve EMPTY categories — both legs print
-        # the empty-set failure and exit 1 (the watched red). GREEN (the
-        # same flip as the exemplar): modules/attack/a-01-ai-recon.nix +
-        # a-02-llm-prompt-injection.nix consume their generated installable
-        # id lists through probed binding tables and the SAME assertions
-        # pass through the SAME eval.
+        # eval-only, no new builds. RED→GREEN chain (watched in CI):
+        # the RED stub (7862ce8) carries the legs + fixtures with the
+        # ATTACK fold still empty — the enabled-fixture hosts resolve
+        # EMPTY categories and both legs print the empty-set failure and
+        # exit 1 (locally evidenced: both fixture evals render `[]` with
+        # the fold stub). GREEN (11204cc) mounts the two category
+        # modules and the SAME assertions pass through the SAME eval.
+        # Hosted record: the RED stub's own CI never ran standalone (a
+        # lane push-sequencing miss — the GREEN commit was already
+        # stacked when the push landed); CI evidence of the watched
+        # flip is the 11204cc run, where the a-02 leg FAILED on an
+        # unquoted render (exit 127) while a-01 passed the full
+        # non-empty assertion, and the eae564e run is all-green on both
+        # systems (runs 38207178583 → 38207722006).
         #
         #   * a-01 — enable defaults FALSE on the CORE substrate; an enabled
         #     a-01 host resolves a NON-EMPTY install set.
