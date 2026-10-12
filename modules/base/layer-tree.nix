@@ -11,6 +11,9 @@
 # member options merge across modules (mixin options like backends join
 # with enable + packages). The old freeform placeholder could not carry
 # nested typed options at all — the watched RED this spine replaced.
+# (KA-08.1 independently probed the same question and reached the same
+# shape: its submodule-with-freeform variant was superseded by this
+# per-id declared tree — the two lanes' eval contracts converge here.)
 #
 # The declared ids are the manifest's §3.6 census (manifest/categories.yaml,
 # single home of the id facts — the list mirrors the category ids, never
