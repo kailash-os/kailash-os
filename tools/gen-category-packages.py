@@ -188,9 +188,8 @@ def _emit_list(category, rows):
 
 
 def generate_category(tools, category):
-    """The category's native rows → {category: generated Nix text} (the
-    empty dict = nothing to emit). rows in manifest order per selection
-    (stable), emitted text deterministic."""
+    if category == "o-02-compute-serving-infrastructure":
+        return {}   # watched RED (KA-08.2): the o-02 emit is the GREEN
     rows = [t for t in _normalize_rows(tools) if (t.get("category") or "") == category]
     return {category: _emit_list(category, rows)} if rows else {}
 

@@ -419,6 +419,33 @@ open(sys.argv[2], "w", encoding="utf-8").write(chr(10).join(gen) + chr(10))
           python3 ${./tools/gen-category-packages.py} --self-test
           touch $out
         '';
+
+        # ---- O-2 legs (KA-08.2) — same shape as the O-1 legs ----
+        o-02-options = pkgs.runCommand
+          "o-02-options" { } ''
+          echo "--- o-02 category enable defaults FALSE on the CORE substrate"
+          test "${lib.boolToString self.nixosConfigurations.kailash-minimal.config.kailash.layers.ops.categories.o-02-compute-serving-infrastructure.enable}" = "false" \
+            || { echo "o-02 categories.enable is not FALSE-default"; exit 1; }
+          echo "o-02-options: OK"
+          touch $out
+        '';
+
+        o-02-generated-drift = pkgs.runCommand "o-02-generated-drift"
+          {
+            nativeBuildInputs = [ (pkgs.python3.withPackages (ps: [ ps.pyyaml ])) ];
+          } ''
+          python3 ${./tools/gen-category-packages.py} \
+            --manifest-file ${kailash-packages.outPath + "/manifest/tools.yaml"} \
+            --category o-02-compute-serving-infrastructure > gen-o-02.nix
+          GENERATED=${./modules/ops/generated/o-02-compute-serving-infrastructure.nix}
+          if ! cmp -s gen-o-02.nix "$GENERATED"; then
+            echo "o-02 generated list DRIFTED from the generator emit:"
+            diff -u "$GENERATED" gen-o-02.nix || true
+            exit 1
+          fi
+          echo "o-02-generated-drift: OK (generator == committed)"
+          touch $out
+        '';
       };
 
 

@@ -3,7 +3,7 @@
 # CORE substrate (profiles/minimal.nix) installs nothing from OPS until a
 # profile or host opts in (the §4.5 opt-in-by-default contract).
 #
-# KA-08.1 (ko#105): the O-1 category module (the DS stack native rows +
+# KA-08.1/08.2 (ko#105/#106): the O-1 + O-2 category modules (the DS stack native rows +
 # the bespoke overlay rows) + the mlflow SERVICE module (the
 # pairing-thesis target — enable defaults false, loopback bind default,
 # the lab-default unauth binding documented never defaulted — plan §9
@@ -15,5 +15,6 @@
   imports = [
     ./o-01-mlops-ml-engineering.nix
     ./mlflow-service.nix
+    ./o-02-compute-serving-infrastructure.nix
   ];
 }
