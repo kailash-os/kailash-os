@@ -105,6 +105,33 @@ $ nix run github:kailash-os/kailash-packages#kailash -- manifest validate
 manifest-wellformed: OK (32 category entries, 336 tools; primary slots: ATTACK 58, CLASSIC 141, DEFENCE 46, OPS 91; data-packs excluded from counts)
 ```
 
+### Images and ISOs (KA-28.0 shape decision)
+
+Pre-built artifacts ship with the `2026.01` train; until release assets
+exist, the flake above is the install surface. The deliverable shapes,
+in shipping priority
+([kailash-os#132](https://github.com/kailash-os/kailash-os/issues/132)):
+
+1. **QEMU/VM disk image — primary, Wave-6-first.** One
+   `nixos-generators` output per profile (`minimal` first); the artifact
+   the verification gates exercise ([KA-32](https://github.com/kailash-os/kailash-os/issues/32)
+   golden-image reproducibility, [KA-43](https://github.com/kailash-os/kailash-os/issues/43)
+   headless-agent boot polish).
+2. **Bootable ISO — secondary.** Installable targets and bare-metal
+   evaluation of the CLASSIC/ATTACK tooling; size budgets enforced per
+   format.
+3. **Container surfaces — tertiary.** Per-category nixos-container /
+   podman provisioning for the OPS service stack
+   ([KA-42](https://github.com/kailash-os/kailash-os/issues/42)).
+4. **The flake — always.** `github:kailash-os/kailash-os` as the
+   importable surface for composed profiles; never discontinued as
+   image artifacts ship.
+
+QEMU images and ISOs emit from the same profile eval (one source, two
+formats). Out of scope for the initial trains: cloud-image formats
+(AMI/export), PXE/netboot, ARM ISOs ([KA-36](https://github.com/kailash-os/kailash-os/issues/36)
+decides the aarch64 posture) and live-patch surfaces.
+
 ## Project Status:
 
 Contact [shain.singh@owasp.org](mailto:shain.singh@owasp.org) for more information.
