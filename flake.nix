@@ -404,8 +404,12 @@ open(sys.argv[2], "w", encoding="utf-8").write(chr(10).join(gen) + chr(10))
           touch $out
         '';
 
-        o-01-enabled-toplevel =
-          self.nixosConfigurations.kailash-o-01-enabled.config.system.build.toplevel;
+        #   * o-01-enabled-toplevel — REMOVED from checks by design: the
+        #     synthetic hosts (kailash-o-01-enabled, kailash-mlflow-enabled)
+        #     are nixosConfigurations only — `nix flake check` eval-checks
+        #     every nixosConfiguration, so "enabling a test host installs
+        #     without breaking eval" is proven by the eval gate itself;
+        #     their closures never enter a CI build (no check attr).
 
         # Generator self-test: the core's asserted contracts (row
         # selection, module/bespoke exclusion, the §11.2 exp refuse,
