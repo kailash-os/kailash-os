@@ -45,3 +45,8 @@ jobs:
       - name: Minimum closure evaluates (${{ matrix.system }})
         run: |
           nix eval .#nixosConfigurations.kailash-minimal.config.system.build.toplevel.drvPath
+      - name: Cachix (kailash) — push daemon
+        uses: cachix/cachix-action@v17
+        with:
+          name: kailash
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"

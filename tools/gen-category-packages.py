@@ -108,6 +108,14 @@ NATIVE_ATTRS = {
     "ruff": ["ruff"],                                           # 0.15.15
     "mypy": ["mypy"],                                           # 1.20.1
     "python313": ["python313"],                                 # 3.13.13
+    # o-03 native rows (KA-09.1, ko#110; probed nixpkgs e7439b6b —
+    # python 3.14 era: chromadb + txtai live in python3Packages only,
+    # no top-level attrs; pkgs.chroma is alecthomas' syntax highlighter,
+    # NOT the embedding database)
+    "chromadb": ["python3Packages", "chromadb"],
+    "qdrant": ["qdrant"],
+    "faiss": ["faiss"],
+    "txtai": ["python3Packages", "txtai"],
 }
 
 # statuses whose rows never reach a generated package list, with the
