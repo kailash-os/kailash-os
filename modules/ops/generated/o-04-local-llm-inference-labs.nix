@@ -1,0 +1,27 @@
+# GENERATED FILE — KA-08.x. DO NOT EDIT: regen with
+#   python3 tools/gen-category-packages.py --category o-04-local-llm-inference-labs
+# from the pinned packages manifest; the committed lists are
+# drift-checked every PR by the OS flake's category checks.
+#
+# Excluded at this pin (status → owner — never list entries):
+#   (none)
+#
+# PURE DATA on purpose: `native` carries pkgs attr PATHS —
+# the category module's resolver ?-guards every path (green
+# eval at revisions without the overlay or where a native attr
+# moves); `bespoke` carries the packages-overlay rows.
+{ ... }:
+
+{
+  o-04-local-llm-inference-labs = {
+    native = [
+      [ "llama.cpp" ]
+      [ "ollama" ]
+      [ "open-webui" ]
+    ];
+    bespoke = [
+      { id = "gguf-quantiser"; derivation = "pkgs/gguf-quantiser/default.nix"; }
+      { id = "text-generation-webui"; derivation = "pkgs/text-generation-webui/default.nix"; }
+    ];
+  };
+}

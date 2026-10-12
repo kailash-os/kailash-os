@@ -419,6 +419,41 @@ open(sys.argv[2], "w", encoding="utf-8").write(chr(10).join(gen) + chr(10))
           touch $out
         '';
 
+        # O-4 services leg (KA-09.3, ko#112). RED stub → GREEN: with the
+        # typed tree present but NO o-04 category module on the fold, an
+        # o-04-ON host (kailash-redteam-ai — the profile opts in via the
+        # §4.5 category switch) kept services.ollama at its upstream
+        # FALSE default — that was the watched RED. GREEN (the o-04
+        # module on the ops fold): the service wiring asserts through the
+        # SAME eval — ollama ON (the category switch is the opt-in), webui
+        # ON (default-with-category sibling toggle), loopback binds on
+        # both (the §11.2 posture recorded at the module), the webui
+        # environment pointed at the loopback Ollama API (the ko#112
+        # pairing), loadModels EMPTY (the module never auto-pulls — the
+        # tiny test model is an operator step, documented in the module
+        # header), and the off-host posture: an o-04-OFF host (CORE
+        # substrate) keeps BOTH services FALSE (opt-in by default).
+        o-04-services = pkgs.runCommand "o-04-services" { } ''
+          test "${toString self.nixosConfigurations.kailash-redteam-ai.config.services.ollama.enable}" = "1" \
+            || { echo "o-04 module missing: services.ollama.enable stays FALSE on an enabled o-04 host (KA-09.3 watched RED - modules/ops/o-04-local-llm-inference-labs.nix lands in the GREEN cycle, ko#112)"; exit 1; }
+          test "${toString self.nixosConfigurations.kailash-redteam-ai.config.services.open-webui.enable}" = "1" \
+            || { echo "webui toggle did not wire services.open-webui on the o-04 host"; exit 1; }
+          test "${self.nixosConfigurations.kailash-redteam-ai.config.services.ollama.host}" = "127.0.0.1" \
+            || { echo "ollama host is not the loopback default"; exit 1; }
+          test "${self.nixosConfigurations.kailash-redteam-ai.config.services.open-webui.host}" = "127.0.0.1" \
+            || { echo "open-webui host is not the loopback default"; exit 1; }
+          test "${self.nixosConfigurations.kailash-redteam-ai.config.services.open-webui.environment.OLLAMA_API_BASE_URL}" = "http://127.0.0.1:11434" \
+            || { echo "open-webui is not pointed at the loopback ollama API"; exit 1; }
+          test "${toString (builtins.length self.nixosConfigurations.kailash-redteam-ai.config.services.ollama.loadModels)}" = "0" \
+            || { echo "the o-04 module must NEVER auto-pull models (loadModels stays empty - the tiny model is an operator step)"; exit 1; }
+          test "${lib.boolToString self.nixosConfigurations.kailash-minimal.config.services.ollama.enable}" = "false" \
+            || { echo "o-04-OFF host must keep services.ollama off (opt-in by default)"; exit 1; }
+          test "${lib.boolToString self.nixosConfigurations.kailash-minimal.config.services.open-webui.enable}" = "false" \
+            || { echo "o-04-OFF host must keep services.open-webui off (opt-in by default)"; exit 1; }
+          echo "o-04-services: ollama+open-webui wired on the o-04-ON host (loopback, webui->loopback ollama, no auto-pull), both off on the CORE substrate"
+          touch $out
+        '';
+
         # ---- §4.5 OPS category modules (KA-08.1/08.2, ko#105/#106) ------
         #
         # Legs (eval-only, no new builds):
@@ -818,6 +853,64 @@ PY
               || { echo "no-auto-start posture: elasticsearch wrapper must be autoStart = false"; exit 1; }
             touch $out
           '';
+
+        # ---- §4.5 ATTACK category modules (KA-13.1, ko#103) ----------------
+        #
+        # The A-1/A-2 legs, the same shape as the c-01-exemplar / O-x legs:
+        # eval-only, no new builds. RED→GREEN chain (watched in CI):
+        # the RED stub (7862ce8) carries the legs + fixtures with the
+        # ATTACK fold still empty — the enabled-fixture hosts resolve
+        # EMPTY categories and both legs print the empty-set failure and
+        # exit 1 (locally evidenced: both fixture evals render `[]` with
+        # the fold stub). GREEN (11204cc) mounts the two category
+        # modules and the SAME assertions pass through the SAME eval.
+        # Hosted record: the RED stub's own CI never ran standalone (a
+        # lane push-sequencing miss — the GREEN commit was already
+        # stacked when the push landed); CI evidence of the watched
+        # flip is the 11204cc run, where the a-02 leg FAILED on an
+        # unquoted render (exit 127) while a-01 passed the full
+        # non-empty assertion, and the eae564e run is all-green on both
+        # systems (runs 38207178583 → 38207722006).
+        #
+        #   * a-01 — enable defaults FALSE on the CORE substrate; an enabled
+        #     a-01 host resolves a NON-EMPTY install set.
+        #   * a-02 — enable defaults FALSE; non-empty enabled install set;
+        #     the garak flagship (the pinned packages overlay at 7374e7a
+        #     probes it present — never assumed): the ko#103 acceptance
+        #     check (`nix build .#checks.x86_64-linux.a-02`).
+        #   * The garak VM probe (`garak --list-probes` in the VM) is
+        #     KA-13.2's wave (ko#104) — this item stays eval-surface.
+        #   * No ATTACK categories are enabled on any product profile here —
+        #     the redteam-ai profile keeps the flat attack.enable only;
+        #     per-category profile flips ride KA-13 closure.
+        a-01 = pkgs.runCommand "a-01-options" { } ''
+          echo "--- a-01 category enable defaults FALSE on the CORE substrate"
+          test "${lib.boolToString self.nixosConfigurations.kailash-minimal.config.kailash.layers.attack.categories.a-01.enable}" = "false" \
+            || { echo "a-01 categories.enable is not FALSE-default"; exit 1; }
+          echo "--- an enabled a-01 host resolves a NON-EMPTY install set"
+          A01PKGS="${toString self.nixosConfigurations.kailash-a-01-enabled.config.kailash.layers.attack.categories.a-01.packages}"
+          echo "a-01 install set: ${lib.concatStringsSep " " (map (p: p.pname or p.name) self.nixosConfigurations.kailash-a-01-enabled.config.kailash.layers.attack.categories.a-01.packages)}"
+          test -n "$A01PKGS" || { echo "a-01: the enabled a-01 category installs NOTHING (the module's install wiring is missing)"; exit 1; }
+          echo "a-01: OK"
+          touch $out
+        '';
+
+        a-02 = pkgs.runCommand "a-02-options" { } ''
+          echo "--- a-02 category enable defaults FALSE on the CORE substrate"
+          test "${lib.boolToString self.nixosConfigurations.kailash-minimal.config.kailash.layers.attack.categories.a-02.enable}" = "false" \
+            || { echo "a-02 categories.enable is not FALSE-default"; exit 1; }
+          echo "--- an enabled a-02 host resolves a NON-EMPTY install set with the garak flagship present"
+          A02PKGS="${toString self.nixosConfigurations.kailash-a-02-enabled.config.kailash.layers.attack.categories.a-02.packages}"
+          A02NAMES="${lib.concatStringsSep " " (map (p: p.pname or p.name) self.nixosConfigurations.kailash-a-02-enabled.config.kailash.layers.attack.categories.a-02.packages)}"
+          echo "a-02 install set: $A02NAMES"
+          test -n "$A02PKGS" || { echo "a-02: the enabled a-02 category installs NOTHING (the module's install wiring is missing)"; exit 1; }
+          case " $A02NAMES " in
+            *" garak "*) : ;;
+            *) echo "a-02: the garak flagship is missing from the enabled install set (the pinned packages overlay probes it present at 7374e7a)"; exit 1 ;;
+          esac
+          echo "a-02: OK"
+          touch $out
+        '';
       };
 
 
@@ -929,6 +1022,32 @@ PY
           {
             networking.hostName = lib.mkForce "kailash-mlflow-enabled";
             services.kailash.mlflow.enable = true;
+          }
+        ];
+      };
+
+      # §4.5 category-install fixtures (KA-13.1, ko#103): synthetic hosts
+      # with an ATTACK category ENABLED — prove "enabling a test host
+      # installs without breaking eval" for A-1 and A-2 (the same not-a-
+      # product-profile pattern the kailash-o-01-enabled fixture owns).
+      nixosConfigurations.kailash-a-01-enabled = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          {
+            networking.hostName = lib.mkForce "kailash-a-01-enabled";
+            kailash.layers.attack.categories.a-01.enable = true;
+          }
+        ];
+      };
+
+      nixosConfigurations.kailash-a-02-enabled = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          {
+            networking.hostName = lib.mkForce "kailash-a-02-enabled";
+            kailash.layers.attack.categories.a-02.enable = true;
           }
         ];
       };
