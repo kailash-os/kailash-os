@@ -37,6 +37,16 @@
         config = {
           allowUnfree = true;
           allowInsecurePredicate = p: true;  # pentest tooling posture (RedNix heritage)
+          # KA-08.3's O-5 SDK surface resolves python3Packages.tensorflow
+          # (2.21.0 at the current pin — marked broken on linux/darwin by
+          # the tensorflow-bin packaging at nixpkgs e7439b6b). The row is
+          # the manifest's ROUTED row (the binding table, probed); the
+          # handler keeps the derivation RESOLVABLE for the install set /
+          # devShell compositions until the upstream packaging heals,
+          # without widening anything else.
+          problems.handlers = {
+            tensorflow.broken = "warn";
+          };
         };
         # The packages overlay wires in when the overlay flake grows
         # overlays.default (packaging items); guarded so host evaluation
