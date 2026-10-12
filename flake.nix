@@ -617,6 +617,49 @@ PY
           touch $out
         '';
 
+        # ---- C-3 Web Application Assessment (KA-07.1, ko#99) ----------------
+        #
+        # The §4.5 category module for the tenth CLASSIC manifest category,
+        # mounted by modules/classic/c-03-web-application-assessment.nix on
+        # the same spine the exemplar defined. The leg:
+        #   * asserts the spine's §4.5 posture on THIS category: c-03
+        #     enable defaults FALSE on the CORE substrate (nothing on PATH
+        #     until the category switch is on — opt-in by default);
+        #   * the composition host (kailash-c-03-composition: the CORE
+        #     floor with c-03 enabled) must resolve a NON-EMPTY install
+        #     set AND carry the flagship — OWASP ZAP — on the composed
+        #     PATH (RED stub: the module consumes NOTHING yet — an empty
+        #     config — so the host installs nothing and both assertions
+        #     are the watched red);
+        #   * GREEN: the module's reviewed binding table resolves the
+        #     generated id list (generated/manifest-ids.json,
+        #     c-03-web-application-assessment — the c-01-exemplar leg owns
+        #     the artifact parity for ALL categories) and the SAME
+        #     assertions pass through the SAME eval.
+        #
+        # Watched RED (KA-07.1): with the stub module imported the host
+        # evaluates but installs NOTHING —
+        #   `c-03-options: the enabled c-03 category installs NOTHING`
+        #   / `c-03-options: the composed PATH is missing the flagship zap`
+        # — while every pre-existing leg stays green.
+        c-03-options = pkgs.runCommand "c-03-options" { } ''
+          echo "--- c-03 category enable defaults FALSE on the CORE substrate"
+          test "${lib.boolToString self.nixosConfigurations.kailash-minimal.config.kailash.layers.classic.categories.c-03.enable}" = "false" \
+            || { echo "c-03 categories.enable is not FALSE-default"; exit 1; }
+          PKGS="${toString self.nixosConfigurations.kailash-c-03-composition.config.kailash.layers.classic.categories.c-03.packages}"
+          echo "c-03 install set: ${lib.concatStringsSep " " (map (p: p.pname or p.name) self.nixosConfigurations.kailash-c-03-composition.config.kailash.layers.classic.categories.c-03.packages)}"
+          test -n "$PKGS" || { echo "c-03-options: the enabled c-03 category installs NOTHING (the module's install wiring is missing)"; exit 1; }
+          NAMES="${lib.concatStringsSep " " (map (p: p.pname or (builtins.parseDrvName p.name).name) self.nixosConfigurations.kailash-c-03-composition.config.environment.systemPackages)}"
+          for tool in zap burpsuite caido-desktop graphw00f; do
+            case " $NAMES " in
+              *" $tool "*) ;;
+              *) { echo "c-03-options: the composed PATH is missing the flagship $tool (the C-3 web assessment surface must compose)"; exit 1; } ;;
+            esac
+          done
+          echo "c-03-options: OK"
+          touch $out
+        '';
+
         # ---- O-2 legs (KA-08.2) — same shape as the O-1 legs ----
         o-02-options = pkgs.runCommand
           "o-02-options" { } ''
@@ -742,6 +785,19 @@ PY
         modules = [
           ./profiles/minimal.nix
           { kailash.layers.classic.categories.c-01.enable = true; }
+        ];
+      };
+
+      # The C-3 composition host (KA-07.1, ko#99): the CORE floor with C-3
+      # Web Application Assessment enabled. RED stub: the c-03 module
+      # installs nothing yet (the binding-table wiring lands GREEN), so
+      # the host carries an EMPTY c-03 install set and the c-03-options
+      # check's non-empty + flagship assertions are the watched red.
+      nixosConfigurations.kailash-c-03-composition = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          { kailash.layers.classic.categories.c-03.enable = true; }
         ];
       };
 
