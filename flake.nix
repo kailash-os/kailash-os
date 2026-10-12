@@ -436,7 +436,10 @@ open(sys.argv[2], "w", encoding="utf-8").write(chr(10).join(gen) + chr(10))
         #   * GREEN: the exemplar's install wiring consumes the generated
         #     artifact through its reviewed binding table and the same
         #     assertions pass through the SAME eval.
-        c-01-exemplar = pkgs.runCommand "c-01-exemplar" { } ''
+        c-01-exemplar = pkgs.runCommand "c-01-exemplar"
+          {
+            nativeBuildInputs = [ (pkgs.python3.withPackages (ps: [ ps.pyyaml ])) ];
+          } ''
           # (1) the generator gates itself
           python3 ${./tools/gen-categories.py} \
             --manifest-file ${kailash-packages.outPath + "/manifest/tools.yaml"} \
