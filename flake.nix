@@ -662,14 +662,16 @@ PY
 
         # ---- C-5 offline-credential + C-7 opt-in posture (KA-07.2, ko#100) -
         #
-        # RED stub (this commit): the c-05 category module CONSUMES
-        # NOTHING (modules/classic/c-05-password-offline-credential.nix
-        # mounts no config, the RED stub), so the enabled c-05
-        # composition here resolves an EMPTY install set and this leg
-        # fails on the non-empty + flagship assertions — the watched
-        # red, same shape as the c-01-exemplar leg. GREEN: the module's
-        # manifest-generated binding table fills the mount and the SAME
-        # assertions pass through the SAME eval (host composition).
+        # GREEN (this commit): the c-05 module's manifest-generated
+        # binding table fills the mount
+        # (modules/classic/c-05-password-offline-credential.nix) and the
+        # SAME assertions (non-empty set, hashcat present) pass through
+        # the SAME eval (host composition). The watched-red history: the
+        # RED stub commit landed the module consuming NOTHING — an
+        # enabled c-05 composition resolved an EMPTY install set and
+        # this leg failed on the non-empty assertion (the same shape as
+        # the c-01-exemplar red, ko#96); this commit flipped the verdict
+        # through one and the same eval.
         #
         # Wordlists posture (asserted as data below once the pack lane
         # lands): seclists is a manifest status:data row — the generator
