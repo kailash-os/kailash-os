@@ -1,42 +1,71 @@
-# The flat layers option tree (KA-17.1, os#114; plan §4.5 transitional).
+# The flat layers option tree (KA-17.1, os#114; plan §4.5) — the typed
+# spine the §4.5 category modules mount at (KA-08.x wave-6).
 #
-# The §4.5 category module contract grows a per-category option tree —
-# `kailash.layers.<layer>.categories.<id>.enable` with manifest-driven
-# package lists. The category modules land with Wave-5 module wiring; until
-# then the tree is the FLAT spine this module declares:
+# The load-bearing lib fact (eval-probed at this pin, twice): typed
+# per-category options CANNOT declare at
+# `kailash.layers.<layer>.categories.<id>` when `categories` is ANY
+# attrs-of-(submodule|anything) option — attrs types do not support
+# nested options, regardless of submoduleWith/freeformType members. The
+# shape that DOES evaluate the whole §4.5 contract:
 #
-#   kailash.layers.<layer>.enable          — layer-level switch
-#   kailash.layers.<layer>.categories      — freeform attrset placeholder
+#   * the LAYER option is a submoduleWith with a freeformType member —
+#     its typed member is the layer-level `enable`; `categories` is
+#     UNDECLARED and lands in the freeform remainder, so
+#   * category modules declare their typed options at the FULL path
+#     `kailash.layers.<layer>.categories.<id>.<member>` — those
+#     declarations evaluate (no attrs-typed middle segment), and
+#   * profiles still compose freeform entries
+#     (`kailash.layers.ops.categories.o-04.enable = true`) and read them
+#     back (redteam-ai's composition, KA-17.1) — the freeform member
+#     carries entries whose typed module has not landed.
 #
-# so profiles (redteam-ai today) compose NOW and the per-category modules
-# attach to the same path later without a contract change. Categories are
-# freeform (attrs of anything) so early per-category settings evaluate
-# instead of dying; the Wave-5 modules replace the placeholder with typed
-# options.
+#   kailash.layers.<layer>.enable          — typed, default false
+#   kailash.layers.<layer>.categories.<id>.enable|packages — typed per
+#     category module (KA-08.x/09.x), default false / [ ]
+#   kailash.layers.<layer>.categories.<anything-else> — freeform remainder
 { lib, ... }:
 
 let
-  layerNames = [ "classic" "attack" "defence" "ops" ];
+  layerNames = [
+    "classic"
+    "attack"
+    "defence"
+    "ops"
+  ];
+
+  layerType = lib.types.submoduleWith {
+    modules = [
+      {
+        options.enable = lib.mkOption {
+          type = lib.types.bool;
+          default = false;
+          description = ''
+            Enable this layer's tooling on this host (the layer-level
+            switch, KA-17.1). Per-category modules land typed at
+            layers.<layer>.categories.<id> (the §4.5 contract).
+          '';
+        };
+      }
+      # The freeform remainder: `categories` (and anything else under the
+      # layer) stays untyped HERE, so full-path per-category declarations
+      # from the category modules evaluate (an attrs-typed `categories`
+      # member would refuse nested options — the watched RED this spine
+      # shape replaced, KA-08.1; profiles compose freeform entries ahead
+      # of their typed modules).
+      {
+        _module.freeformType = lib.types.attrsOf lib.types.anything;
+      }
+    ];
+  };
 in
+
 {
-  options.kailash.layers = lib.genAttrs layerNames (layer: {
-    enable = lib.mkOption {
-      type = lib.types.bool;
-      default = false;
-      description = ''
-        Enable Layer ${lib.toUpper layer} tooling on this host. The flat
-        spine of the §4.5 option tree — per-category modules (Wave-5
-        wiring) attach under categories.<id> on the same path.
-      '';
-    };
-    categories = lib.mkOption {
-      type = lib.types.attrsOf lib.types.anything;
-      default = { };
-      description = ''
-        Per-category settings placeholder (freeform until the Wave-5 module
-        wiring lands typed per-category options on this path).
-      '';
-    };
+  options.kailash.layers = lib.genAttrs layerNames (layer: lib.mkOption {
+    type = layerType;
+    default = { };
+    description = ''
+      Layer ${lib.toUpper layer}: enable + the §4.5 per-category tree.
+    '';
   });
 
   config = { };

@@ -357,6 +357,64 @@ open(sys.argv[2], "w", encoding="utf-8").write(chr(10).join(gen) + chr(10))
             || { echo "kailash-minimal-hardened must keep kailash.labMode = false"; exit 1; }
           touch $out
         '';
+
+        # ---- §4.5 OPS category modules (KA-08.1/08.2, ko#105/#106) ------
+        #
+        # Legs (eval-only, no new builds):
+        #   * o-01-options / o-02-options — the §4.5 enable defaults are
+        #     FALSE on the CORE substrate (opt-in-by-default verified at
+        #     eval, not claimed) and the mlflow service enable defaults
+        #     FALSE.
+        #   * o-01-generated-drift — the committed generated package list
+        #     equals the manifest-driven generator emit at THIS revision's
+        #     pin: the generator runs against the vended kailash-packages
+        #     manifest (through the flake input — never a hand-copy),
+        #     output cmp'd against modules/ops/generated/o-01-*.nix. Drift
+        #     (a manifest row edit, a pin bump) red-flags the PR until the
+        #     list is regenerated in the same cycle.
+        #   * o-01-enabled-toplevel — a synthetic lab host (NOT a product
+        #     profile) with o-01 enabled evaluates to a toplevel —
+        #     "enabling a test host installs without breaking eval".
+        o-01-options = pkgs.runCommand
+          "o-01-options" { } ''
+          echo "--- o-01 category enable defaults FALSE on the CORE substrate"
+          test "${lib.boolToString self.nixosConfigurations.kailash-minimal.config.kailash.layers.ops.categories.o-01-mlops-ml-engineering.enable}" = "false" \
+            || { echo "o-01 categories.enable is not FALSE-default"; exit 1; }
+          echo "--- mlflow service enable defaults FALSE on the CORE substrate"
+          test "${lib.boolToString self.nixosConfigurations.kailash-minimal.config.services.kailash.mlflow.enable}" = "false" \
+            || { echo "services.kailash.mlflow.enable is not FALSE-default"; exit 1; }
+          echo "o-01-options: OK"
+          touch $out
+        '';
+
+        o-01-generated-drift = pkgs.runCommand "o-01-generated-drift"
+          {
+            nativeBuildInputs = [ (pkgs.python3.withPackages (ps: [ ps.pyyaml ])) ];
+          } ''
+          python3 ${./tools/gen-category-packages.py} \
+            --manifest-file ${kailash-packages.outPath + "/manifest/tools.yaml"} \
+            --category o-01-mlops-ml-engineering > gen-o-01.nix
+          GENERATED=${./modules/ops/generated/o-01-mlops-ml-engineering.nix}
+          if ! cmp -s gen-o-01.nix "$GENERATED"; then
+            echo "o-01 generated list DRIFTED from the generator emit:"
+            diff -u "$GENERATED" gen-o-01.nix || true
+            exit 1
+          fi
+          echo "o-01-generated-drift: OK (generator == committed)"
+          touch $out
+        '';
+
+        o-01-enabled-toplevel =
+          self.nixosConfigurations.kailash-o-01-enabled.config.system.build.toplevel;
+
+        # Generator self-test: the core's asserted contracts (row
+        # selection, module/bespoke exclusion, the §11.2 exp refuse,
+        # determinism). RED stub: the empty emit fails the selection case.
+        o-01-generator-self-test = pkgs.runCommand
+          "o-01-generator-self-test" { } ''
+          python3 ${./tools/gen-category-packages.py} --self-test
+          touch $out
+        '';
       };
 
 
@@ -400,6 +458,40 @@ open(sys.argv[2], "w", encoding="utf-8").write(chr(10).join(gen) + chr(10))
       nixosConfigurations.kailash-minimal-hardened = nixpkgs.lib.nixosSystem {
         inherit system pkgs;
         modules = [ ./profiles/minimal-hardened.nix ];
+      };
+
+      # §4.5 category-install fixture (KA-08.1, ko#105): a synthetic host
+      # with the O-1 category ENABLED — proves "enabling a test host
+      # installs without breaking eval" (the o-01-enabled-toplevel check
+      # drives its toplevel). NOT a product profile; consumed only by the
+      # checks (the fixture pattern the safety legs use).
+      nixosConfigurations.kailash-o-01-enabled = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          {
+            networking.hostName = lib.mkForce "kailash-o-01-enabled";
+            kailash.layers.ops.categories.o-01-mlops-ml-engineering.enable = true;
+          }
+        ];
+      };
+
+      # The mlflow SERVICE composed (KA-08.1): a synthetic host with
+      # services.kailash.mlflow ENABLED (loopback default port 5000) —
+      # EVAL-ONLY (no check leg, no CI build): nix flake check evaluates
+      # every nixosConfiguration, so this host proves the service module
+      # composes and produces the unit without building its closure; the
+      # unit + port assertions ride flake-eval and the PR's verbatim
+      # `nix eval` lines. NOT a product profile.
+      nixosConfigurations.kailash-mlflow-enabled = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          {
+            networking.hostName = lib.mkForce "kailash-mlflow-enabled";
+            services.kailash.mlflow.enable = true;
+          }
+        ];
       };
 
       # devShells per category with KA-09; images with the images wave;
