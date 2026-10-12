@@ -785,7 +785,6 @@ PY
             touch $out
           '';
 
-<<<<<<< HEAD
         # ---- §4.5 ATTACK category modules (KA-13.1, ko#103) ----------------
         #
         # The A-1/A-2 legs, the same shape as the c-01-exemplar / O-x legs:
@@ -844,8 +843,7 @@ PY
           touch $out
         '';
 
-=======
->>>>>>> 3b22f5d (feat(ops): KA-09.4 — GREEN 2: per-category devShells (nix develop .#<category>))
+
         # ---- O-6 Docs & Authoring legs (KA-09.4) ------------------------------
         #
         # RED stub (watched RED): the o-06 category module has NOT landed —
