@@ -1815,12 +1815,7 @@ PY
             };
             walk = import ./images/closure-walk.nix { inherit lib; };
             snapshot = builtins.fromJSON (builtins.readFile ./tests/images-census.json);
-            # KA-28 watched-RED bootstrap STUB: forces every target's live
-            # count to 0 so the eval-time require throws on the first
-            # target (iso-full: snapshot 20 != live 0). The assertions are
-            # identical; the GREEN commit restores the walker binding:
-            # countsByName = builtins.mapAttrs (_: tl: (walk tl).count) gen.toplevels;
-            countsByName = builtins.mapAttrs (_: _: 0) gen.toplevels;
+              countsByName = builtins.mapAttrs (_: tl: (walk tl).count) gen.toplevels;
             packTokenRe = "seclists|gnuradio|gqrx|hackrf|sox|librosa|texlive|kailash-data|sdr-tools|wordlists";
             heavyTokens = name:
               lib.filter
