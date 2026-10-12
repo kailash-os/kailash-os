@@ -942,6 +942,79 @@ PY
           touch $out
         '';
 
+        # ---- C-8 + C-9 typed surfaces (KA-07.3, ko#101) --------------------
+        #
+        # Same-shape §4.5 legs off the four-CLASSIC gates:
+        #   * c-08-options — enabled composition NON-EMPTY (RED stub: the
+        #     module mounts nothing → "installs NOTHING"), metasploit
+        #     PRESENT once the binding table binds (pkgs.metasploit
+        #     carries the whole msf* bin family) and the arsenal rows
+        #     (impacket, mimikatz, crackmapexec, covenant, empire,
+        #     bloodhound) ABSENT — the software-only exclusion holds at
+        #     every eval, not just in prose;
+        #   * c-09-options — enabled composition NON-EMPTY (RED stub
+        #     same shape) and the service-module rows (timesketch,
+        #     faraday, pwndoc-ng) ABSENT from the install set BY
+        #     CONSTRUCTION — they ship as service modules in a later
+        #     lane, never as package-list rows.
+        c-08-options =
+          let
+            c8Host = (self.nixosConfigurations.kailash-c-08-enabled.config
+              .kailash.layers.classic.categories.c-08);
+            c8Names = map (p: p.pname or (builtins.parseDrvName p.name).name) c8Host.packages;
+          in
+          pkgs.runCommand "c-08-options" { } ''
+            install_set="${toString c8Names}"
+            echo "c-08 install set: $install_set"
+            test -n "$install_set" \
+              || { echo "c-08-options: the enabled c-08 category installs NOTHING (the binding table is missing)"; exit 1; }
+            for expected in metasploit-framework weevely laudanum pspy unix-privesc-check; do
+              case " $install_set " in
+                *" $expected "*) : ;;
+                *) echo "c-08 install set missing $expected"; exit 1 ;;
+              esac
+            done
+            # Software-only exclusion (§3.7/§4.5): the arsenal rows never
+            # reach the install set — the manifest ledger never had them
+            # and the binding table cannot invent them.
+            for banned in impacket mimikatz crackmapexec covenant empire bloodhound; do
+              case " $install_set " in
+                *" $banned "*) { echo "c-08 arsenal exclusion VIOLATED: $banned in the install set"; exit 1; } ;;
+              esac
+            done
+            echo "c-08-options: OK (software-only posture verified at eval)"
+            touch $out
+          '';
+
+        c-09-options =
+          let
+            c9Host = (self.nixosConfigurations.kailash-c-09-enabled.config
+              .kailash.layers.classic.categories.c-09);
+            c9Names = map (p: p.pname or (builtins.parseDrvName p.name).name) c9Host.packages;
+          in
+          pkgs.runCommand "c-09-options" { } ''
+            install_set="${toString c9Names}"
+            echo "c-09 install set: $install_set"
+            test -n "$install_set" \
+              || { echo "c-09-options: the enabled c-09 category installs NOTHING (the binding table is missing)"; exit 1; }
+            for expected in autopsy sleuthkit volatility3 testdisk regripper chainsaw hayabusa dc3dd; do
+              case " $install_set " in
+                *" $expected "*) : ;;
+                *) echo "c-09 install set missing $expected"; exit 1 ;;
+              esac
+            done
+            # Service-module rows are ABSENT BY CONSTRUCTION: they ship
+            # as systemd service modules (later lane), never as
+            # package-list rows.
+            for service_row in timesketch faraday pwndoc-ng; do
+              case " $install_set " in
+                *" $service_row "*) { echo "c-09 service-module row $service_row must NOT be in the install set"; exit 1; } ;;
+              esac
+            done
+            echo "c-09-options: OK (service-module rows excluded by construction)"
+            touch $out
+          '';
+
         # ---- O-3 docker-wrapper stores (KA-09.2, ko#111, §5.4 Shape 3) -----
         #
         # Each declared backend id stands up ONE oci-containers container
@@ -1171,6 +1244,78 @@ PY
           touch $out
         '';
 
+        # ---- O-5 SDKs & Dev Env legs (KA-08.3, os#107) ------------------------
+        #
+        # RED stub (watched RED): the o-05 category module has NOT landed —
+        # config.kailash.layers.ops.categories.o-05.packages is the spine's
+        # empty default, so the composition assertions below THROW at
+        # evaluation with their named message (the KA-09.4 o-06 pattern)
+        # while every older leg stays green through the SAME eval. GREEN
+        # lands the module (the generated, manifest-driven install set)
+        # and the SAME assertions pass through the SAME eval. Routing:
+        # autogen (status: bespoke) reaches the set ONLY through the
+        # packages overlay (?-guarded by id); pytorch's Shape-4 -nvidia
+        # variant is NEVER here (the default torch is the cpu shape,
+        # kailash-os#108); no module/data rows exist in o-05 at this pin.
+        o-05-options =
+          let
+            o5Host = (self.nixosConfigurations.kailash-minimal.extendModules {
+              modules = [ { kailash.layers.ops.categories.o-05.enable = true; } ];
+            });
+            o5PkgNames =
+              map (p: p.pname or (builtins.parseDrvName p.name).name)
+                o5Host.config.kailash.layers.ops.categories.o-05.packages;
+            require = cond: msg: if cond then true else throw msg;
+            # FORCED via the derivation attr below (toString coerces every
+            # element): a missing install set fails THIS check at EVAL with
+            # its named message — never a silent vacuous touch.
+            _evalProofs = [
+              (require (o5PkgNames != [ ])
+                "o-05-options: install set EMPTY — the o-05 category module has not landed (KA-08.3 GREEN)")
+              (require (lib.elem "langchain" o5PkgNames)
+                "o-05-options: install set missing the langchain SDK (KA-08.3 GREEN)")
+              (require (lib.elem "langgraph" o5PkgNames)
+                "o-05-options: install set missing langgraph (KA-08.3 GREEN)")
+              (require (lib.elem "llama-index" o5PkgNames)
+                "o-05-options: install set missing llama-index (KA-08.3 GREEN)")
+              (require (lib.elem "torch" o5PkgNames)
+                "o-05-options: install set missing the torch non-GPU default (KA-08.3 GREEN)")
+            ];
+          in
+          pkgs.runCommand "o-05-options"
+            {
+              proofs = toString _evalProofs;
+            }
+            ''
+              echo "o-05 install set (pnames): ${toString o5PkgNames}"
+              echo "o-05-options: ${toString (lib.length _evalProofs)} eval proofs passed [${toString _evalProofs}]"
+              touch $out
+            '';
+
+        # The generated-list drift leg (mirror of o-01/o-02/o-06): the
+        # committed modules/ops/generated/o-05-*.nix must equal the
+        # generator's emit against the PINNED packages manifest through the
+        # flake input. RED stub: the committed emit does not exist yet —
+        # the path interpolation fails at eval ("path does not exist" =
+        # the watched red, the ka-09.2 posture-doc pattern). GREEN lands
+        # it and cmp passes.
+        o-05-generated-drift = pkgs.runCommand "o-05-generated-drift"
+          {
+            nativeBuildInputs = [ (pkgs.python3.withPackages (ps: [ ps.pyyaml ])) ];
+          } ''
+          python3 ${./tools/gen-category-packages.py} \
+            --manifest-file ${kailash-packages.outPath + "/manifest/tools.yaml"} \
+            --category o-05-ai-engineering-sdks-dev-env > gen-o-05.nix
+          GENERATED=${./modules/ops/generated/o-05-ai-engineering-sdks-dev-env.nix}
+          if ! cmp -s gen-o-05.nix "$GENERATED"; then
+            echo "o-05 generated list DRIFTED from the generator emit:"
+            diff -u "$GENERATED" gen-o-05.nix || true
+            exit 1
+          fi
+          echo "o-05-generated-drift: OK (generator == committed)"
+          touch $out
+        '';
+
         # ---- per-category devShells (KA-09.4: `nix develop .#<category>`) -----
         #
         # ONE shell per SHIPPED category: the category enabled on the CORE
@@ -1178,10 +1323,11 @@ PY
         # wiring) and the composed install set AS the shell packages.
         # Shipped = the categories whose modules carry install sets on
         # master: the four Wave-5 CLASSIC (c-01, c-02, c-04, c-06) + the OPS
-        # modules landed so far (o-01, o-02, o-03) + o-06 (this item).
-        # o-04 joins when KA-09.3's module lands its install set; o-05 /
-        # o-07 join with their wave items. RED stub: the devShells output
-        # does not exist yet — every id probe throws its named eval failure.
+        # modules landed so far (o-01, o-02, o-03) + o-06 (KA-09.4) + o-05
+        # (KA-08.3, os#107). o-04 joins when KA-09.3's module lands its
+        # install set; o-07 joins with its wave item. RED stub: the
+        # devShells output does not exist yet — every id probe throws its
+        # named eval failure.
         category-devshells =
           let
             shipped = {
@@ -1192,6 +1338,7 @@ PY
               o-01 = "ops";
               o-02 = "ops";
               o-03 = "ops";
+              o-05 = "ops";
               o-06 = "ops";
             };
             shells = (self.devShells or { }).${system} or { };
@@ -1217,6 +1364,10 @@ PY
                   "category-devshells: the o-06 devShell set does not carry typst (KA-09.4 GREEN)")
                 (require (lib.elem "nmap" (pnamesOf (devShellPkgs "classic" "c-01")))
                   "category-devshells: the c-01 devShell set does not carry nmap")
+                (require (lib.elem "langchain" (pnamesOf (devShellPkgs "ops" "o-05")))
+                  "category-devshells: the o-05 devShell set does not carry langchain (KA-08.3 GREEN)")
+                (require (lib.elem "torch" (pnamesOf (devShellPkgs "ops" "o-05")))
+                  "category-devshells: the o-05 devShell set does not carry the torch default (KA-08.3 GREEN)")
                 (require (pnamesOf (devShellPkgs "ops" "o-06") != [ ])
                   "category-devshells: the o-06 devShell install set is EMPTY (KA-09.4 GREEN)")
               ];
@@ -1460,6 +1611,31 @@ PY
         modules = [ ./profiles/minimal-hardened.nix ];
       };
 
+      # The §4.5 category-install fixtures for the KA-07.3 pair (ko#101):
+      # synthetic hosts with the C-8 / C-9 category ENABLED — the
+      # c-08-options / c-09-options legs ride them. NOT product profiles.
+      nixosConfigurations.kailash-c-08-enabled = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          {
+            networking.hostName = lib.mkForce "kailash-c-08-enabled";
+            kailash.layers.classic.categories.c-08.enable = true;
+          }
+        ];
+      };
+
+      nixosConfigurations.kailash-c-09-enabled = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          {
+            networking.hostName = lib.mkForce "kailash-c-09-enabled";
+            kailash.layers.classic.categories.c-09.enable = true;
+          }
+        ];
+      };
+
       # §4.5 category-install fixture (KA-08.1, ko#105): a synthetic host
       # with the O-1 category ENABLED — proves "enabling a test host
       # installs without breaking eval". NOT a product profile; the
@@ -1549,6 +1725,7 @@ PY
           o-01 = "ops";
           o-02 = "ops";
           o-03 = "ops";
+          o-05 = "ops";
           o-06 = "ops";
         };
 
