@@ -120,19 +120,23 @@ def _nix_attr_path(path):
 
 
 def _emit_list(category, rows):
-    """One generated Nix file per category: header + the native rows as
-    guarded attr expressions (the `?` guard keeps host evaluation green
-    at revisions/pins where an attr moves or the overlay is absent)."""
+    """One generated Nix file per category: header + the STRUCTURE the
+    category module resolves — native attr PATHS (strings; the module
+    ?-guards resolution, so the file stays pure data — valid at any pin)
+    and bespoke rows (id + manifest derivation path; resolved through the
+    packages overlay at the use site)."""
     native = [t for t in rows if (t.get("packaging") or {}).get("status") == "native"]
+    bespoke = [t for t in rows if (t.get("packaging") or {}).get("status") == "bespoke"]
     native.sort(key=lambda t: t.get("id") or "")
+    bespoke.sort(key=lambda t: t.get("id") or "")
     excluded = {}
     for t in rows:
         st = (t.get("packaging") or {}).get("status")
-        if st and st != "native":
+        if st and st not in ("native", "bespoke"):
             excluded.setdefault((st, STATUS_OWNER.get(st, "its own owner")), []).append(
-                t.get("id")
+                t.get("id") or ""
             )
-    exp_ids = sorted(t.get("id") for t in rows
+    exp_ids = sorted(t.get("id") or "" for t in rows
                      if (t.get("safety") or {}).get("level") == "exp")
     if exp_ids:
         print(
@@ -150,27 +154,45 @@ def _emit_list(category, rows):
     )
     lines.append("# from the pinned packages manifest; the committed lists are")
     lines.append("# drift-checked every PR by the OS flake's category checks.")
-    lines.append("# Excluded at this pin (never package-list entries): %s"
-                 % json.dumps(
-                     {"%s (%s)" % (st, owner): ids for (st, owner), ids in sorted(excluded.items())},
-                     sort_keys=True,
-                 ))
-    lines.append("{ lib, pkgs }:")
+    lines.append("#")
+    lines.append("# Excluded at this pin (status → owner — never list entries):")
+    if excluded:
+        for (st, owner), ids in sorted(excluded.items()):
+            lines.append("#   %-8s → %s: %s" % (st, owner, ", ".join(sorted(ids))))
+    else:
+        lines.append("#   (none)")
+    lines.append("#")
+    lines.append("# PURE DATA on purpose: `native` carries pkgs attr PATHS —")
+    lines.append("# the category module's resolver ?-guards every path (green")
+    lines.append("# eval at revisions without the overlay or where a native attr")
+    lines.append("# moves); `bespoke` carries the packages-overlay rows.")
+    lines.append("{ ... }:")
     lines.append("")
     lines.append("{")
-    lines.append("  %s = [" % category)
+    lines.append("  %s = {" % category)
+    lines.append("    native = [")
     for t in native:
-        attr = _nix_attr_path(NATIVE_ATTRS.get(t["id"], [t["id"]]))
-        lines.append("    (pkgs ? %s : %s)" % (attr, attr))
-    lines.append("  ];")
+        path = NATIVE_ATTRS.get(t["id"], [t["id"]])
+        lines.append("      [ %s ]" % " ".join('"%s"' % seg for seg in path))
+    lines.append("    ];")
+    lines.append("    bespoke = [")
+    for t in bespoke:
+        drv = (t.get("packaging") or {}).get("derivation")
+        lines.append(
+            '      { id = "%s"; derivation = "%s"; }' % (t["id"], drv or "")
+        )
+    lines.append("    ];")
+    lines.append("  };")
     lines.append("}")
     return "\n".join(lines) + "\n"
 
 
 def generate_category(tools, category):
-    return {}
+    """The category's native rows → {category: generated Nix text} (the
+    empty dict = nothing to emit). rows in manifest order per selection
+    (stable), emitted text deterministic."""
     rows = [t for t in _normalize_rows(tools) if (t.get("category") or "") == category]
-    return _emit_list(category, rows)
+    return {category: _emit_list(category, rows)} if rows else {}
 
 
 def load_tools(path):
@@ -210,19 +232,32 @@ def self_test() -> int:
             },
             {
                 "o-01-test": [
-                    "(pkgs ? pkgs.dvc : pkgs.dvc)",
+                    '"dvc"',
                 ]
             },
         ),
     ]
     for i, (doc, want) in enumerate(cases):
         got = generate_category(doc.get("tools") or [], list(want)[0])
-        assert got == want, f"case {i}: {got!r} != {want!r}"
+        cat = list(want)[0]
+        assert cat in got, f"case {i}: category {cat!r} missing from emit {list(got)!r}"
+        text = got[cat]
+        assert want[cat][0] in text, (
+            f"case {i}: {want[cat][0]!r} not in the emitted text"
+        )
+        # non-native ids never leak as list entries (attr lines only for
+        # the selected native rows); the exclusion header records the rest
+        body = text.split("= [", 1)[1].split("];", 1)[0]
+        for leaked in ("mlflow", "bentoml", "ollama"):
+            assert leaked not in body, f"case {i}: {leaked!r} leaked into the list"
+        assert "the row's own service module" in text, "exclusion header missing"
     # exp rows refuse selection in every shape
     for doc in (
-        {"tools": [{"id": "x", "packaging": {"status": "native"},
+        {"tools": [{"id": "x", "category": "o-01-test",
+                    "packaging": {"status": "native"},
                     "safety": {"level": "exp"}}]},
-        {"tools": [{"x": {"packaging": {"status": "native"},
+        {"tools": [{"x": {"category": "o-01-test",
+                          "packaging": {"status": "native"},
                           "safety": {"level": "exp"}}}]},
     ):
         try:

@@ -1,94 +1,90 @@
 # Layer OPS — O-1 MLOps & ML Engineering Suite (KA-08.1, ko#105; plan §3.5,
-# §9 Phase 3). The §4.5 category-module shape — the same contract the
-# wave-5/6 category modules mount at:
+# §9 Phase 3). The §4.5 category module, config-only on the §3.6 typed
+# spine (modules/base/layer-tree.nix — the per-id option-decl tree; the
+# same mount the exemplar modules/classic/c-01-information-gathering.nix
+# defines). The spine owns enable + packages at
+# kailash.layers.ops.categories.o-01 (the SHORT manifest id — the tree
+# keys categories by the §3.6 census ids; the module FILE keeps the
+# manifest's long id); this module declares NOTHING there — it consumes
+# the spine members:
 #
-#   options.kailash.layers.ops.categories.o-01-mlops-ml-engineering = {
-#     enable   — the category switch (default OFF; profiles opt in);
-#     packages — the generated, manifest-driven install set (hosts append;
-#                never redefine);
-#   };
-#   config (mkIf enable) installs it.
+#   enable   — the category switch (spine default false; profiles opt
+#              in): the O-1 MLOps and ML Engineering category — the
+#              versioning/CLI tooling and the DS stack (dvc, git-lfs,
+#              wandb, pandas, polars, scikit-learn, numpy, scipy,
+#              xgboost, lightgbm; the bespoke overlay rows when the
+#              packages overlay is composed). MLflow is NOT in this
+#              package set — it ships as the service module
+#              (services.kailash.mlflow). Nothing installs until enabled
+#              (§4.5 opt-in by default).
+#   packages — the generated, manifest-driven install set
+#              (config-assigned below; hosts compose/append on the spine
+#              option — never redefine).
 #
-# DATA CONTRACT: the default package list is GENERATED from the pinned
-# packages manifest (manifest/tools.yaml) — never hand-edited. The
-# generator (tools/gen-category-packages.py in kailash-packages) selects
-# the category's manifest rows: safety.level == "exp" rows never reach a
-# package list (the §11.2 double-key gate owns exp routing); module-status
-# rows never reach a package list (the row's own service module owns them
-# — mlflow → services.kailash.mlflow); native rows resolve on the pinned
-# nixpkgs (attr divergence recorded per row in the generated-file header)
-# and form the committed list in modules/ops/generated/; bespoke rows
-# (bentoml, feast, kedro, kedro-datasets) resolve through the packages
-# overlay the OS flake composes, guarded by `?` so host evaluation stays
-# green at revisions without it.
+# DATA CONTRACT: the default package list is GENERATED (§4.5 — the
+# manifest is the only hand-maintained registry). The generator
+# (tools/gen-category-packages.py, mirror-paired with kailash-packages)
+# selects the category's manifest rows and emits their STRUCTURE:
 #
-# The generator emit is drift-checked every PR by the root flake's
-# checks.o-01-options (generator run against the pinned manifest ==
-# committed list). The manifest stays the only hand-maintained registry
-# (§4.5).
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}:
+#   * native rows  → pkgs attr PATHS in the generated file; THIS module
+#     resolves them ?-guarded against its own pkgs, so host evaluation
+#     stays green at revisions/pins where an attr moves (divergence —
+#     wandb-cli → python3Packages.wandb at this pin — lives in the
+#     generator's NATIVE_ATTRS table, probed per pin, never assumed);
+#   * bespoke rows → emitted WITH their manifest derivation paths;
+#     resolved here by id through the packages overlay (the OS flake
+#     composes it when kailash-packages ships overlays.default), guarded
+#     ?-by-id so revisions without the overlay evaluate the native subset;
+#   * module rows  → NEVER here (the row's own service module owns them —
+#     mlflow ships as services.kailash.mlflow, ./mlflow-service.nix);
+#   * safety.level == "exp" rows → NEVER in any package list (§11.2 — the
+#     double-key gate owns exp routing; the generator refuses to emit
+#     them).
+#
+# The committed files under modules/ops/generated/ are pure generator
+# emit, drift-checked EVERY PR by checks.o-01-generated-drift (generator
+# run against the PINNED manifest through the flake input == committed ||
+# red).
+{ config, lib, pkgs, ... }:
 
 let
-  cfg = config.kailash.layers.ops.categories.o-01-mlops-ml-engineering;
+  cfg = config.kailash.layers.ops.categories.o-01;
 
-  # Generated native-row list (modules/ops/generated/, the eval-side
-  # source — the CI drift gate proves generator == committed).
-  o-01-generated =
+  # The generator's committed emit = pure structure (no package attrs).
+  generated =
     (import ./generated/o-01-mlops-ml-engineering.nix {
-      inherit lib pkgs;
+      inherit lib;
     }).o-01-mlops-ml-engineering;
 
-  # §4.5 bespoke rows resolve through the packages overlay, guarded: at
-  # revisions without the overlay the category evaluates with the native
-  # subset (the §4.5 cross-repo rule — the OS flake composes the overlay
-  # when kailash-packages ships overlays.default).
-  bespokePackages = lib.flatten (
-    lib.optionals (pkgs ? bentoml) (
-      [
-        pkgs.bentoml
-        pkgs.feast
-        pkgs.kedro
-      ]
-      ++ lib.optionals (pkgs ? "kedro-datasets") [ pkgs."kedro-datasets" ]
-    )
-  );
+  # Resolver, §4.5: every attr path ?-guarded (green eval at revisions
+  # where the overlay is absent or a native attr moves).
+  resolveNative = path:
+    if lib.attrByPath path null pkgs != null then [ (lib.getAttrFromPath path pkgs) ] else [ ];
+  resolveBespoke = row:
+    if lib.attrByPath [ row.id ] null pkgs != null
+    then [ (lib.getAttrFromPath [ row.id ] pkgs) ]
+    else [ ];
 
-  # The bespoke rows ride the option DEFAULT (the §4.5 merge contract:
-  # hosts append via the typed option, never a config-assignment into the
-  # freeform-carried tree — a mkIf self-assignment of cfg.packages would
-  # re-enter the layers merge mid-collection).
-  o-01-packages = o-01-generated ++ bespokePackages;
+  # The manifest-driven install set = the generated rows resolved.
+  # Hosts compose/append on the spine option; never redefine — and never
+  # a config-assignment of cfg.packages back into the tree (a mkIf
+  # self-assignment re-enters the layers merge mid-collection,
+  # eval-probed at this pin).
+  installSet = lib.flatten
+    (map resolveNative generated.native ++ map resolveBespoke generated.bespoke);
 in
 {
-  options.kailash.layers.ops.categories.o-01-mlops-ml-engineering = {
-    enable = lib.mkEnableOption ''
-      the O-1 MLOps and ML Engineering category (KA-08.1): the
-      versioning/CLI tooling and the DS stack (dvc, git-lfs, wandb, pandas,
-      polars, scikit-learn, numpy, scipy, xgboost, lightgbm). MLflow is NOT
-      in this package set — it ships as the service module
-      (services.kailash.mlflow). Nothing installs until enabled (§4.5
-      opt-in by default)
-    '';
+  config = {
+    # The manifest-driven install set (10 native rows resolved on the
+    # pinned nixpkgs + the bespoke overlay rows when the overlay is
+    # composed; the generator + drift check own the regeneration).
+    kailash.layers.ops.categories.o-01.packages = installSet;
 
-    packages = lib.mkOption {
-      type = lib.types.listOf lib.types.package;
-      default = o-01-packages;
-      defaultText = lib.literalExpression "o-01-generated ++ bespoke overlay rows — modules/ops/generated (manifest-driven)";
-      description = ''
-        The O-1 category install set: generated from the pinned manifest
-        (§4.5 — the manifest is the only hand-maintained registry); native
-        rows resolve on the pinned nixpkgs, bespoke rows through the
-        packages overlay. Hosts append; never redefine.
-      '';
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
-    environment.systemPackages = cfg.packages;
+    # The §4.5 install config: nothing on PATH until the category switch
+    # is ON — opt-in by default. MLflow is NOT in this set — it ships as
+    # the service module (services.kailash.mlflow); exp-class rows are
+    # absent from the tree by construction (the lab-mode gate owns that
+    # surface).
+    environment.systemPackages = lib.mkIf cfg.enable cfg.packages;
   };
 }
