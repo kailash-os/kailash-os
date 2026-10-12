@@ -80,6 +80,14 @@ NATIVE_ATTRS = {
     "kind": ["kind"],
     "podman": ["podman"],
     "nvidia-container-toolkit": ["nvidia-container-toolkit"],
+    # o-03 native rows (KA-09.1, ko#110; probed nixpkgs e7439b6b —
+    # python 3.14 era: chromadb + txtai live in python3Packages only,
+    # no top-level attrs; pkgs.chroma is alecthomas' syntax highlighter,
+    # NOT the embedding database)
+    "chromadb": ["python3Packages", "chromadb"],
+    "qdrant": ["qdrant"],
+    "faiss": ["faiss"],
+    "txtai": ["python3Packages", "txtai"],
 }
 
 # statuses whose rows never reach a generated package list, with the
