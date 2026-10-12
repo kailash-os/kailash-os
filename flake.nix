@@ -415,7 +415,10 @@ open(sys.argv[2], "w", encoding="utf-8").write(chr(10).join(gen) + chr(10))
         # selection, module/bespoke exclusion, the §11.2 exp refuse,
         # determinism). RED stub: the empty emit fails the selection case.
         o-01-generator-self-test = pkgs.runCommand
-          "o-01-generator-self-test" { } ''
+          "o-01-generator-self-test"
+          {
+            nativeBuildInputs = [ (pkgs.python3.withPackages (ps: [ ps.pyyaml ])) ];
+          } ''
           python3 ${./tools/gen-category-packages.py} --self-test
           touch $out
         '';
