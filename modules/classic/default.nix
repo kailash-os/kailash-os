@@ -14,5 +14,7 @@
     ./c-07-signal-sdr.nix
     ./c-05-password-offline-credential.nix
     ./c-10-runtime-appsec-ai.nix
+    ./c-08-exploitation-post-exploitation.nix
+    ./c-09-forensics-ir-reporting.nix
   ];
 }
