@@ -15,6 +15,7 @@
   imports = [
     ./o-01-mlops-ml-engineering.nix
     ./o-03-vector-stores-retrieval.nix
+    ./o-04-local-llm-inference-labs.nix
     ./mlflow-service.nix
     ./o-02-compute-serving-infrastructure.nix
   ];

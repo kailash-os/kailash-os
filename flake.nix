@@ -419,19 +419,38 @@ open(sys.argv[2], "w", encoding="utf-8").write(chr(10).join(gen) + chr(10))
           touch $out
         '';
 
-        # O-4 services leg (KA-09.3, ko#112). RED stub (watched RED →
-        # GREEN): with the typed tree present but NO o-04 category module
-        # on the fold, an o-04-ON host (kailash-redteam-ai — the profile
-        # opts in via the §4.5 category switch) keeps services.ollama at
-        # its upstream FALSE default - this assertion evaluates that FALSE
-        # and fails. GREEN: the o-04 module wires services.ollama
-        # (mkIf cfg.enable) and this leg passes; the leg then extends with
-        # the loopback/opt-in/webui wiring assertions. (The o-02 pattern
-        # leg o-04-options above owns the typed-tree enable assertion;
-        # this one owns the SERVICE wiring.)
+        # O-4 services leg (KA-09.3, ko#112). RED stub → GREEN: with the
+        # typed tree present but NO o-04 category module on the fold, an
+        # o-04-ON host (kailash-redteam-ai — the profile opts in via the
+        # §4.5 category switch) kept services.ollama at its upstream
+        # FALSE default — that was the watched RED. GREEN (the o-04
+        # module on the ops fold): the service wiring asserts through the
+        # SAME eval — ollama ON (the category switch is the opt-in), webui
+        # ON (default-with-category sibling toggle), loopback binds on
+        # both (the §11.2 posture recorded at the module), the webui
+        # environment pointed at the loopback Ollama API (the ko#112
+        # pairing), loadModels EMPTY (the module never auto-pulls — the
+        # tiny test model is an operator step, documented in the module
+        # header), and the off-host posture: an o-04-OFF host (CORE
+        # substrate) keeps BOTH services FALSE (opt-in by default).
         o-04-services = pkgs.runCommand "o-04-services" { } ''
           test "${toString self.nixosConfigurations.kailash-redteam-ai.config.services.ollama.enable}" = "1" \
             || { echo "o-04 module missing: services.ollama.enable stays FALSE on an enabled o-04 host (KA-09.3 watched RED - modules/ops/o-04-local-llm-inference-labs.nix lands in the GREEN cycle, ko#112)"; exit 1; }
+          test "${toString self.nixosConfigurations.kailash-redteam-ai.config.services.open-webui.enable}" = "1" \
+            || { echo "webui toggle did not wire services.open-webui on the o-04 host"; exit 1; }
+          test "${self.nixosConfigurations.kailash-redteam-ai.config.services.ollama.host}" = "127.0.0.1" \
+            || { echo "ollama host is not the loopback default"; exit 1; }
+          test "${self.nixosConfigurations.kailash-redteam-ai.config.services.open-webui.host}" = "127.0.0.1" \
+            || { echo "open-webui host is not the loopback default"; exit 1; }
+          test "${self.nixosConfigurations.kailash-redteam-ai.config.services.open-webui.environment.OLLAMA_API_BASE_URL}" = "http://127.0.0.1:11434" \
+            || { echo "open-webui is not pointed at the loopback ollama API"; exit 1; }
+          test "${toString (builtins.length self.nixosConfigurations.kailash-redteam-ai.config.services.ollama.loadModels)}" = "0" \
+            || { echo "the o-04 module must NEVER auto-pull models (loadModels stays empty - the tiny model is an operator step)"; exit 1; }
+          test "${lib.boolToString self.nixosConfigurations.kailash-minimal.config.services.ollama.enable}" = "false" \
+            || { echo "o-04-OFF host must keep services.ollama off (opt-in by default)"; exit 1; }
+          test "${lib.boolToString self.nixosConfigurations.kailash-minimal.config.services.open-webui.enable}" = "false" \
+            || { echo "o-04-OFF host must keep services.open-webui off (opt-in by default)"; exit 1; }
+          echo "o-04-services: ollama+open-webui wired on the o-04-ON host (loopback, webui->loopback ollama, no auto-pull), both off on the CORE substrate"
           touch $out
         '';
 
