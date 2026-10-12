@@ -633,6 +633,94 @@ PY
           touch $out
         '';
 
+        # ---- VM smoke contract (KA-06.3, ko#98) ----------------------------
+        #
+        # The eval-side watchdog binding the booted suite (vmTests,
+        # tests/c-01.nix etc.) to the §4.5 module options:
+        #   * per category: the vmTests tables' PATH rows must equal the
+        #     module option's install set compiled through the shared
+        #     ledger (tests/vm-smoke-tables.nix pathNameForPname — the
+        #     probed-at-pin manifest id → derivation-name map;
+        #     binAliases + helpExceptions documented rows ride the same
+        #     ledger);
+        #   * non-empty per category + flagship presence by NAME at the
+        #     option level (nmap, sqlmap, nikto, ghidra — ko#98's
+        #     anchors; boot legs assert the VM PATH form).
+        #   * full-profile boot host eval (kailash-vm-full, the vmTests
+        #     suite's boot target) resolves non-empty and carries the
+        #     nmap row.
+        # Watched RED (the bootstrap): with the bootstrap STUB (the
+        # tables file emitting empty sets) the (2) diffs failed loudly —
+        # every category printed `tables != eval-side` with both sides —
+        # and the kailash-vm-full host did not exist yet (the (1) eval
+        # failed). The RED commit message carries that output verbatim.
+        # VM reality (ko#98): hosted CI cannot BOOT (no KVM) and the
+        # lane box cannot build x86_64-linux — this leg is the
+        # always-run proof; the boots run on a Linux VM host per
+        # tests/README.md (PENDING-VM posture recorded on the issue).
+        classic-vm-smoke-contract =
+          let
+            tables = import ./tests/vm-smoke-tables.nix { inherit lib; };
+
+            # One SIDE per category, as a sorted, joined PATH-name row
+            # string (diff-friendly; Nix attr iteration is name-sorted).
+            # Eval side: the §4.5 module option's install set compiled
+            # through pathNameForPname (probed-at-pin id map; a pname
+            # whose binding moved REDs here — the exact watched drift).
+            evalSide = cat:
+              lib.sort (a: b: a < b) (lib.unique (lib.concatMap
+                (p:
+                  let
+                    n = p.pname or (builtins.parseDrvName p.name).name;
+                  in
+                    tables.pathNameForPname.${n} or [ n ])
+                self.nixosConfigurations.kailash-full.config.kailash.layers.classic.categories.${cat}.packages));
+            tablesSide = cat: lib.sort (a: b: a < b) tables.pathNames.${cat};
+            joined = rows: lib.concatStringsSep "," rows;
+          in
+          pkgs.runCommand "classic-vm-smoke-contract"
+            {
+              nativeBuildInputs = [ pkgs.bash ];
+            } ''
+            # (1) the profile host AND the boot-suite host (kailash-vm-full,
+            # the vmTests legs' boot target — every one of its nodes
+            # imports the same profiles/full.nix) evaluate with all four
+            # categories enabled
+            ${lib.concatStringsSep "\n" (map (host: ''
+            ${lib.concatStringsSep "\n" (map (cat: ''
+            test "${toString self.nixosConfigurations.${host}.config.kailash.layers.classic.categories.${cat}.enable}" = "1" \
+              || { echo "${host}: ${cat} not enabled (the boot suite's host drifted from profiles/full.nix)"; exit 1; }
+          '') [ "c-01" "c-02" "c-04" "c-06" ])}
+          '') [ "kailash-full" "kailash-vm-full" ])}
+
+            # (2) the vmTests PATH tables == the module options (through
+            # the shared ledger; both sides baked at eval — the same
+            # tables the boot legs consume)
+            ${lib.concatStringsSep "\n" (map (cat: ''
+            if test "${joined (evalSide cat)}" = "${joined (tablesSide cat)}"; then
+              echo "${cat}: tables == eval-side (${toString (lib.length (tablesSide cat))} rows)"
+            else
+              echo "${cat}: vm-smoke tables != eval-side (binding-table or ledger drift):"
+              echo "  eval-side: ${joined (evalSide cat)}"
+              echo "  tables   : ${joined (tablesSide cat)}"
+              exit 1
+            fi
+          '') [ "c-01" "c-02" "c-04" "c-06" ])}
+
+            # (3) flagships resolve BY NAME at the option level (nmap,
+            # sqlmap, nikto, ghidra — ko#98's anchors; the boot legs
+            # assert the VM PATH form).
+            ${lib.concatStringsSep "\n" (lib.mapAttrsToList (cat: flags: ''
+            CAT_NAMES="${lib.concatStringsSep " " (map (p: p.pname or (builtins.parseDrvName p.name).name) self.nixosConfigurations.kailash-full.config.kailash.layers.classic.categories.${cat}.packages)}"
+            ${lib.concatStringsSep "\n" (map (flag: ''
+            case " $CAT_NAMES " in *" ${flag} "*) ;; *) echo "${cat}: flagship ${flag} missing from the option set"; exit 1;; esac
+          '') flags)}
+          '') tables.flagshipCmds)}
+
+            echo "classic-vm-smoke-contract: OK (tables == module options, boot host = full profile, flagships resolve)"
+            touch $out
+          '';
+
         # ---- The four CLASSIC modules together (KA-06.2, ko#97) -----------
         #
         # The full-profile composition gate: with NOTHING enabled the
@@ -1596,6 +1684,27 @@ PY
         modules = [ ./profiles/full.nix ];
       };
 
+      # The VM smoke suite's boot host (KA-06.3, ko#98): the full
+      # profile + qemu-vm.nix (the `nixos-rebuild build-vm` module —
+      # provides the virtualisation.* options and the build.vm runner;
+      # its fileSystems mkVMoverride supersedes minimal.nix's
+      # placeholder root inside the VM) with the runner tunables the
+      # tests/vm-smoke-*.nix legs mirror in their nodes. Eval-side this
+      # host is checked by the classic-vm-smoke-contract leg; the BOOT
+      # runs on a Linux VM host per tests/README.md.
+      nixosConfigurations.kailash-vm-full = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/full.nix
+          "${nixpkgs}/nixos/modules/virtualisation/qemu-vm.nix"
+          {
+            virtualisation.graphics = false;
+            virtualisation.cores = 2;
+            virtualisation.memorySize = 4096;
+          }
+        ];
+      };
+
       # Layer-ATTACK red-team profile (KA-17.1, os#114): CORE floor + Layer
       # ATTACK full + O-4 (local inference labs). Evaluates through the
       # module tree with the flat option spine until the Wave-5
@@ -1787,5 +1896,44 @@ PY
         };
 
       # devShells with KA-09 (landed: KA-09.4); images with the images wave;      # remaining hosts (kailash-full etc.) land with their profile items.
+
+      # ---- VM smoke suite (KA-06.3, ko#98): tests/c-01.nix etc -------------
+      #
+      # NOTE intentionally NOT `checks`: `nix flake check` builds-and-runs
+      # check attrs, and its runners (hosted, KA-08.4 posture; this lane
+      # box) cannot boot x86_64-linux VMs — a checks-registered nixosTest
+      # would red every flake-check run. The legs live here as the
+      # EXECUTABLE suite; `nix flake check`'s option-tree sweep (every
+      # nixosConfiguration in the flake is eval-checked) exercises their
+      # eval, and a Linux VM host runs them per tests/README.md:
+      #   nix build -L .#vmTests.x86_64-linux.<leg>
+      # The eval-side contract check (checks.classic-vm-smoke-contract)
+      # binds THIS suite to the module options (the watched-RED leg —
+      # without it the unregistered tests could drift silently from the
+      # modules and modules could drift from the manifest unprobed).
+      vmTests.${system} = {
+        c-01 = import ./tests/c-01.nix {
+          inherit lib pkgs system;
+          installSurface = self.nixosConfigurations.kailash-full.config.kailash.layers.classic.categories.c-01.packages;
+        };
+        c-02 = import ./tests/c-02.nix {
+          inherit lib pkgs system;
+          installSurface = self.nixosConfigurations.kailash-full.config.kailash.layers.classic.categories.c-02.packages;
+        };
+        c-04 = import ./tests/c-04.nix {
+          inherit lib pkgs system;
+          installSurface = self.nixosConfigurations.kailash-full.config.kailash.layers.classic.categories.c-04.packages;
+        };
+        c-06 = import ./tests/c-06.nix {
+          inherit lib pkgs system;
+          installSurface = self.nixosConfigurations.kailash-full.config.kailash.layers.classic.categories.c-06.packages;
+        };
+        full-profile-boot = import ./tests/full-profile-boot.nix {
+          inherit lib pkgs system;
+          installSurface = builtins.mapAttrs
+            (id: _: self.nixosConfigurations.kailash-full.config.kailash.layers.classic.categories.${id}.packages)
+            { c-01 = null; c-02 = null; c-04 = null; c-06 = null; };
+        };
+      };
     };
 }
