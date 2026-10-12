@@ -357,6 +357,145 @@ open(sys.argv[2], "w", encoding="utf-8").write(chr(10).join(gen) + chr(10))
             || { echo "kailash-minimal-hardened must keep kailash.labMode = false"; exit 1; }
           touch $out
         '';
+
+        # ---- O-3 vector stores typed surface (KA-09.1, ko#110) -------------
+        #
+        # Eval assertions over the typed o-03 category options: the native
+        # install set (python-module chromadb + qdrant + faiss + txtai +
+        # the overlay's jina-embeddings-cli when composed) is non-empty on
+        # an o-03 host and services wire up (chromadb, qdrant, postgresql
+        # with the pgvector extension inside its package set). RED stub
+        # (KA-09.1): the assertions cannot evaluate while the typed
+        # surface is missing (`o-03.packages` does not exist) - the eval
+        # failure is the watched red; GREEN: the typed module and the
+        # spine land and every assertion passes through the SAME eval.
+        o-03-options =
+          let
+            o3Host = (self.nixosConfigurations.kailash-redteam-ai.extendModules {
+              modules = [ { kailash.layers.ops.categories.o-03.enable = true; } ];
+            });
+            pgExt = o3Host.config.services.postgresql.package.installedExtensions;
+          in
+          pkgs.runCommand "o-03-options" { } ''
+            set -- ${toString (map (p: p.pname or p.name) o3Host.config.kailash.layers.ops.categories.o-03.packages)}
+            for expected in chromadb qdrant faiss txtai; do
+              found=""
+              for got in "$@"; do [ "$got" = "$expected" ] && found=1; done
+              [ -n "$found" ] || { echo "o-03 install set missing $expected"; exit 1; }
+            done
+            echo "o-03 native install set: $*"
+            test "${toString o3Host.config.services.chromadb.enable}" = "1" \
+              || { echo "services.chromadb not wired by the o-03 module"; exit 1; }
+            test "${toString o3Host.config.services.qdrant.enable}" = "1" \
+              || { echo "services.qdrant not wired by the o-03 module"; exit 1; }
+            echo "postgresql extensions: ${lib.concatStringsSep "," pgExt}"
+            case "${lib.concatStringsSep "," pgExt}" in
+              *pgvector*) : ;;
+              *) echo "pgvector missing from the postgres package set"; exit 1 ;;
+            esac
+            touch $out
+          '';
+
+        # ---- O-4 local-LLM typed surface (KA-09.3, ko#112) ------------------
+        #
+        # redteam-ai-compat: the EXISTING freeform-path setting in
+        # profiles/redteam-ai.nix (sets
+        # kailash.layers.ops.categories.o-04.enable = true) must evaluate
+        # WITH the typed option tree present - the typed entry absorbs the
+        # profile's historical composition without a conflict (the §4.5
+        # contract: same path, typed + freeform-born entries merge).
+        # RED stub: fails while the typed spine is missing.
+        o-04-options = pkgs.runCommand "o-04-options" { } ''
+          test "${toString self.nixosConfigurations.kailash-redteam-ai.config.kailash.layers.ops.categories.o-04.enable}" = "1" \
+            || { echo "o-04 enable did not resolve through the typed tree"; exit 1; }
+          touch $out
+        '';
+
+        redteam-ai-compat = pkgs.runCommand "redteam-ai-compat" { } ''
+          # The historical freeform entry (profiles/redteam-ai.nix) must
+          # resolve through the TYPED tree - enable true, no conflict.
+          test "${toString self.nixosConfigurations.kailash-redteam-ai.config.kailash.layers.ops.categories.o-04.enable}" = "1" \
+            || { echo "redteam-ai o-04 setting did not survive the typed spine"; exit 1; }
+          touch $out
+        '';
+
+        # ---- §4.5 CLASSIC category surfaces (KA-06.1/06.2, ko#96/#97) ------
+        #
+        # The §4.5 contract for the four Wave-5 CLASSIC categories, mounted
+        # by modules/classic/c-*.nix (the exemplar first). The exemplar
+        # leg (ko#96):
+        #   * run the committed generator (--self-test);
+        #   * parity: the committed generated/manifest-ids.json must equal
+        #     the generator's emit from the PINNED packages manifest
+        #     (through the flake input — never a hand-copy);
+        #   * eval the c-01 typed surface: `kailash.layers.classic.categories.c-01.packages`
+        #     resolves as a config-only category module's default (RED
+        #     stub: the module file consumes NOTHING yet — an empty
+        #     default — so an enabled c-01 host installs nothing and the
+        #     non-empty assertion is the watched red);
+        #   * GREEN: the exemplar's install wiring consumes the generated
+        #     artifact through its reviewed binding table and the same
+        #     assertions pass through the SAME eval.
+        c-01-exemplar = pkgs.runCommand "c-01-exemplar"
+          {
+            nativeBuildInputs = [ (pkgs.python3.withPackages (ps: [ ps.pyyaml ])) ];
+          } ''
+          # (1) the generator gates itself
+          python3 ${./tools/gen-categories.py} \
+            --manifest-file ${kailash-packages.outPath + "/manifest/tools.yaml"} \
+            --self-test
+          # (2) parity: committed artifact == generator emit from the
+          # PINNED packages manifest
+          GOT="$(python3 ${./tools/gen-categories.py} \
+            --manifest-file ${kailash-packages.outPath + "/manifest/tools.yaml"})"
+          echo "$GOT" > emit-real.json
+          if python3 - emit-real.json ${./generated/manifest-ids.json} <<'PY' >delta.out 2>&1
+import json, sys
+got = json.load(open(sys.argv[1], encoding="utf-8"))
+snap = json.load(open(sys.argv[2], encoding="utf-8"))
+missing = []
+extra = []
+for cat, gdoc in sorted(got["categories"].items()):
+    s = snap["categories"].get(cat)
+    if s is None:
+        extra.append(cat + ": category absent from the committed artifact")
+        continue
+    installable_g = sorted(gdoc["installable"])
+    installable_s = sorted(s["installable"])
+    gm = [i for i in installable_s if i not in installable_g]
+    sx = [i for i in installable_g if i not in installable_s]
+    if gm:
+        missing.append(cat + ": " + ",".join(gm))
+    if sx:
+        extra.append(cat + ": " + ",".join(sx))
+for cat in sorted(snap["categories"]):
+    if cat not in got["categories"]:
+        missing.append(cat + ": category absent from the generator emit")
+if missing or extra:
+    for m in missing:
+        print("missing-from-emit: " + m)
+    for e in extra:
+        print("new-in-emit: " + e)
+    sys.exit(1)
+print("generator emit == committed manifest-ids artifact (all categories)")
+PY
+          then cat delta.out
+          else
+            echo "c-01-exemplar: manifest-ids drift from the pinned manifest (regenerate with \`make gen-categories\`):"
+            cat delta.out
+            exit 1
+          fi
+          # (3) the four Wave-5 CLASSIC counts print for the record
+          python3 -c "import json; d = json.load(open('emit-real.json')); c = d['categories']; print('installable counts: c-01=' + str(len(c['c-01-information-gathering']['installable'])) + ' c-02=' + str(len(c['c-02-vulnerability-analysis']['installable'])) + ' c-04=' + str(len(c['c-04-database-assessment']['installable'])) + ' c-06=' + str(len(c['c-06-reverse-engineering']['installable'])) + ' (manifest total ' + str(d['tools_total']) + ' tools)')"
+          # (4) the §4.5 exemplar host: an enabled c-01 category on the
+          # CORE floor must resolve a NON-EMPTY install set (RED stub:
+          # the module consumes nothing yet -> empty -> the watched red).
+          PKGS="${toString self.nixosConfigurations.kailash-c-01-exemplar.config.kailash.layers.classic.categories.c-01.packages}"
+          echo "c-01 install set: ${lib.concatStringsSep " " (map (p: p.pname or p.name) self.nixosConfigurations.kailash-c-01-exemplar.config.kailash.layers.classic.categories.c-01.packages)}"
+          test -n "$PKGS" || { echo "c-01-exemplar: the enabled c-01 category installs NOTHING (the exemplar's install wiring is missing)"; exit 1; }
+          echo "c-01-exemplar: OK"
+          touch $out
+        '';
       };
 
 
@@ -380,6 +519,19 @@ open(sys.argv[2], "w", encoding="utf-8").write(chr(10).join(gen) + chr(10))
                 "!/bin/sh -c 'KAILASH_LAB_MODE=1 exec exp-tool-by-audit-fixture'";
             };
           }
+        ];
+      };
+
+      # The §4.5 EXEMPLAR host (KA-06.1, ko#96): the CORE floor with C-1
+      # Information Gathering enabled. RED stub: the c-01 module
+      # consumes nothing yet (the manifest-generated install set is not
+      # wired), so the host carries an EMPTY c-01 install set and the
+      # c-01-exemplar check's non-empty assertion is the watched red.
+      nixosConfigurations.kailash-c-01-exemplar = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          { kailash.layers.classic.categories.c-01.enable = true; }
         ];
       };
 
