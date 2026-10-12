@@ -9,5 +9,7 @@
     ./c-02-vulnerability-analysis.nix
     ./c-04-database-assessment.nix
     ./c-06-reverse-engineering.nix
+    ./c-08-exploitation-post-exploitation.nix
+    ./c-09-forensics-ir-reporting.nix
   ];
 }

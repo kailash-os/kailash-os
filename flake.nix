@@ -644,6 +644,79 @@ PY
           touch $out
         '';
 
+        # ---- C-8 + C-9 typed surfaces (KA-07.3, ko#101) --------------------
+        #
+        # Same-shape §4.5 legs off the four-CLASSIC gates:
+        #   * c-08-options — enabled composition NON-EMPTY (RED stub: the
+        #     module mounts nothing → "installs NOTHING"), metasploit
+        #     PRESENT once the binding table binds (pkgs.metasploit
+        #     carries the whole msf* bin family) and the arsenal rows
+        #     (impacket, mimikatz, crackmapexec, covenant, empire,
+        #     bloodhound) ABSENT — the software-only exclusion holds at
+        #     every eval, not just in prose;
+        #   * c-09-options — enabled composition NON-EMPTY (RED stub
+        #     same shape) and the service-module rows (timesketch,
+        #     faraday, pwndoc-ng) ABSENT from the install set BY
+        #     CONSTRUCTION — they ship as service modules in a later
+        #     lane, never as package-list rows.
+        c-08-options =
+          let
+            c8Host = (self.nixosConfigurations.kailash-c-08-enabled.config
+              .kailash.layers.classic.categories.c-08);
+            c8Names = map (p: p.pname or (builtins.parseDrvName p.name).name) c8Host.packages;
+          in
+          pkgs.runCommand "c-08-options" { } ''
+            install_set="${toString c8Names}"
+            echo "c-08 install set: $install_set"
+            test -n "$install_set" \
+              || { echo "c-08-options: the enabled c-08 category installs NOTHING (the binding table is missing)"; exit 1; }
+            for expected in metasploit-framework weevely laudanum pspy unix-privesc-check; do
+              case " $install_set " in
+                *" $expected "*) : ;;
+                *) echo "c-08 install set missing $expected"; exit 1 ;;
+              esac
+            done
+            # Software-only exclusion (§3.7/§4.5): the arsenal rows never
+            # reach the install set — the manifest ledger never had them
+            # and the binding table cannot invent them.
+            for banned in impacket mimikatz crackmapexec covenant empire bloodhound; do
+              case " $install_set " in
+                *" $banned "*) { echo "c-08 arsenal exclusion VIOLATED: $banned in the install set"; exit 1; } ;;
+              esac
+            done
+            echo "c-08-options: OK (software-only posture verified at eval)"
+            touch $out
+          '';
+
+        c-09-options =
+          let
+            c9Host = (self.nixosConfigurations.kailash-c-09-enabled.config
+              .kailash.layers.classic.categories.c-09);
+            c9Names = map (p: p.pname or (builtins.parseDrvName p.name).name) c9Host.packages;
+          in
+          pkgs.runCommand "c-09-options" { } ''
+            install_set="${toString c9Names}"
+            echo "c-09 install set: $install_set"
+            test -n "$install_set" \
+              || { echo "c-09-options: the enabled c-09 category installs NOTHING (the binding table is missing)"; exit 1; }
+            for expected in autopsy sleuthkit volatility3 testdisk regripper chainsaw hayabusa dc3dd; do
+              case " $install_set " in
+                *" $expected "*) : ;;
+                *) echo "c-09 install set missing $expected"; exit 1 ;;
+              esac
+            done
+            # Service-module rows are ABSENT BY CONSTRUCTION: they ship
+            # as systemd service modules (later lane), never as
+            # package-list rows.
+            for service_row in timesketch faraday pwndoc-ng; do
+              case " $install_set " in
+                *" $service_row "*) { echo "c-09 service-module row $service_row must NOT be in the install set"; exit 1; } ;;
+              esac
+            done
+            echo "c-09-options: OK (service-module rows excluded by construction)"
+            touch $out
+          '';
+
         # ---- O-3 docker-wrapper stores (KA-09.2, ko#111, §5.4 Shape 3) -----
         #
         # Each declared backend id stands up ONE oci-containers container
@@ -773,6 +846,31 @@ PY
       nixosConfigurations.kailash-minimal-hardened = nixpkgs.lib.nixosSystem {
         inherit system pkgs;
         modules = [ ./profiles/minimal-hardened.nix ];
+      };
+
+      # The §4.5 category-install fixtures for the KA-07.3 pair (ko#101):
+      # synthetic hosts with the C-8 / C-9 category ENABLED — the
+      # c-08-options / c-09-options legs ride them. NOT product profiles.
+      nixosConfigurations.kailash-c-08-enabled = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          {
+            networking.hostName = lib.mkForce "kailash-c-08-enabled";
+            kailash.layers.classic.categories.c-08.enable = true;
+          }
+        ];
+      };
+
+      nixosConfigurations.kailash-c-09-enabled = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          {
+            networking.hostName = lib.mkForce "kailash-c-09-enabled";
+            kailash.layers.classic.categories.c-09.enable = true;
+          }
+        ];
       };
 
       # §4.5 category-install fixture (KA-08.1, ko#105): a synthetic host
