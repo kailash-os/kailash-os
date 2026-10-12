@@ -396,6 +396,32 @@ open(sys.argv[2], "w", encoding="utf-8").write(chr(10).join(gen) + chr(10))
             touch $out
           '';
 
+        # o-03-generated-drift (KA-09.1): the committed o-03 generated
+        # package list == the generator emit from the PINNED packages
+        # manifest through the flake input (never a hand-copy) — the o-02
+        # leg's exact shape. RED stub: the generated list is ABSENT at
+        # this commit (modules/ops/generated/o-03-vector-stores-
+        # retrieval.nix) — the leg's flake-input eval of the module tree
+        # throws (file not found) and this leg fails: the watched red.
+        # GREEN: the generator-emit file lands and `cmp` proves byte
+        # identity at every later revision.
+        o-03-generated-drift = pkgs.runCommand "o-03-generated-drift"
+          {
+            nativeBuildInputs = [ (pkgs.python3.withPackages (ps: [ ps.pyyaml ])) ];
+          } ''
+          python3 ${./tools/gen-category-packages.py} \
+            --manifest-file ${kailash-packages.outPath + "/manifest/tools.yaml"} \
+            --category o-03-vector-stores-retrieval > gen-o-03.nix
+          GENERATED=${./modules/ops/generated/o-03-vector-stores-retrieval.nix}
+          if ! cmp -s gen-o-03.nix "$GENERATED"; then
+            echo "o-03 generated list DRIFTED from the generator emit:"
+            diff -u "$GENERATED" gen-o-03.nix || true
+            exit 1
+          fi
+          echo "o-03-generated-drift: OK (generator == committed)"
+          touch $out
+          '';
+
         # ---- O-4 local-LLM typed surface (KA-09.3, ko#112) ------------------
         #
         # redteam-ai-compat: the EXISTING freeform-path setting in
