@@ -785,6 +785,7 @@ PY
             touch $out
           '';
 
+<<<<<<< HEAD
         # ---- §4.5 ATTACK category modules (KA-13.1, ko#103) ----------------
         #
         # The A-1/A-2 legs, the same shape as the c-01-exemplar / O-x legs:
@@ -843,6 +844,8 @@ PY
           touch $out
         '';
 
+=======
+>>>>>>> 3b22f5d (feat(ops): KA-09.4 — GREEN 2: per-category devShells (nix develop .#<category>))
         # ---- O-6 Docs & Authoring legs (KA-09.4) ------------------------------
         #
         # RED stub (watched RED): the o-06 category module has NOT landed —
@@ -1109,6 +1112,38 @@ PY
       };
 
       # devShells per category with KA-09; images with the images wave;
-      # remaining hosts (kailash-full etc.) land with their profile items.
+
+      # ---- per-category devShells (KA-09.4, ko#113): `nix develop .#<category>` ---
+      #
+      # ONE shell per SHIPPED category (a category with an install-set
+      # module on master): the category's INSTALL SET as the shell
+      # packages — read through the §4.5 typed spine itself (extendModules
+      # of the CORE minimal floor with the category enable, then the
+      # category's own `packages` option, never the host's whole
+      # systemPackages — the shell carries the category, mkShell adds the
+      # standard toolchain). Generated over the shipped map (mapAttrs),
+      # new shipped categories join the map (o-04 with KA-09.3's module,
+      # o-05/o-07 with their wave items). Every id and its package set is
+      # additionally asserted by the checks.category-devshells leg.
+      devShells.${system} = builtins.mapAttrs
+        (id: layer: pkgs.mkShell {
+          name = "kailash-${id}-devshell";
+          packages =
+            (self.nixosConfigurations.kailash-minimal.extendModules {
+              modules = [ { kailash.layers.${layer}.categories.${id}.enable = true; } ];
+            }).config.kailash.layers.${layer}.categories.${id}.packages;
+        })
+        {
+          c-01 = "classic";
+          c-02 = "classic";
+          c-04 = "classic";
+          c-06 = "classic";
+          o-01 = "ops";
+          o-02 = "ops";
+          o-03 = "ops";
+          o-06 = "ops";
+        };
+
+      # devShells with KA-09 (landed: KA-09.4); images with the images wave;      # remaining hosts (kailash-full etc.) land with their profile items.
     };
 }
