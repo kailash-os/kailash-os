@@ -7,6 +7,7 @@
   imports = [
     ./c-01-information-gathering.nix
     ./c-02-vulnerability-analysis.nix
+    ./c-03-web-application-assessment.nix
     ./c-04-database-assessment.nix
     ./c-06-reverse-engineering.nix
   ];
