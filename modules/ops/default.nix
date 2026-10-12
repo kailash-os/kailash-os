@@ -23,5 +23,6 @@
     ./mlflow-service.nix
     ./o-02-compute-serving-infrastructure.nix
     ./o-06-documentation-reporting-authoring.nix
+    ./o-05-ai-engineering-sdks-dev-env.nix
   ];
 }
