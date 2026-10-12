@@ -706,6 +706,58 @@ PY
               || { echo "no-auto-start posture: elasticsearch wrapper must be autoStart = false"; exit 1; }
             touch $out
           '';
+
+        # ---- §4.5 ATTACK category modules (KA-13.1, ko#103) ----------------
+        #
+        # The A-1/A-2 legs, the same shape as the c-01-exemplar / O-x legs:
+        # eval-only, no new builds. RED stub (this commit): the ATTACK fold
+        # (modules/attack/) imports NO category module yet, so the two
+        # enabled-fixture hosts resolve EMPTY categories — both legs print
+        # the empty-set failure and exit 1 (the watched red). GREEN (the
+        # same flip as the exemplar): modules/attack/a-01-ai-recon.nix +
+        # a-02-llm-prompt-injection.nix consume their generated installable
+        # id lists through probed binding tables and the SAME assertions
+        # pass through the SAME eval.
+        #
+        #   * a-01 — enable defaults FALSE on the CORE substrate; an enabled
+        #     a-01 host resolves a NON-EMPTY install set.
+        #   * a-02 — enable defaults FALSE; non-empty enabled install set;
+        #     the garak flagship (the pinned packages overlay at 7374e7a
+        #     probes it present — never assumed): the ko#103 acceptance
+        #     check (`nix build .#checks.x86_64-linux.a-02`).
+        #   * The garak VM probe (`garak --list-probes` in the VM) is
+        #     KA-13.2's wave (ko#104) — this item stays eval-surface.
+        #   * No ATTACK categories are enabled on any product profile here —
+        #     the redteam-ai profile keeps the flat attack.enable only;
+        #     per-category profile flips ride KA-13 closure.
+        a-01 = pkgs.runCommand "a-01-options" { } ''
+          echo "--- a-01 category enable defaults FALSE on the CORE substrate"
+          test "${lib.boolToString self.nixosConfigurations.kailash-minimal.config.kailash.layers.attack.categories.a-01.enable}" = "false" \
+            || { echo "a-01 categories.enable is not FALSE-default"; exit 1; }
+          echo "--- an enabled a-01 host resolves a NON-EMPTY install set"
+          A01PKGS="${toString self.nixosConfigurations.kailash-a-01-enabled.config.kailash.layers.attack.categories.a-01.packages}"
+          echo "a-01 install set: ${lib.concatStringsSep " " (map (p: p.pname or p.name) self.nixosConfigurations.kailash-a-01-enabled.config.kailash.layers.attack.categories.a-01.packages)}"
+          test -n "$A01PKGS" || { echo "a-01: the enabled a-01 category installs NOTHING (the module's install wiring is missing)"; exit 1; }
+          echo "a-01: OK"
+          touch $out
+        '';
+
+        a-02 = pkgs.runCommand "a-02-options" { } ''
+          echo "--- a-02 category enable defaults FALSE on the CORE substrate"
+          test "${lib.boolToString self.nixosConfigurations.kailash-minimal.config.kailash.layers.attack.categories.a-02.enable}" = "false" \
+            || { echo "a-02 categories.enable is not FALSE-default"; exit 1; }
+          echo "--- an enabled a-02 host resolves a NON-EMPTY install set with the garak flagship present"
+          A02PKGS="${toString self.nixosConfigurations.kailash-a-02-enabled.config.kailash.layers.attack.categories.a-02.packages}"
+          A02NAMES=${lib.concatStringsSep " " (map (p: p.pname or p.name) self.nixosConfigurations.kailash-a-02-enabled.config.kailash.layers.attack.categories.a-02.packages)}
+          echo "a-02 install set: $A02NAMES"
+          test -n "$A02PKGS" || { echo "a-02: the enabled a-02 category installs NOTHING (the module's install wiring is missing)"; exit 1; }
+          case " $A02NAMES " in
+            *" garak "*) : ;;
+            *) echo "a-02: the garak flagship is missing from the enabled install set (the pinned packages overlay probes it present at 7374e7a)"; exit 1 ;;
+          esac
+          echo "a-02: OK"
+          touch $out
+        '';
       };
 
 
@@ -804,6 +856,32 @@ PY
           {
             networking.hostName = lib.mkForce "kailash-mlflow-enabled";
             services.kailash.mlflow.enable = true;
+          }
+        ];
+      };
+
+      # §4.5 category-install fixtures (KA-13.1, ko#103): synthetic hosts
+      # with an ATTACK category ENABLED — prove "enabling a test host
+      # installs without breaking eval" for A-1 and A-2 (the same not-a-
+      # product-profile pattern the kailash-o-01-enabled fixture owns).
+      nixosConfigurations.kailash-a-01-enabled = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          {
+            networking.hostName = lib.mkForce "kailash-a-01-enabled";
+            kailash.layers.attack.categories.a-01.enable = true;
+          }
+        ];
+      };
+
+      nixosConfigurations.kailash-a-02-enabled = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          {
+            networking.hostName = lib.mkForce "kailash-a-02-enabled";
+            kailash.layers.attack.categories.a-02.enable = true;
           }
         ];
       };
