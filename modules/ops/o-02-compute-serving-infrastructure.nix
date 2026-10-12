@@ -1,19 +1,36 @@
 # Layer OPS — O-2 Compute & Serving Infrastructure (KA-08.2, ko#106; plan
-# §3.5, §9 Phase 3). The §4.5 category-module shape:
+# §3.5, §9 Phase 3). The §4.5 category module, config-only on the §3.6 typed
+# spine (modules/base/layer-tree.nix — the per-id option-decl tree; the
+# same mount the exemplar modules/classic/c-01-information-gathering.nix
+# defines). The spine owns enable + packages at
+# kailash.layers.ops.categories.o-02 (the SHORT manifest id — the tree
+# keys categories by the §3.6 census ids; the module FILE keeps the
+# manifest's long id); this module declares only its EXTRA sibling members
+# via the bare-tree sibling pattern (the same shape the O-3 backends mixin
+# uses) and consumes the spine members:
 #
-#   options.kailash.layers.ops.categories.o-02-compute-serving-infrastructure = {
-#     enable   — the category switch (mkEnableOption, default OFF);
-#     packages — the generated, manifest-driven install set (§4.5; hosts
-#                append; never redefine);
-#     k3s      — the k3s service toggle: rides the UPSTREAM services.k3s
-#                module (probed at the pin) — never a first-party server
-#                derivation here;
-#     podman   — the rootless container substrate: rides the upstream
-#                virtualisation.podman module (dockerCompat default ON —
-#                the docker-socket compatibility the docker-backed lab
-#                tooling expects; the ko#111 Shape-3 substrate);
-#   };
-#   config (mkIf enable) installs the set and applies the toggles.
+#   enable   — the category switch (spine default false; profiles opt in):
+#              the O-2 Compute and Serving Infrastructure category — the
+#              container/orchestration substrate CLI tooling (k3s, minikube,
+#              kind, podman, nvidia-container-toolkit, vllm). The serving
+#              stacks (tgi, torchserve, kserve, ray, triton) are manifest
+#              module rows — they NEVER enter this package set; their
+#              service modules own them. ollama/llama.cpp ride the O-4
+#              category (their manifest primary — §4.5 cross-refs). Nothing
+#              installs until enabled (§4.5 opt-in by default).
+#   packages — the generated, manifest-driven install set (config-assigned
+#              below; hosts compose/append on the spine option — never
+#              redefine).
+#
+#   EXTRA sibling members (declared HERE on the same tree path, merging
+#   without structural change):
+#     k3s    — the k3s service toggle: rides the UPSTREAM services.k3s
+#              module (probed at the pin) — never a first-party server
+#              derivation here;
+#     podman — the rootless container substrate: rides the upstream
+#              virtualisation.podman module (dockerCompat default ON —
+#              the docker-socket compatibility the docker-backed lab
+#              tooling expects; the ko#111 Shape-3 substrate).
 #
 # Routing contracts (same shape as the O-1 module, §4.5):
 #   * module-status rows (tgi, torchserve, kserve, ray,
@@ -31,15 +48,10 @@
 # DATA CONTRACT: same as the O-1 module (generated manifest-driven
 # structure in modules/ops/generated/, pure emit, CI drift-checked every
 # PR by checks.o-02-generated-drift; resolution ?-guarded HERE).
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}:
+{ config, lib, pkgs, ... }:
 
 let
-  cfg = config.kailash.layers.ops.categories.o-02-compute-serving-infrastructure;
+  cfg = config.kailash.layers.ops.categories.o-02;
 
   # The generator's committed emit = pure structure (no package attrs).
   generated =
@@ -48,7 +60,7 @@ let
     }).o-02-compute-serving-infrastructure;
 
   # Resolver, §4.5: every attr path ?-guarded (green eval at revisions
-  # without the overlay or where a native attr moves).
+  # where the overlay is absent or a native attr moves).
   resolveNative = path:
     if lib.attrByPath path null pkgs != null then [ (lib.getAttrFromPath path pkgs) ] else [ ];
   resolveBespoke = row:
@@ -56,38 +68,19 @@ let
     then [ (lib.getAttrFromPath [ row.id ] pkgs) ]
     else [ ];
 
-  # The install set = the generated rows resolved (the OPTION DEFAULT —
-  # hosts append via the typed option; NEVER a config-assignment of
-  # cfg.packages back into the tree — re-enters the layers merge,
+  # The manifest-driven install set = the generated rows resolved.
+  # Hosts compose/append on the spine option; never redefine — and never
+  # a config-assignment of cfg.packages back into the tree (a mkIf
+  # self-assignment re-enters the layers merge mid-collection,
   # eval-probed at this pin).
-  o-02-packages = lib.flatten
+  installSet = lib.flatten
     (map resolveNative generated.native ++ map resolveBespoke generated.bespoke);
 in
 {
-  options.kailash.layers.ops.categories.o-02-compute-serving-infrastructure = {
-    enable = lib.mkEnableOption ''
-      the O-2 Compute and Serving Infrastructure category (KA-08.2): the
-      container/orchestration substrate (k3s, minikube, kind, podman,
-      nvidia-container-toolkit, vllm) plus the docker-socket compatibility
-      substrate. The serving stacks (tgi, torchserve, kserve, ray, triton)
-      are manifest module rows — they NEVER enter this package set; their
-      service modules own them. ollama/llama.cpp ride the O-4 category
-      (their manifest primary — §4.5 cross-refs). Nothing installs or
-      listens until enabled (§4.5 opt-in by default)
-    '';
-
-    packages = lib.mkOption {
-      type = lib.types.listOf lib.types.package;
-      default = o-02-packages;
-      defaultText = lib.literalExpression ''
-        manifest-driven (modules/ops/generated + the generator's emit)
-      '';
-      description = ''
-        The O-2 category install set: generated from the pinned manifest
-        (§4.5). Hosts append; never redefine.
-      '';
-    };
-
+  # EXTRA sibling members only (KA-08.2). enable + packages are the §4.5
+  # baseline members the layer tree declares (modules/base/layer-tree.nix);
+  # mkIf cfg.enable drives the install + the substrate toggles below.
+  options.kailash.layers.ops.categories.o-02 = {
     k3s = {
       enable = lib.mkOption {
         type = lib.types.bool;
@@ -126,19 +119,26 @@ in
     };
   };
 
-  config = lib.mkIf cfg.enable {
-    environment.systemPackages = cfg.packages;
+  config = {
+    # The manifest-driven install set (native rows resolved on the pinned
+    # nixpkgs + the bespoke overlay rows when the overlay is composed; the
+    # generator + drift check own the regeneration).
+    kailash.layers.ops.categories.o-02.packages = installSet;
+
+    # The §4.5 install config: nothing on PATH until the category switch
+    # is ON — opt-in by default.
+    environment.systemPackages = lib.mkIf cfg.enable cfg.packages;
 
     # The substrates ride the UPSTREAM NixOS modules (probed at the pin);
     # both default OFF and are gated by THIS category's enable plus their
     # own switches — the category installs the CLI tooling; the daemons
     # only rise when the operator declares them.
-    services.k3s = lib.mkIf cfg.k3s.enable {
+    services.k3s = lib.mkIf (cfg.enable && cfg.k3s.enable) {
       enable = true;
       role = lib.mkDefault "server";
     };
 
-    virtualisation.podman = lib.mkIf cfg.podman.enable {
+    virtualisation.podman = lib.mkIf (cfg.enable && cfg.podman.enable) {
       enable = true;
       dockerCompat = lib.mkDefault cfg.podman.dockerCompat;
     };
