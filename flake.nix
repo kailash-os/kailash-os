@@ -535,18 +535,19 @@ PY
           # Per-category install sets resolve: c-04 = 6 (mssql-cli is a
           # manifest-bespoke row whose overlay row has not landed — the
           # named drop), c-02 = 5 (legion same; gvm = the module-status
-          # deferred GVM row, ko#97), c-06 = 17 (26 manifest ids:
+          # deferred GVM row, ko#97), c-06 = 16 (26 manifest ids:
           # pwndbg, peda, javasnoop, jd-gui, smali, unipacker,
-          # pyinstaller-extractor drop as overlay-pending, qiling is
-          # marked broken at this pin, cstool+capstone dedupe to one
-          # capstone derivation).
+          # pyinstaller-extractor drop as overlay-pending, angr drops on
+          # its build failure ("requires setuptools-rust", hosted job
+          # 114623996385), qiling is marked broken, cstool+capstone
+          # dedupe to one capstone derivation).
           C04="${toString (builtins.length self.nixosConfigurations.kailash-full.config.kailash.layers.classic.categories.c-04.packages)}"
           C02="${toString (builtins.length self.nixosConfigurations.kailash-full.config.kailash.layers.classic.categories.c-02.packages)}"
           C06="${toString (builtins.length self.nixosConfigurations.kailash-full.config.kailash.layers.classic.categories.c-06.packages)}"
           echo "install-set counts: c-04=$C04 c-02=$C02 c-06=$C06"
           test "$C04" = "6" || { echo "c-04 install set: expected 6, got $C04"; exit 1; }
           test "$C02" = "5" || { echo "c-02 install set: expected 5 (gvm module-deferred, legion overlay-pending), got $C02"; exit 1; }
-          test "$C06" = "17" || { echo "c-06 install set: expected 17 (overlay-pending + qiling-broken + cstool dedupe), got $C06"; exit 1; }
+          test "$C06" = "16" || { echo "c-06 install set: expected 16 (overlay-pending + angr-build-gap + qiling-broken + cstool dedupe), got $C06"; exit 1; }
           echo "classic-four-eval: OK"
           touch $out
         '';
