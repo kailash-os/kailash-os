@@ -42,16 +42,69 @@
       this with the c-02 category (kailash.layers.classic.categories.c-02
       .enable)
     '';
+    package = lib.mkOption {
+      type = lib.types.nullOr lib.types.package;
+      default = null;
+      description = ''
+        The gvmd manager derivation. The package CONTRACT: gvmd is absent
+        from the pinned nixpkgs at this revision (probed — only
+        greenbone-feed-sync + gvm-tools exist there), so an enabled host
+        MUST supply the manager derivation; the module requires it
+        eval-time (the assertion + the unit-text abort) rather than
+        inventing a substitute.
+      '';
+      example = lib.types.literalExpression "pkgs.gvmd";
+    };
   };
 
   config = lib.mkIf config.services.kailash.gvm.enable {
-    # RED stub: enable-only. The GREEN commit replaces this with the
-    # §3.2 C-2 stack (redis server, manager unit, feed-sync units).
+    # The §3.2 C-2 stack: dedicated redis instance (unix-socket only,
+    # loopback, TCP off), the gvmd manager unit behind the package
+    # CONTRACT, and the Greenbone community feed-sync units.
     assertions = [
       {
-        assertion = true;
-        message = "kailash-gvm: RED stub — the §3.2 stack is not implemented yet";
+        assertion = config.services.kailash.gvm.package != null;
+        message = "kailash-gvm: services.kailash.gvm.package is required — gvmd is absent from the pinned nixpkgs; supply the manager derivation to compose the service";
       }
     ];
+
+    services.redis.servers.kailash-gvm = {
+      enable = true;
+      bind = "127.0.0.1";
+      port = 0;
+      unixSocket = "/run/redis-kailash-gvm/redis.sock";
+      unixSocketPerm = 660;
+    };
+
+    systemd.units."kailash-gvmd.service" = {
+      description = "Kailash GVM/OpenVAS vulnerability manager (gvmd)";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network.target" "redis-kailash-gvm.service" ];
+      requires = [ "redis-kailash-gvm.service" ];
+      text = lib.mkIf (config.services.kailash.gvm.package == null)
+        (abort "services.kailash.gvm: enable=true with no manager package — the gvmd derivation is required (absent from this nixpkgs pin); set services.kailash.gvm.package");
+    };
+
+    systemd.units."kailash-gvm-feed.service" = {
+      description = "Kailash GVM Greenbone community feed sync";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "network-online.target" "kailash-gvmd.service" ];
+      path = with pkgs; [ greenbone-feed-sync ];
+      serviceConfig = {
+        Type = "oneshot";
+        StateDirectory = "kailash-gvm";
+        ExecStart = "${pkgs.greenbone-feed-sync}/bin/greenbone-feed-sync";
+      };
+    };
+
+    systemd.units."kailash-gvm-feed.timer" = {
+      description = "Kailash GVM community feed sync schedule";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnCalendar = "daily";
+        Persistent = true;
+        Unit = "kailash-gvm-feed.service";
+      };
+    };
   };
 }

@@ -842,12 +842,12 @@ PY
           echo "--- gvm-manager-package: the manager-derivation require/throw posture"
           test "${lib.boolToString (self.nixosConfigurations.kailash-gvm-enabled.config.services.kailash.gvm ? "package")}" = "true" \
             || { echo "services.kailash.gvm must declare the package contract option (the manager-derivation require)"; exit 1; }
-          NO_PKG_THROW="${lib.boolToString (builtins.tryEval ((self.nixosConfigurations.kailash-minimal.extendModules {
+          NO_PKG_THROW="${lib.boolToString (let t = builtins.tryEval (self.nixosConfigurations.kailash-minimal.extendModules {
             modules = [ { services.kailash.gvm.enable = true; } ];
-          }).config.systemd.units."kailash-gvmd.service".text).success)}"
+          }).config.systemd.units; in t.success && t.value ? "kailash-gvmd.service" && (builtins.tryEval t.value."kailash-gvmd.service".text).success)}"
           test "$NO_PKG_THROW" = "false" \
             || { echo "the manager require must THROW at eval when enable=true and no manager package is set (gvmd is absent from the pin)"; exit 1; }
-          WITH_PKG_COMPOSES="${lib.boolToString (builtins.tryEval ((self.nixosConfigurations.kailash-minimal.extendModules {
+          WITH_PKG_COMPOSES="${lib.boolToString (let t = builtins.tryEval (self.nixosConfigurations.kailash-minimal.extendModules {
             modules = [ {
               services.kailash.gvm.enable = true;
               services.kailash.gvm.package = pkgs.stdenv.mkDerivation {
@@ -856,7 +856,7 @@ PY
                 installPhase = "mkdir -p $out/bin; printf '#!/bin/sh\necho gvmd-standin\n' > $out/bin/gvmd; chmod +x $out/bin/gvmd";
               };
             } ];
-          }).config.systemd.units."kailash-gvmd.service".text).success)}"
+          }).config.systemd.units; in t.success && (t.value ? "kailash-gvmd.service"))}"
           test "$WITH_PKG_COMPOSES" = "true" \
             || { echo "an operator-supplied manager package must compose the gvmd unit (no throw)"; exit 1; }
           echo "gvm-manager-package: OK"
@@ -1883,6 +1883,16 @@ PY
           {
             networking.hostName = lib.mkForce "kailash-gvm-enabled";
             services.kailash.gvm.enable = true;
+            # The eval-only fixture supplies the manager stand-in (the
+            # gvmd derivation is ABSENT from the pin — the package
+            # CONTRACT requires the operator to supply it; the unit
+            # composition, not the manager's runtime, is what this
+            # fixture proves).
+            services.kailash.gvm.package = pkgs.stdenv.mkDerivation {
+              name = "gvm-manager-standin";
+              unpackPhase = "true";
+              installPhase = "mkdir -p $out/bin; printf '#!/bin/sh\necho gvmd-standin\n' > $out/bin/gvmd; chmod +x $out/bin/gvmd";
+            };
           }
         ];
       };
