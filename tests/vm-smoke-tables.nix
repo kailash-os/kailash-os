@@ -32,9 +32,12 @@ let
   minus = ids: drops: lib.filter (id: !(lib.elem id drops)) ids;
 
   pathNameForPname = {
-    # c-01: everything binds bare except the-harvester (derivation
-    # name `theharvester` — no hyphen at this pin).
+    # c-01: everything binds bare except the two derivation-name
+    # mismatches (probed at the c-01 module's pins):
+    #   the-harvester → derivation name `theharvester` (no hyphen);
+    #   maltego-community → derivation name `maltego` (pkgs.maltego).
     "theharvester" = [ "the-harvester" ];
+    "maltego" = [ "maltego-community" ];
     # c-04: the module's named rows ride server packages with
     # derivation names that are NOT the manifest ids.
     "postgresql_16" = [ "psql" ];
