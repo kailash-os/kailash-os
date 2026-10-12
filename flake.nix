@@ -496,6 +496,61 @@ PY
           echo "c-01-exemplar: OK"
           touch $out
         '';
+
+        # ---- The four CLASSIC modules together (KA-06.2, ko#97) -----------
+        #
+        # The full-profile composition gate: with NOTHING enabled the
+        # kailash-full floor installs zero category tools; with all four
+        # shipped categories ON the composed systemPackages carries the
+        # flagship tool of each (nmap/sqlmap/nikto/ghidra) AND the
+        # categories' sets stay manifest-verified (the c-01-exemplar
+        # leg owns the c-01 parity). RED note (KA-06.2): landed with the
+        # modules in the same GREEN cycle — the watched red for the
+        # SECOND-FOUR was the same-shape one-off: before this commit the
+        # c-04/c-02/c-06 ids were unresolvable on any host (the tree had
+        # no such modules), so this check's eval itself failed.
+        classic-four-eval = pkgs.runCommand "classic-four-eval"
+          {
+            nativeBuildInputs = [ pkgs.bash ];
+          } ''
+          FULL="${self.nixosConfigurations.kailash-full.config.system.build.toplevel}"
+          test -n "$FULL" && echo "kailash-full toplevel: $FULL"
+          # Nothing enabled on the CORE floor: the minimal host's PATH
+          # must NOT carry the categories' flagships.
+          MIN_NAMES="${lib.concatStringsSep " " (map (p: p.pname or (builtins.parseDrvName p.name).name) self.nixosConfigurations.kailash-minimal.config.environment.systemPackages)}"
+          for tool in nmap sqlmap nikto ghidra; do
+            case " $MIN_NAMES " in
+              *" $tool "*) { echo "kailash-minimal must NOT carry $tool (opt-in by default)"; exit 1; } ;;
+            esac
+          done
+          # All four shipped categories ON: the composed PATH carries the
+          # flagship of each + a per-category probe tool.
+          FULL_NAMES="${lib.concatStringsSep " " (map (p: p.pname or (builtins.parseDrvName p.name).name) self.nixosConfigurations.kailash-full.config.environment.systemPackages)}"
+          for tool in nmap sqlmap nikto ghidra radare2 gdb binwalk; do
+            case " $FULL_NAMES " in
+              *" $tool "*) ;;
+              *) { echo "kailash-full PATH missing $tool (the four shipped CLASSIC categories must compose)"; exit 1; } ;;
+            esac
+          done
+          # Per-category install sets resolve: c-04 = 6 (mssql-cli is a
+          # manifest-bespoke row whose overlay row has not landed — the
+          # named drop), c-02 = 5 (legion same; gvm = the module-status
+          # deferred GVM row, ko#97), c-06 = 16 (26 manifest ids:
+          # pwndbg, peda, javasnoop, jd-gui, smali, unipacker,
+          # pyinstaller-extractor drop as overlay-pending, angr drops on
+          # its build failure ("requires setuptools-rust", hosted job
+          # 114623996385), qiling is marked broken, cstool+capstone
+          # dedupe to one capstone derivation).
+          C04="${toString (builtins.length self.nixosConfigurations.kailash-full.config.kailash.layers.classic.categories.c-04.packages)}"
+          C02="${toString (builtins.length self.nixosConfigurations.kailash-full.config.kailash.layers.classic.categories.c-02.packages)}"
+          C06="${toString (builtins.length self.nixosConfigurations.kailash-full.config.kailash.layers.classic.categories.c-06.packages)}"
+          echo "install-set counts: c-04=$C04 c-02=$C02 c-06=$C06"
+          test "$C04" = "6" || { echo "c-04 install set: expected 6, got $C04"; exit 1; }
+          test "$C02" = "5" || { echo "c-02 install set: expected 5 (gvm module-deferred, legion overlay-pending), got $C02"; exit 1; }
+          test "$C06" = "16" || { echo "c-06 install set: expected 16 (overlay-pending + angr-build-gap + qiling-broken + cstool dedupe), got $C06"; exit 1; }
+          echo "classic-four-eval: OK"
+          touch $out
+        '';
       };
 
 
@@ -533,6 +588,17 @@ PY
           ./profiles/minimal.nix
           { kailash.layers.classic.categories.c-01.enable = true; }
         ];
+      };
+
+      # The FULL profile host (KA-06.2, ko#97): the CORE floor + the four
+      # shipped CLASSIC categories (c-01, c-02, c-04, c-06) — the §4.5
+      # composition profile. Eval-gated (the classic-four-eval check
+      # asserts the categories' install sets resolve and the flagship
+      # tools reach the composed PATH); remaining categories join the
+      # profile as their modules land.
+      nixosConfigurations.kailash-full = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [ ./profiles/full.nix ];
       };
 
       # Layer-ATTACK red-team profile (KA-17.1, os#114): CORE floor + Layer
