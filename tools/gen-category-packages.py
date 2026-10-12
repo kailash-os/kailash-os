@@ -80,6 +80,34 @@ NATIVE_ATTRS = {
     "kind": ["kind"],
     "podman": ["podman"],
     "nvidia-container-toolkit": ["nvidia-container-toolkit"],
+    # o-05 native rows (KA-08.3, os#107; probed at pins 8c3cede7 [os
+    # flake.lock] AND e7439b6b [packages flake.lock] — sentinel tryEval,
+    # never assumed id==attr). Every Python-SDK row binds inside
+    # python3Packages at BOTH pins; the tool rows bind top-level:
+    "langchain": ["python3Packages", "langchain"],              # 1.2.15
+    "langgraph": ["python3Packages", "langgraph"],              # 1.1.10
+    "llama-index": ["python3Packages", "llama-index"],          # 0.14.19
+    "openai-python": ["python3Packages", "openai"],             # 2.33.0
+    "anthropic-python": ["python3Packages", "anthropic"],       # 0.97.0
+    "google-genai": ["python3Packages", "google-genai"],        # 1.67.0
+    "crewai": ["python3Packages", "crewai"],                    # 1.14.4
+    "pytorch": ["python3Packages", "torch"],                    # 2.12.0 cpu default
+    "torchvision": ["python3Packages", "torchvision"],          # 0.27.0
+    "torchaudio": ["python3Packages", "torchaudio"],            # 2.11.0
+    "tensorflow": ["python3Packages", "tensorflow"],            # 2.21.0
+    "jax": ["python3Packages", "jax"],                          # 0.10.0
+    "onnxruntime": ["python3Packages", "onnxruntime"],          # 1.26.0
+    "transformers": ["python3Packages", "transformers"],        # 5.5.4
+    "datasets": ["python3Packages", "datasets"],                # 4.5.0
+    "peft": ["python3Packages", "peft"],                        # 0.18.1
+    "trl": ["python3Packages", "trl"],                          # 0.24.0
+    "python-lsp-server": ["python3Packages", "python-lsp-server"],  # 1.14.0
+    "vscode": ["vscode"],                                       # 1.122.1 (openvsx)
+    "neovim": ["neovim"],                                       # 0.12.2
+    "uv": ["uv"],                                               # 0.11.17
+    "ruff": ["ruff"],                                           # 0.15.15
+    "mypy": ["mypy"],                                           # 1.20.1
+    "python313": ["python313"],                                 # 3.13.13
     # o-03 native rows (KA-09.1, ko#110; probed nixpkgs e7439b6b —
     # python 3.14 era: chromadb + txtai live in python3Packages only,
     # no top-level attrs; pkgs.chroma is alecthomas' syntax highlighter,
