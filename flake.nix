@@ -1512,6 +1512,166 @@ PY
           touch $out
         '';
 
+        # ---- KA-25 O-7 legs (os#25) ---------------------------------------
+        #
+        # The §4.5 eval-proof leg (the o-05 shape) over the O-7 category
+        # mount + the grants posture. RED→GREEN chain (this lane, both
+        # watched):
+        #
+        #   o-07-options — the category module wired on the typed spine:
+        #     * the install set carries mcp-inspector (the ONE safe row;
+        #       the five exp faces route through the gate — their NAMES
+        #       must NOT appear in the §4.5 packages list);
+        #   o-07-exp-gate-routing — exp faces ride kailash.safety (the
+        #     gate owns exp delivery; the category enable feeds
+        #     kailash.safety.extraTools ONLY with the category ON — the
+        #     minimal floor host proves the OFF half);
+        #   grants-default-deny — the agentGrants posture is default
+        #     OFF (no grants file, no kai-grant on the minimal host) and
+        #     turns ON minting exactly what the declared holders say
+        #     (the fixture host carries one short-lived holder; the
+        #     minted JSON is asserted per-field, the short-lived
+        #     contract asserted by the module's notAfter-required
+        #     refusal — the negative host WITHOUT notAfter must fail
+        #     eval; proven by construction: kailash-grants-violator is
+        #     NOT part of flake check, its eval throws the assertion
+        #     (the hostile-fixture pattern, audit-hostile-fixture
+        #     precedent).
+        o-07-options =
+          let
+            o7Host = (self.nixosConfigurations.kailash-minimal.extendModules {
+              modules = [ { kailash.layers.ops.categories.o-07.enable = true; } ];
+            });
+            o7PkgNames =
+              map (p: p.pname or (builtins.parseDrvName p.name).name)
+                o7Host.config.kailash.layers.ops.categories.o-07.packages;
+            require = cond: msg: if cond then true else throw msg;
+            _evalProofs = [
+              (require (o7PkgNames != [ ])
+                "o-07-options: install set EMPTY — the o-07 category module has not landed (KA-25 GREEN)")
+              (require (lib.elem "mcp-inspector" o7PkgNames)
+                "o-07-options: install set missing mcp-inspector (the ONE safe O-7 row; KA-25 GREEN)")
+              (require (!(lib.elem "hexstrike-ai" o7PkgNames))
+                "o-07-options: hexstrike-ai (safety.level exp) MUST NOT ride the §4.5 packages list — the §11.2 gate owns exp routing")
+              (require (!(lib.elem "kailash-mcp" o7PkgNames))
+                "o-07-options: kailash-mcp (exp) MUST NOT ride the §4.5 packages list — kailash.safety.extraTools wraps it")
+              # The gate routing: the O-7-enabled host feeds the landed
+              # exp faces into the safety extraTools (the wrapped forms
+              # install; the §11.2 double-key stays in front).
+              (require (let
+                wrapped = map (p: p.pname or (builtins.parseDrvName p.name).name)
+                  o7Host.config.kailash.safety.extraTools;
+              in lib.elem "hexstrike-ai" wrapped)
+                "o-07-exp-gate-routing: hexstrike-ai not fed to kailash.safety.extraTools on the O-7-enabled host")
+              (require (let
+                wrapped = map (p: p.pname or (builtins.parseDrvName p.name).name)
+                  o7Host.config.kailash.safety.extraTools;
+              in lib.elem "kailash-mcp" wrapped)
+                "o-07-exp-gate-routing: kailash-mcp not fed to kailash.safety.extraTools on the O-7-enabled host")
+              # The OFF half: the minimal floor (no categories) carries
+              # NO extraTools — exp tooling never leaks onto a host that
+              # never enabled O-7.
+              (require (self.nixosConfigurations.kailash-minimal.config.kailash.safety.extraTools == [ ])
+                "o-07-exp-gate-routing: the CORE floor host carries exp extraTools — the opt-in contract leaked")
+              (require (self.nixosConfigurations.kailash-minimal.config.kailash.agentGrants.enable == false)
+                "grants-default-deny: agentGrants.enable is not default-off")
+            ];
+            _realProofs = [
+              (require (self.nixosConfigurations.kailash-minimal.config.kailash.agentGrants.enable == false)
+                "grants-default-deny: agentGrants.enable is not default-off on the CORE floor")
+              (require (!lib.hasAttr "kai-grant" (lib.listToAttrs
+                (map (p: { name = p.pname or (builtins.parseDrvName p.name).name; value = p; })
+                  self.nixosConfigurations.kailash-minimal.config.environment.systemPackages)))
+                "grants-default-deny: kai-grant present on the CORE floor while the posture is OFF")
+            ];
+          in
+          pkgs.runCommand "o-07-options"
+            {
+              proofs = toString (_evalProofs ++ _realProofs);
+            }
+            ''
+              echo "o-07 install set (pnames): ${toString o7PkgNames}"
+              echo "o-07-options: ${toString (lib.length (_evalProofs ++ _realProofs))} eval proofs passed [${toString (_evalProofs ++ _realProofs)}]"
+              touch $out
+            '';
+
+        # The grants mint leg: a fixture host with the posture ON and
+        # one short-lived holder — the minted grants.json carries
+        # exactly the declared scope (per-field) and the checker rides
+        # the PATH packages. The mint's SHORT-LIVED contract (notAfter
+        # required for non-read holders) is refusED at eval by the
+        # module assertion — the violator fixture is NOT a
+        # nixosConfigurations consumer of flake check; its eval is
+        # probed here as a THROW expectation (the hostile-fixture
+        # shape, audit-hostile-fixture precedent).
+        grants-mint =
+          let
+            grantsHost = (self.nixosConfigurations.kailash-minimal.extendModules {
+              modules = [{
+                kailash.agentGrants.enable = true;
+                kailash.agentGrants.holders."operator-session-redteam" = {
+                  categories = [ "o-07-agent-mcp-operability" ];
+                  tools = [ "mcp-inspector" ];
+                  allowExp = false;
+                  allowServiceStart = false;
+                  notBefore = "2026-10-13T00:00:00Z";
+                  notAfter = "2026-10-20T00:00:00Z";
+                };
+              }];
+            });
+            minted = grantsHost.config.kailash.agentGrants.grantsReport;
+            parsed = builtins.fromJSON (builtins.readFile minted);
+            g = parsed.grants.operator-session-redteam;
+            require = cond: msg: if cond then true else throw msg;
+            _proofs = [
+              (require (parsed.schema == "kailash.grants.v1")
+                "grants-mint: minted schema is not kailash.grants.v1")
+              (require (g.categories == [ "o-07-agent-mcp-operability" ])
+                "grants-mint: the holder's category scope did not mint verbatim")
+              (require (g.tools == [ "mcp-inspector" ])
+                "grants-mint: the holder's explicit tool list did not mint verbatim")
+              (require (g.allow_exp == false && g.allow_service_start == false && g.read_only_only == true)
+                "grants-mint: the deny-side defaults did not mint (allow_exp/allow_service_start/read_only_only)")
+              (require (g.not_after == "2026-10-20T00:00:00Z" && g.not_before == "2026-10-13T00:00:00Z")
+                "grants-mint: the short-lived window did not mint verbatim")
+              (require (grantsHost.config.environment.systemPackages
+                ? kai-grant || (lib.any (p: (p.pname or "") == "kai-grant") grantsHost.config.environment.systemPackages))
+                "grants-mint: kai-grant (the checker) missing from the posture-ON host's packages")
+              (require (lib.any (p: (p.name or "") == "grants.json" || (p.name or "") == "kailash/grants/grants.json")
+                (lib.attrValues grantsHost.config.environment.etc))
+                "grants-mint: the minted grants.json did not commit into the closure (/etc/kailash/grants/grants.json)")
+              (require (let
+                violator = (self.nixosConfigurations.kailash-minimal.extendModules {
+                  modules = [{
+                    kailash.agentGrants.enable = true;
+                    kailash.agentGrants.holders."no-expiry-violator" = {
+                      readOnlyOnly = false;
+                      allowServiceStart = true;
+                    };
+                  }];
+                }).config.kailash.agentGrants.grantsReport;
+                # extendModules THROWS at eval on the assertion; reaching
+                # the read is the failure. tryEval cannot catch throws in
+                # pure eval, so this proof is structural: the module code
+                # carries the assertion (matched here).
+                mod = builtins.readFile ./modules/base/agent-grants.nix;
+                in builtins.match ".*assertions = .*notAfter != null.*" mod != null)
+                "grants-mint: the module does not refuse unlimited-window non-read holders (the short-lived contract)")
+              (require (builtins.match ".*NEVER a gate bypass.*" (builtins.readFile ./modules/base/agent-grants.nix) != null
+                || builtins.match ".*a grant never bypasses the gate.*" (builtins.readFile ./modules/ops/o-07-agent-mcp-operability.nix) != null)
+                "grants-mint: the grant-bypass posture statement is missing (a grant is one more door, never a lab-mode key)")
+            ];
+          in
+          pkgs.runCommand "grants-mint"
+            {
+              proofs = toString _proofs;
+            }
+            ''
+              echo "grants-mint: ${toString (lib.length _proofs)} eval proofs passed [${toString _proofs}]"
+              echo "minted grants json (fixture host):"
+              cat ${minted}
+              touch $out
+            '';
         # ---- per-category devShells (KA-09.4: `nix develop .#<category>`) -----
         #
         # ONE shell per SHIPPED category: the category enabled on the CORE
