@@ -1790,6 +1790,87 @@ PY
               echo "a-04-options: ${toString (lib.length _evalProofs)} eval proofs passed [${toString _evalProofs}]"
               touch $out
             '';
+        # ---- The §8.1 image-matrix eval legs (KA-28, ko#28) ----------------
+        #
+        # images-census: the eval-side census gate, REQUIRE/THROW at EVAL
+        # time (the runCommand renders only after both assertions hold —
+        # a drift never reaches the build phase). Re-derives the walker's
+        # per-target closure-name count (images/closure-walk.nix over
+        # images/generator.nix's per-profile toplevels) and requires it
+        # EQUAL to the committed snapshot (tests/images-census.json) — a
+        # manifest merge or a pin bump that moves the closures throws at
+        # eval until scripts/gen-image-census.sh regenerates the snapshot
+        # in the same cycle. Also requires the §8.1 exclusions per target:
+        # the heavy tokens (seclists / gnuradio / gqrx / hackrf / sox /
+        # librosa / texlive) and the opt-in pack rows (kailash-data.*,
+        # sdr-tools, wordlists-mega) must NEVER appear in a default image
+        # closure — the packs are forced opt-in by construction, proven at
+        # eval per target per format.
+        images-census =
+          let
+            gen = import ./images/generator.nix {
+              inherit lib;
+              pkgsLinux = pkgs;
+              nixos-generators = inputs.nixos-generators;
+            };
+            walk = import ./images/closure-walk.nix { inherit lib; };
+            snapshot = builtins.fromJSON (builtins.readFile ./tests/images-census.json);
+            # KA-28 watched-RED bootstrap STUB: forces every target's live
+            # count to 0 so the eval-time require throws on the first
+            # target (iso-full: snapshot 20 != live 0). The assertions are
+            # identical; the GREEN commit restores the walker binding:
+            # countsByName = builtins.mapAttrs (_: tl: (walk tl).count) gen.toplevels;
+            countsByName = builtins.mapAttrs (_: _: 0) gen.toplevels;
+            packTokenRe = "seclists|gnuradio|gqrx|hackrf|sox|librosa|texlive|kailash-data|sdr-tools|wordlists";
+            heavyTokens = name:
+              lib.filter
+                (n: builtins.match ".*(${packTokenRe}).*" n != null)
+                (walk (builtins.getAttr name gen.toplevels)).names;
+            # The eval-time proof: per target, snapshot==live AND zero
+            # heavy tokens. One lib.require-style assertion chain — the
+            # first violated target throws with its name + both counts.
+            proveTarget = name: cnt:
+              if snapshot.targets ? ${name} then
+                assert (snapshot.targets.${name}.count or (-1) == cnt
+                  || throw "images-census: ${name} drift — snapshot ${toString (snapshot.targets.${name}.count or (-1))} != live ${toString cnt} (regenerate via scripts/gen-image-census.sh)");
+                assert (builtins.length (heavyTokens name) == 0
+                  || throw "images-census: ${name} carries ${toString (builtins.length (heavyTokens name))} excluded heavy tokens — the packs must stay opt-in");
+                "${name}=${toString cnt}"
+              else
+                throw "images-census: target ${name} missing from the committed snapshot (tests/images-census.json)";
+            proofs = lib.mapAttrsToList proveTarget countsByName;
+          in
+          assert (lib.length proofs == 8
+            || throw "images-census: expected 8 §8.1 targets, live walker produced ${toString (lib.length proofs)}");
+          pkgs.runCommand "images-census"
+            { } ''
+            # The eval-side assertions above ran BEFORE this derivation
+            # rendered; this body prints the proofs verbatim and succeeds.
+            cat <<EOPROOFS
+            ${lib.concatStringsSep "\n" proofs}
+            EOPROOFS
+            echo "images-census: 8/8 targets snapshot-equal, heavy exclusions clean (eval-proven)"
+            touch $out
+          '';
+
+        # images-budget-selftest: the §8.1 verifier's own proof — the
+        # breach + PACK-LEAK + clean cases driven through the SAME
+        # enforcement unit the release-lane mass legs call (the mass
+        # legs run the verifier against closureInfo-produced census
+        # documents; the committed snapshot carries only the count
+        # census, so the enforce path is exercised on synthetic
+        # closure data here). The watched RED shape: a stub verifier
+        # leaves all three cases unproven and the leg fails loudly.
+        images-budget-selftest = pkgs.runCommand "images-budget-selftest"
+          {
+            nativeBuildInputs = [ pkgs.python3 ];
+          } ''
+          ${pkgs.python3}/bin/python3 ${./tools/kailash-images-budget.py} --self-test > self-test.out
+          grep -q "OK (breach + exclusion + clean all proven)" self-test.out \
+            || { echo "images-budget-selftest: the verifier did not prove breach+exclusion+clean:"; cat self-test.out; exit 1; }
+          echo "images-budget-selftest: OK — breach+pack-leak+clean proven through the enforcement unit"
+          touch $out
+        '';
       };
 
 
@@ -2103,6 +2184,66 @@ PY
       };
 
       # devShells per category with KA-09; images with the images wave;
+      # devShells per category landed with KA-09.4 (ko#113); the images wave
+      # lands here.
+
+      # ---- The §8.1 image matrix + size budgets (KA-28, ko#28) ------------
+      #
+      # One GENERATOR (images/generator.nix): each shipped profile evals once
+      # through nixos-generators' format module and splits into the TWO shapes
+      # the ratified deliverable-shape decision (ko#132) ships — the QEMU qcow2
+      # (PRIMARY, drives KA-32's golden-image gate + KA-43's boot polish) and
+      # the bootable ISO (SECONDARY, bare-metal evaluation). The budget table
+      # (images/kailash-images-table.nix) carries the plan §8.1 budgets, the
+      # committed census snapshot (tests/images-census.json) the
+      # derivation-level closure evidence, scripts/gen-image-census.sh the
+      # regeneration cycle, tools/kailash-images-budget.py the verifier.
+      #
+      # Exposure: the artifact derivations as `packages` (`nix build
+      # .#kailash-images-qemu-minimal`), the census/verifier as flake `apps`
+      # (`nix run .#images-census`), and the check legs the eval gate runs:
+      #   * images-census — the walker's per-target closure-name count
+      #     asserts equal to the committed snapshot; heavy-pack tokens
+      #     (seclists / gnuradio / gqrx / hackrf / texlive / the
+      #     kailash-data.* opt-in packs) assert ABSENT — the exclusion by
+      #     construction is eval-proven here, per target.
+      #   * images-budget-selftest — the verifier's breach + pack-leak +
+      #     clean cases (the watched-RED shape: a stub verifier trips all
+      #     three).
+      # The MASS budget legs (closureInfo NarSize sums) are RUNTIME legs
+      # invoked from CI/the release lane against the hosted toplevels —
+      # not flake-check attrs (they would build the whole images closure
+      # on every PR).
+      packages.${system} =
+        let
+          gen = import ./images/generator.nix {
+            inherit lib;
+            pkgsLinux = pkgs;
+            nixos-generators = inputs.nixos-generators;
+          };
+        in
+        # The §8.1 image artifacts, FLATTENED into packages (each target's
+        # ref = `kailash-images-<format>-<profile>` — the table carries the
+        # refs; `nix build .#<ref>` per target). NOTE: each ref key here
+        # resolves to ONE derivation (the image artifact); the toplevels
+        # (gen.toplevels) stay internal to the census/budget legs — nothing
+        # double-keys packages (a nested attrset here is not a derivation
+        # and flake check rejects it).
+        lib.mapAttrs' (name: target: lib.nameValuePair target.ref gen.images.${name})
+          (import ./images/kailash-images-table.nix).targets;
+
+      apps.${system} = {
+        images-census = {
+          type = "app";
+          program = "${pkgs.writeShellApplication {
+            name = "kailash-images-census-runner";
+            runtimeInputs = [ pkgs.python3 ];
+            text = ''
+              exec bash ${./scripts/gen-image-census.sh} "$@"
+            '';
+          }}";
+        };
+      };
 
       # ---- per-category devShells (KA-09.4, ko#113): `nix develop .#<category>` ---
       #
@@ -2146,7 +2287,9 @@ PY
           d-04 = "defence";
         };
 
-      # devShells with KA-09 (landed: KA-09.4); images with the images wave;      # remaining hosts (kailash-full etc.) land with their profile items.
+      # devShells with KA-09 (landed: KA-09.4); images with the images wave
+      # (KA-28, this splice); remaining hosts (kailash-full etc.) land with
+      # their profile items.
 
       # ---- VM smoke suite (KA-06.3, ko#98): tests/c-01.nix etc -------------
       #
