@@ -948,7 +948,133 @@ PY
           echo "a-02: OK"
           touch $out
         '';
-      };
+
+
+        # ---- O-6 Docs & Authoring legs (KA-09.4) ------------------------------
+        #
+        # RED stub (watched RED): the o-06 category module has NOT landed —
+        # config.kailash.layers.ops.categories.o-06.packages is the spine's
+        # empty default, so the composition assertions below THROW at
+        # evaluation with their named message while every older leg stays
+        # green through the SAME eval. GREEN lands the module (the
+        # generated, manifest-driven install set) and the SAME assertions
+        # pass through the SAME eval. Routing: texlive-full (status: data —
+        # the opt-in TeX data pack) NEVER enters the list; pwndoc-ng +
+        # dradis (status: module) are excluded by construction — the
+        # service-module ledger owns them, per the manifest rows.
+        o-06-options =
+          let
+            o6Host = (self.nixosConfigurations.kailash-minimal.extendModules {
+              modules = [ { kailash.layers.ops.categories.o-06.enable = true; } ];
+            });
+            o6PkgNames =
+              map (p: p.pname or (builtins.parseDrvName p.name).name)
+                o6Host.config.kailash.layers.ops.categories.o-06.packages;
+            require = cond: msg: if cond then true else throw msg;
+            # FORCED via the derivation attr below (toString coerces every
+            # element): a missing install set fails THIS check at EVAL with
+            # its named message — never a silent vacuous touch.
+            _evalProofs = [
+              (require (o6PkgNames != [ ])
+                "o-06-options: install set EMPTY — the o-06 category module has not landed (KA-09.4 GREEN)")
+              (require (lib.elem "quarto" o6PkgNames)
+                "o-06-options: install set missing the quarto flagship (KA-09.4 GREEN)")
+              (require (lib.elem "typst" o6PkgNames)
+                "o-06-options: install set missing typst (KA-09.4 GREEN)")
+            ];
+          in
+          pkgs.runCommand "o-06-options"
+            {
+              proofs = toString _evalProofs;
+            }
+            ''
+              echo "o-06 install set (pnames): ${toString o6PkgNames}"
+              echo "o-06-options: ${toString (lib.length _evalProofs)} eval proofs passed [${toString _evalProofs}]"
+              touch $out
+            '';
+
+        # The generated-list drift leg (mirror of o-01/o-02): the committed
+        # modules/ops/generated/o-06-*.nix must equal the generator's emit
+        # against the PINNED packages manifest through the flake input.
+        # RED stub: the committed emit does not exist yet — the path
+        # interpolation fails at eval ("path does not exist" = the watched
+        # red, the ka-09.2 posture-doc pattern). GREEN lands it and cmp
+        # passes.
+        o-06-generated-drift = pkgs.runCommand "o-06-generated-drift"
+          {
+            nativeBuildInputs = [ (pkgs.python3.withPackages (ps: [ ps.pyyaml ])) ];
+          } ''
+          python3 ${./tools/gen-category-packages.py} \
+            --manifest-file ${kailash-packages.outPath + "/manifest/tools.yaml"} \
+            --category o-06-documentation-reporting-authoring > gen-o-06.nix
+          GENERATED=${./modules/ops/generated/o-06-documentation-reporting-authoring.nix}
+          if ! cmp -s gen-o-06.nix "$GENERATED"; then
+            echo "o-06 generated list DRIFTED from the generator emit:"
+            diff -u "$GENERATED" gen-o-06.nix || true
+            exit 1
+          fi
+          echo "o-06-generated-drift: OK (generator == committed)"
+          touch $out
+        '';
+
+        # ---- per-category devShells (KA-09.4: `nix develop .#<category>`) -----
+        #
+        # ONE shell per SHIPPED category: the category enabled on the CORE
+        # minimal floor (extendModules — the §4.5 typed spine is the only
+        # wiring) and the composed install set AS the shell packages.
+        # Shipped = the categories whose modules carry install sets on
+        # master: the four Wave-5 CLASSIC (c-01, c-02, c-04, c-06) + the OPS
+        # modules landed so far (o-01, o-02, o-03) + o-06 (this item).
+        # o-04 joins when KA-09.3's module lands its install set; o-05 /
+        # o-07 join with their wave items. RED stub: the devShells output
+        # does not exist yet — every id probe throws its named eval failure.
+        category-devshells =
+          let
+            shipped = {
+              c-01 = "classic";
+              c-02 = "classic";
+              c-04 = "classic";
+              c-06 = "classic";
+              o-01 = "ops";
+              o-02 = "ops";
+              o-03 = "ops";
+              o-06 = "ops";
+            };
+            shells = (self.devShells or { }).${system} or { };
+            devShellPkgs = layer: id:
+              (self.nixosConfigurations.kailash-minimal.extendModules {
+                modules = [ { kailash.layers.${layer}.categories.${id}.enable = true; } ];
+              }).config.kailash.layers.${layer}.categories.${id}.packages;
+            pnamesOf = list: map (p: p.pname or (builtins.parseDrvName p.name).name) list;
+            require = cond: msg: if cond then true else throw msg;
+            # FORCED via the derivation attr below (toString coerces every
+            # element): a missing devShell id fails THIS check at EVAL with
+            # its named message.
+            _evalProofs =
+              lib.mapAttrsToList
+                (id: layer:
+                  require (builtins.hasAttr id shells)
+                    "category-devshells: devShells.${system}.${id} MISSING — the per-category devShells have not landed (KA-09.4 GREEN)")
+                shipped
+              ++ [
+                (require (lib.elem "quarto" (pnamesOf (devShellPkgs "ops" "o-06")))
+                  "category-devshells: the o-06 devShell set does not carry quarto (KA-09.4 GREEN)")
+                (require (lib.elem "typst" (pnamesOf (devShellPkgs "ops" "o-06")))
+                  "category-devshells: the o-06 devShell set does not carry typst (KA-09.4 GREEN)")
+                (require (lib.elem "nmap" (pnamesOf (devShellPkgs "classic" "c-01")))
+                  "category-devshells: the c-01 devShell set does not carry nmap")
+                (require (pnamesOf (devShellPkgs "ops" "o-06") != [ ])
+                  "category-devshells: the o-06 devShell install set is EMPTY (KA-09.4 GREEN)")
+              ];
+          in
+          pkgs.runCommand "category-devshells"
+            {
+              proofs = toString _evalProofs;
+            }
+            ''
+              echo "category-devshells: ${toString (lib.length _evalProofs)} eval proofs passed (shipped ids: ${builtins.concatStringsSep " " (builtins.attrNames shipped)}) [${toString _evalProofs}]"
+              touch $out
+            '';      };
 
 
       # ---- Audit hostile fixture (KA-18.2, os#93) --------------------------
@@ -1098,6 +1224,38 @@ PY
       };
 
       # devShells per category with KA-09; images with the images wave;
-      # remaining hosts (kailash-full etc.) land with their profile items.
+
+      # ---- per-category devShells (KA-09.4, ko#113): `nix develop .#<category>` ---
+      #
+      # ONE shell per SHIPPED category (a category with an install-set
+      # module on master): the category's INSTALL SET as the shell
+      # packages — read through the §4.5 typed spine itself (extendModules
+      # of the CORE minimal floor with the category enable, then the
+      # category's own `packages` option, never the host's whole
+      # systemPackages — the shell carries the category, mkShell adds the
+      # standard toolchain). Generated over the shipped map (mapAttrs),
+      # new shipped categories join the map (o-04 with KA-09.3's module,
+      # o-05/o-07 with their wave items). Every id and its package set is
+      # additionally asserted by the checks.category-devshells leg.
+      devShells.${system} = builtins.mapAttrs
+        (id: layer: pkgs.mkShell {
+          name = "kailash-${id}-devshell";
+          packages =
+            (self.nixosConfigurations.kailash-minimal.extendModules {
+              modules = [ { kailash.layers.${layer}.categories.${id}.enable = true; } ];
+            }).config.kailash.layers.${layer}.categories.${id}.packages;
+        })
+        {
+          c-01 = "classic";
+          c-02 = "classic";
+          c-04 = "classic";
+          c-06 = "classic";
+          o-01 = "ops";
+          o-02 = "ops";
+          o-03 = "ops";
+          o-06 = "ops";
+        };
+
+      # devShells with KA-09 (landed: KA-09.4); images with the images wave;      # remaining hosts (kailash-full etc.) land with their profile items.
     };
 }
