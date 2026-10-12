@@ -725,7 +725,8 @@ PY
             || { echo "c-07 packages is NON-EMPTY on kailash-minimal ($MIN_C07) — the stub must mount nothing"; exit 1; }
           test "$FULL_C07" = "0" \
             || { echo "c-07 packages is NON-EMPTY on kailash-full ($FULL_C07) — the stub must mount nothing"; exit 1; }
-          echo "c-07-optin-posture: OK (enable false on minimal+full, empty mounts)"          touch $out
+          echo "c-07-optin-posture: OK (enable false on minimal+full, empty mounts)"
+          touch $out
         '';
 
         # ---- O-2 legs (KA-08.2) — same shape as the O-1 legs ----
