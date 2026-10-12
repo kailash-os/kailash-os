@@ -419,6 +419,22 @@ open(sys.argv[2], "w", encoding="utf-8").write(chr(10).join(gen) + chr(10))
           touch $out
         '';
 
+        # O-4 services leg (KA-09.3, ko#112). RED stub (watched RED →
+        # GREEN): with the typed tree present but NO o-04 category module
+        # on the fold, an o-04-ON host (kailash-redteam-ai — the profile
+        # opts in via the §4.5 category switch) keeps services.ollama at
+        # its upstream FALSE default - this assertion evaluates that FALSE
+        # and fails. GREEN: the o-04 module wires services.ollama
+        # (mkIf cfg.enable) and this leg passes; the leg then extends with
+        # the loopback/opt-in/webui wiring assertions. (The o-02 pattern
+        # leg o-04-options above owns the typed-tree enable assertion;
+        # this one owns the SERVICE wiring.)
+        o-04-services = pkgs.runCommand "o-04-services" { } ''
+          test "${toString self.nixosConfigurations.kailash-redteam-ai.config.services.ollama.enable}" = "1" \
+            || { echo "o-04 module missing: services.ollama.enable stays FALSE on an enabled o-04 host (KA-09.3 watched RED - modules/ops/o-04-local-llm-inference-labs.nix lands in the GREEN cycle, ko#112)"; exit 1; }
+          touch $out
+        '';
+
         # ---- §4.5 OPS category modules (KA-08.1/08.2, ko#105/#106) ------
         #
         # Legs (eval-only, no new builds):
