@@ -748,7 +748,7 @@ PY
             || { echo "a-02 categories.enable is not FALSE-default"; exit 1; }
           echo "--- an enabled a-02 host resolves a NON-EMPTY install set with the garak flagship present"
           A02PKGS="${toString self.nixosConfigurations.kailash-a-02-enabled.config.kailash.layers.attack.categories.a-02.packages}"
-          A02NAMES=${lib.concatStringsSep " " (map (p: p.pname or p.name) self.nixosConfigurations.kailash-a-02-enabled.config.kailash.layers.attack.categories.a-02.packages)}
+          A02NAMES="${lib.concatStringsSep " " (map (p: p.pname or p.name) self.nixosConfigurations.kailash-a-02-enabled.config.kailash.layers.attack.categories.a-02.packages)}"
           echo "a-02 install set: $A02NAMES"
           test -n "$A02PKGS" || { echo "a-02: the enabled a-02 category installs NOTHING (the module's install wiring is missing)"; exit 1; }
           case " $A02NAMES " in
