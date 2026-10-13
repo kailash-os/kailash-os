@@ -1,4 +1,4 @@
-# GENERATED FILE — KA-23. DO NOT EDIT: regen with
+# GENERATED FILE — KA-08.x. DO NOT EDIT: regen with
 #   python3 tools/gen-category-packages.py --category a-05-model-extraction-inversion
 # from the pinned packages manifest; the committed lists are
 # drift-checked every PR by the OS flake's category checks.
@@ -14,7 +14,8 @@
 
 {
   a-05-model-extraction-inversion = {
-    native = [ ];
+    native = [
+    ];
     bespoke = [
       { id = "art"; derivation = "pkgs/art/default.nix"; }
       { id = "cleverhans"; derivation = "pkgs/cleverhans/default.nix"; }

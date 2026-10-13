@@ -1803,16 +1803,26 @@ PY
           {
             nativeBuildInputs = [ (pkgs.python3.withPackages (ps: [ ps.pyyaml ])) ];
           } ''
+          # a-08's installable rows are BOTH derivation-pending bespoke
+          # at this pin and the category carries FOUR safety:exp rows —
+          # the generator REFUSES an exp-carrying category's emit (the
+          # §11.2 contract, exit 1 + the named row list on stderr).
+          # This leg pins the refusal AND the ledger shape the module
+          # consumes (the a-05 file is the one exp-free long-tail emit;
+          # its byte-parity rides a-05-generated-drift above).
           python3 ${./tools/gen-category-packages.py} \
             --manifest-file ${kailash-packages.outPath + "/manifest/tools.yaml"} \
-            --category a-08-data-poisoning > gen-a-08.nix
-          GENERATED=${./modules/attack/generated/a-08-data-poisoning.nix}
-          if ! cmp -s gen-a-08.nix "$GENERATED"; then
-            echo "a-08 generated list DRIFTED from the generator emit:"
-            diff -u "$GENERATED" gen-a-08.nix || true
-            exit 1
+            --category a-08-data-poisoning > gen-a-08.nix 2> refuse.err
+          rc=$?
+          if [ "$rc" -eq 0 ]; then
+            echo "a-08-generated-drift: FAIL: the generator EMITTED an exp-carrying category (the §11.2 refuse did not fire)"; cat gen-a-08.nix; exit 1
           fi
-          echo "a-08-generated-drift: OK (generator == committed)"
+          grep -q "carries safety:exp rows" refuse.err \
+            || { echo "a-08-generated-drift: FAIL: the refusal does not name the exp rows"; cat refuse.err; exit 1; }
+          cat refuse.err
+          LEDGER=${./generated/manifest-ids.json}
+          python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); a8=d["categories"]["a-08-data-poisoning"]; assert a8["count"]==6 and len(a8["exp"])==4 and len(a8["installable"])==2, a8' "$LEDGER"
+          echo "a-08-generated-drift: OK (the §11.2 refuse fired with the named rows; ledger 6=4exp+2installable)"
           touch $out
         '';
 
