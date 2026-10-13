@@ -106,16 +106,38 @@ jobs:
         with:
           subject-path: ${{ steps.locate.outputs.iso }}${{ steps.locate.outputs.qcow }}
           sbom-path: ${{ steps.sbom.outputs.spom }}
-      - name: Upload the artefact to the release
-        if: steps.locate.outputs.iso != '' || steps.locate.outputs.qcow != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ inputs.tag || github.ref_name }}
+      # Naming: every leg's basename collides on the release (all ISOs are
+      # nixos-*.iso, every qcow2 nixos.qcow2) — the 422 on the hosted run.
+      # Stage under the unique name; the bits (and their digests) are
+      # unchanged, so the attestations above still cover the artefact.
+      - name: Stage the artefact under its release name
+        id: stage
         run: |
-          TAG="${TAG#refs/tags/}"
-          if [ -n "${{ steps.locate.outputs.iso }}" ]; then
-            gh release upload "$TAG" "${{ steps.locate.outputs.iso }}" --repo "$GITHUB_REPOSITORY" --clobber
-          fi
-          if [ -n "${{ steps.locate.outputs.qcow }}" ]; then
-            gh release upload "$TAG" "${{ steps.locate.outputs.qcow }}" --repo "$GITHUB_REPOSITORY" --clobber
-          fi
+          TAG="${{ inputs.tag || github.ref_name }}"
+          ART="${{ steps.locate.outputs.iso }}${{ steps.locate.outputs.qcow }}"
+          EXT="${ART##*.}"
+          DEST="kailash-${TAG}-${{ matrix.name }}.${EXT}"
+          cp "$ART" "$DEST"
+          (sha256sum "$DEST" 2>/dev/null || shasum -a 256 "$DEST") | tee SHA256SUMS
+          echo "dest=$(pwd)/$DEST" >> "$GITHUB_OUTPUT"
+          echo "sums=$(pwd)/SHA256SUMS" >> "$GITHUB_OUTPUT"
+      # Upload as a WORKFLOW ARTIFACT: the release-asset endpoint 404/422s
+      # the workflow_dispatch github.token against a release created by an
+      # outside token (the run's evidence: 404 on the ISO POST, 422 on the
+      # qcow POST — while the SAME file uploads fine with the user's PAT,
+      # probed with t.bin). The release attachment is the user-side step
+      # (gh release upload with the user PAT) — the attestation verifies
+      # per-artefact digest regardless of who uploads. SHA256SUMS rides
+      # the artifact so the release-side attach carries the checksum.
+      - name: Save the artefact as a workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: |
+            ${{ steps.stage.outputs.dest }}
+            ${{ steps.stage.outputs.sums }}
+          retention-days: 30
+      - name: Attest the staged artefact name (the digest is the subject)
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: ${{ steps.stage.outputs.dest }}
