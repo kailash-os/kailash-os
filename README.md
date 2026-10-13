@@ -108,7 +108,9 @@ manifest-wellformed: OK (32 category entries, 336 tools; primary slots: ATTACK 5
 ### Images and ISOs (KA-28.0 shape decision)
 
 Pre-built artifacts ship with the `2026.01` train; until release assets
-exist, the flake above is the install surface. The deliverable shapes,
+exist, the flake above is the install surface. The images matrix —
+every target, budget, download surface and the verify commands — is
+documented in [`docs/guide/images.md`](docs/guide/images.md). The deliverable shapes,
 in shipping priority
 ([kailash-os#132](https://github.com/kailash-os/kailash-os/issues/132)):
 
@@ -128,9 +130,13 @@ in shipping priority
    image artifacts ship.
 
 QEMU images and ISOs emit from the same profile eval (one source, two
-formats). Out of scope for the initial trains: cloud-image formats
-(AMI/export), PXE/netboot, ARM ISOs ([KA-36](https://github.com/kailash-os/kailash-os/issues/36)
-decides the aarch64 posture) and live-patch surfaces.
+formats). The arch strategy is x86 hosted, arm local
+([kailash-os#198](https://github.com/kailash-os/kailash-os/issues/198)):
+aarch64 minimal + headless-agent rows build via
+[`tools/build-arm-images.sh`](tools/build-arm-images.sh); the aarch64
+`redteam-ai` rows remain the [KA-36](https://github.com/kailash-os/kailash-os/issues/36)
+residual. Out of scope for the initial trains: cloud-image formats
+(AMI/export), PXE/netboot and live-patch surfaces.
 
 ## Project Status:
 

@@ -8,10 +8,17 @@
 # natively — no emulation, no remote builder).
 #
 # Usage (from a clone at the tag):
-#   tools/build-arm-images.sh 2026.01-alpha.1 [minimal|redteam-ai|headless-agent] [iso|qemu] [upload]
+#   tools/build-arm-images.sh 2026.01-alpha.1 [profile] [iso|qemu] [upload]
 #
-# Default: every profile in BOTH formats at $TAG, no upload (files left in
-# ./release-arm/ with a SHA256SUMS sheet).
+# Default: every TABLE-scoped profile (minimal, headless-agent) in BOTH
+# formats at $TAG, no upload (files left in ./release-arm/ with an
+# arm-local checksum sheet SHA256SUMS-aarch64-local — suffixed, so it can
+# never clobber the release's canonical SHA256SUMS; the release-side
+# attach concatenates the sheets). The redteam-ai profile has no aarch64
+# row in the matrix table (the KA-36 slice-2 residual, kailash-os#36), so
+# it is NOT in the default expansion — the images-release-completeness
+# gate (KA-33 slice 3, kailash-os#200) enforces that the default expands
+# exactly the table's aarch64 rows and nothing else.
 set -euo pipefail
 
 TAG="${1:?usage: build-arm-images.sh <tag> [profile] [format] [upload]}"
@@ -25,7 +32,7 @@ mkdir -p "$OUTDIR"
 
 PROFILES=()
 if [ "$PROFILE" = "all" ]; then
-  PROFILES=(minimal redteam-ai headless-agent)
+  PROFILES=(minimal headless-agent)
 else
   PROFILES=("$PROFILE")
 fi
@@ -61,12 +68,25 @@ for prof in "${PROFILES[@]}"; do
   done
 done
 
-echo "== SHA256SUMS =="
+echo "== SHA256SUMS-aarch64-local =="
 cd "$OUTDIR"
-if command -v sha256sum >/dev/null 2>&1; then
-  sha256sum ./*.iso ./*.qcow2 2>/dev/null > SHA256SUMS || true
-else
-  shasum -a 256 ./*.iso ./*.qcow2 2>/dev/null > SHA256SUMS || true
+# The arm-local sheet is SUFFIXED (ko#200): it concatenates INTO the
+# release's canonical SHA256SUMS on the release side; never a shared
+# unsuffixed name that could clobber it. The checksum run is STRICT:
+# empty expansions abort loudly instead of silently writing a blank sheet
+# (the old 2>/dev/null || true swallow).
+ARTS=()
+for f in ./*.iso ./*.qcow2; do
+  if [ -f "$f" ]; then ARTS+=("$f"); fi
+done
+if [ "${#ARTS[@]}" -eq 0 ]; then
+  echo "no image artefacts in $OUTDIR — nothing to checksum" >&2
+  exit 1
 fi
-cat SHA256SUMS
-echo "done — artefacts + SHA256SUMS in $OUTDIR/ (re-run with 'upload' to push them to the release)"
+if command -v sha256sum >/dev/null 2>&1; then
+  sha256sum "${ARTS[@]}" > SHA256SUMS-aarch64-local
+else
+  shasum -a 256 "${ARTS[@]}" > SHA256SUMS-aarch64-local
+fi
+cat SHA256SUMS-aarch64-local
+echo "done — artefacts + SHA256SUMS-aarch64-local in $OUTDIR/ (re-run with 'upload' to push them to the release)"

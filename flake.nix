@@ -2487,6 +2487,33 @@ PY
 
           '';
 
+        # images-release-completeness: EVERY matrix target (the 12-row
+        # table) must be a buildable package attr AND covered by a build
+        # surface (KA-33 slice 3, ko#200) — the 8 hosted rows must be
+        # DECLARED in release-images.yml's matrix (the slice-1 4-leg
+        # subset left the never-built quartet with no build record; found
+        # only by diffing the table against the release page), the 4
+        # aarch64 rows must be producible by tools/build-arm-images.sh's
+        # default expansion, and the builder's default must not expand
+        # rows OUTSIDE the table. Drift = RED at eval/build time before
+        # any release could repeat the gap. The assertions run through
+        # the SAME checker a user runs locally via the tools script —
+        # expected-nonzero probes ride an ||-guard context (the errexit
+        # rule), never a bare `CMD; rc=$?`.
+        images-release-completeness = pkgs.runCommand "images-release-completeness"
+          {
+            nativeBuildInputs = [ pkgs.python3 ];
+          } ''
+          ${pkgs.python3}/bin/python3 ${./tools/check-images-release-completeness.py} \
+              --table ${./images/kailash-images-table.nix} \
+              --workflow ${./.github/workflows/release-images.yml} \
+              --builder ${./tools/build-arm-images.sh} > out.log 2>&1 \
+            || { echo "images-release-completeness: RED — the release image matrix has gaps:"; cat out.log; exit 1; }
+          echo "images-release-completeness: OK — gap-free (every table row has a declared build surface)"
+          cat out.log
+          touch $out
+          '';
+
 
 
         # ---- kailash.data.* wordlists + data packs (KA-29, ko#29) ----------
