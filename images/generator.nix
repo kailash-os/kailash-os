@@ -124,7 +124,9 @@ let
       # plain floor would override) — forced here.
       boot.loader.systemd-boot.enable = lib.mkForce false;
       boot.loader.efi.canTouchEfiVariables = lib.mkForce false;
-      # The §8.1 ISO posture in the format module (profile-agnostic).
+      # The §8.1 ISO posture in the format module (profile-agnostic);
+      # BIOS boot stays ON here (x86 default) — the arm override lives in
+      # mkTarget (the ISO module itself is system-blind).
       isoImage.volumeID = lib.mkDefault "KAILASH_LIVE";
       isoImage.makeBiosBootable = lib.mkDefault true;
       isoImage.makeEfiBootable = lib.mkDefault true;
@@ -155,6 +157,10 @@ let
           formatModule
           formatModules.${target.format}
           (../profiles + "/${target.profile}.nix")
+        ] ++ lib.optionals (target.system or "x86_64-linux" == "aarch64-linux" && target.format == "iso") [
+          # aarch64 ISO: BIOS boot is x86-only at this nixpkgs (KA-36
+          # slice 1) — the arm live surface boots UEFI-only.
+          { isoImage.makeBiosBootable = lib.mkForce false; }
         ];
       };
     in {
