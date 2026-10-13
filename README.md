@@ -37,7 +37,7 @@ chain, ATTACK).
 | 2 | Vulnerability Analysis | CLASSIC | 7 |
 | 3 | Web Application Assessment | CLASSIC | 10 |
 | 4 | Database Assessment | CLASSIC | 7 |
-| 5 | Password & Offline-Credential Attacks | CLASSIC | 15 |
+| 5 | Password & Offline-Credential Attacks | CLASSIC | 16 |
 | 6 | Reverse Engineering (software artefacts) | CLASSIC | 26 |
 | 7 | Exploitation & Post-Exploitation (software) | CLASSIC | 9 |
 | 8 | Forensics, IR & Reporting | CLASSIC | 21 |
@@ -64,9 +64,9 @@ chain, ATTACK).
 | 29 | AI Threat Modelling | DEFENCE | 6 |
 | 30 | AI Governance & Regulation Mapping | DEFENCE | 4 |
 | 31 | Standards Verification Toolkit | DEFENCE | 5 |
-| — | **Total** | 31 categories | **336** |
+| — | **Total** | 31 categories | **337** |
 
-Per-layer primary tool slots: CLASSIC 141 · ATTACK 58 · DEFENCE 46 · OPS 91 — 31 categories, 336 tool slots across the four layers (data-packs excluded from counts, plan §3.6), generated from [`categories.yaml`](https://github.com/kailash-os/kailash-packages/blob/main/manifest/categories.yaml) — the taxonomy's single home — on the `kailash-packages` main HEAD.
+Per-layer primary tool slots: CLASSIC 142 · ATTACK 58 · DEFENCE 46 · OPS 91 — 31 categories, 337 tool slots across the four layers (data-packs excluded from counts, plan §3.6), generated from [`categories.yaml`](https://github.com/kailash-os/kailash-packages/blob/main/manifest/categories.yaml) — the taxonomy's single home — on the `kailash-packages` main HEAD.
 <!-- END GENERATED CATEGORY TABLE -->
 
 The table is **generated** from the Kailash packages manifest — never

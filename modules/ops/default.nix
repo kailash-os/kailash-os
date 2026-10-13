@@ -15,6 +15,13 @@
 # KA-09.4 (ko#113): the O-6 Docs & Authoring category module (the
 # publishing/authoring stack; texlive-full stays the opt-in data row,
 # dradis/pwndoc-ng the module rows — both never in the install set).
+#
+# KA-25 (os#25): the O-7 Agent & MCP Operability category module — the
+# exp faces route through the §11.2 lab-mode gate (kailash.safety.-
+# extraTools; the FIRST category module wiring exp rows at the
+# category level), mcp-inspector rides the §4.5 package-list surface,
+# and the capability-grants posture (modules/base/agent-grants.nix)
+# scopes agent actions on top (a grant never bypasses the gate).
 { lib, ... }: {
   imports = [
     ./o-01-mlops-ml-engineering.nix
@@ -24,5 +31,6 @@
     ./o-02-compute-serving-infrastructure.nix
     ./o-06-documentation-reporting-authoring.nix
     ./o-05-ai-engineering-sdks-dev-env.nix
+    ./o-07-agent-mcp-operability.nix
   ];
 }
