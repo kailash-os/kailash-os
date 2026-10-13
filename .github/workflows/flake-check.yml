@@ -17,12 +17,20 @@ permissions:
 
 jobs:
   flake-check:
+    # The aarch64 row is SUSPENDED (issue #186): the root flake registers
+    # zero checks.aarch64-linux legs (68 on x86_64-linux), so the arm job
+    # gated nothing — plain `nix flake check` there is eval-only theatre
+    # ("omitted these incompatible systems: x86_64-linux") that stayed
+    # green while legs failed for two committed rounds (run 38338309343,
+    # a-08-generated-drift). It returns the moment the flake declares its
+    # first aarch64 leg: re-add `{ os: ubuntu-24.04-arm, system:
+    # aarch64-linux }` in the same cycle that leg lands — no gate leg
+    # that gates nothing.
     strategy:
       fail-fast: false
       matrix:
         include:
           - { os: ubuntu-latest, system: x86_64-linux }
-          - { os: ubuntu-24.04-arm, system: aarch64-linux }
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v7.0.1
