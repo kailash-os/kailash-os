@@ -1,0 +1,51 @@
+{
+  "status": "pending-vm",
+  "recorded_at": "2026-10-12T23:29:45Z",
+  "issue": "kailash-os#109",
+  "issue_ref": "[kailash-os#109](https://github.com/kailash-os/kailash-os/issues/109)",
+  "endpoint_checks": [
+    {
+      "endpoint": "ollama-11434",
+      "expected": "a completion for a one-token prompt",
+      "verdict": "blocked",
+      "reason": "the platform VM cannot boot on this host: no x86_64-linux Nix builder (see host_constraint) — the endpoint is inside the NixOS VM that never started"
+    },
+    {
+      "endpoint": "mlflow-5000",
+      "expected": "HTTP 200 on /health",
+      "verdict": "blocked",
+      "reason": "same host constraint — the platform VM cannot boot on this host; no agent-reachable path exercises the VM's own units"
+    }
+  ],
+  "verbatim_sections": [
+    "attempts[1] — nix build --no-link .#nixosConfigurations.kailash-platform.config.system.build.vm (verbatim tool error)",
+    "attempts[3] — docker info (the host's Linux container runtime is live but is NOT a Nix builder and NOT a NixOS VM)"
+  ],
+  "commands": [
+    "for q in qemu-system-x86_64 qemu-system-aarch64 colima lima docker; do command -v $q >/dev/null 2>&1 && echo \"$q: FOUND\" || echo \"$q: NOT FOUND\"; done",
+    "nix build --no-link .#nixosConfigurations.kailash-platform.config.system.build.vm",
+    "docker info",
+    "cat /etc/nix/machines"
+  ],
+  "host_constraint": "Lane host is aarch64-darwin (M4 Max, Determinate nix 3.3.1) with NO x86_64-linux Nix builder: /etc/nix/machines is empty (0 build machines) and there is no docker/colima nix-remote-builder integration — `nix build --no-link .#nixosConfigurations.kailash-platform.config.system.build.vm` stops at `error: a 'x86_64-linux' with features {} is required to build '/nix/store/90g13z3wfwhn91k5sn16xw06q97g9dp1-etc-hostname.drv', but I am a 'aarch64-darwin' with features {apple-virt, benchmark, big-parallel, nixos-test}` (verbatim, 2026-10-13). The platform profile targets x86_64-linux only; hosted CI cannot boot VMs either, so no agent-reachable path produces the REAL endpoint evidence. A docker daemon IS live on the host (OrbStack, Server Version 29.4.0) but it provides a Linux container runtime, not a Nix builder and not a NixOS VM — it cannot exercise the platform VM's own ollama/MLflow units, and substituting containerized endpoints would test the wrong thing (fabricated acceptance by another name). qemu-system-x86_64 + qemu-system-aarch64 ARE installed (/opt/homebrew/bin); an x86_64 NixOS boot under TCG (no KVM on the host) plus an ollama model load is impractically slow for an unattended gate, so the boot remains the maintainer's interactive step by design.",
+  "interactive_step": "MAINTAINER (single step on his Mac): cd kailash-os && nix build --no-link .#nixosConfigurations.kailash-platform.config.system.build.vm -K && ./result/bin/run-kailash-platform-vm — boot the built VM (add an x86_64-linux remote builder, or run the boot under qemu TCG and accept the slow model load), then curl -s http://127.0.0.1:11434/api/generate -d '{\"model\":\"llama3.2:1b\",\"prompt\":\"hi\",\"stream\":false}' (expect a completion) and curl -s http://127.0.0.1:5000/health (expect 200) — hand both outputs back and the GREEN record (kind 'real' with both endpoint verbatim outputs) is committed to this PR. With a Linux VM host the harness (tools/vm-acceptance-harness.sh) runs the boot-wait + both probes unattended and writes this record with kind 'real'.",
+  "attempts": [
+    {
+      "command": "for q in qemu-system-x86_64 qemu-system-aarch64 colima lima docker; do command -v $q >/dev/null 2>&1 && echo \"$q: FOUND $(command -v $q)\" || echo \"$q: NOT FOUND\"; done",
+      "output": "qemu-system-x86_64: FOUND /opt/homebrew/bin/qemu-system-x86_64\nqemu-system-aarch64: FOUND /opt/homebrew/bin/qemu-system-aarch64\ncolima: NOT FOUND\nlima: NOT FOUND\ndocker: FOUND /Users/shsingh/.local/bin/docker"
+    },
+    {
+      "command": "nix build --no-link .#nixosConfigurations.kailash-platform.config.system.build.vm",
+      "output": "error: a 'x86_64-linux' with features {} is required to build '/nix/store/90g13z3wfwhn91k5sn16xw06q97g9dp1-etc-hostname.drv', but I am a 'aarch64-darwin' with features {apple-virt, benchmark, big-parallel, nixos-test}"
+    },
+    {
+      "command": "cat /etc/nix/machines",
+      "output": "(empty — 0 remote build machines; no x86_64-linux builder configured)"
+    },
+    {
+      "command": "docker info",
+      "output": "Client:\n Version:    29.4.0\n Context:    orbstack\nServer Version: 29.4.0"
+    }
+  ],
+  "host_constraint_note": "the harness + record verifier land in this PR; the acceptance is complete ONLY when kind==real with both endpoint verbatim outputs replaces this record (the verifier is the tripwire — a hand-typed ok with no output behind it fails CI)."
+}

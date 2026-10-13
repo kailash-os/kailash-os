@@ -1671,6 +1671,129 @@ PY
               cat ${minted}
               touch $out
             '';
+        # ---- Platform-VM acceptance legs (KA-08.5, kailash-os#109) ---------
+        #
+        # The acceptance is a REAL run (platform-profile VM boots; ollama
+        # completes a prompt; MLflow serves :5000) — the run itself is
+        # the maintainer's interactive qemu step on the lane Mac (this
+        # host has no Linux builder). This check leg pins the
+        # COMPOSITION the acceptance will exercise, through the SAME
+        # eval: the profile exists, the MLflow service module composes
+        # (unit on :5000), ollama is enabled loopback on :11434, the
+        # webui pairing stays OFF on the platform host, and the CORE
+        # floor keeps both services OFF (opt-in-by-default invariant).
+        # RED stub (watched RED): profiles/platform.nix does NOT exist
+        # at the stub commit — the host eval throws "file does not
+        # exist". GREEN (this commit): the profile lands and every
+        # assertion passes through the SAME eval; the harness
+        # (tools/vm-acceptance-harness.sh) + the verifier
+        # (tools/vm-acceptance-verify.py) + the record
+        # (tests/vm-acceptance-record.json) carry the boot outcome.
+        o-05-platform-services =
+          let
+            platformHost = (self.nixosConfigurations.kailash-platform);
+            mlflowUnit = platformHost.config.systemd.units."kailash-mlflow.service".text;
+          in
+          pkgs.runCommand "o-05-platform-services"
+            {
+              nativeBuildInputs = [ pkgs.bash ];
+              unitText = mlflowUnit;
+            }
+            ''
+              echo "--- platform profile: both acceptance services ON"
+              test "${toString platformHost.config.services.ollama.enable}" = "1" \
+                || { echo "o-05-platform-services: services.ollama not enabled on kailash-platform"; exit 1; }
+              test "${toString platformHost.config.services.kailash.mlflow.enable}" = "1" \
+                || { echo "o-05-platform-services: services.kailash.mlflow not enabled on kailash-platform"; exit 1; }
+              echo "--- binds + ports: loopback :11434 / :5000"
+              test "${platformHost.config.services.ollama.host}" = "127.0.0.1" \
+                || { echo "o-05-platform-services: ollama host is not the loopback default"; exit 1; }
+              test "${toString platformHost.config.services.ollama.port}" = "11434" \
+                || { echo "o-05-platform-services: ollama port is not 11434"; exit 1; }
+              test "${toString platformHost.config.services.kailash.mlflow.port}" = "5000" \
+                || { echo "o-05-platform-services: mlflow port is not 5000"; exit 1; }
+              echo "--- the mlflow unit composes with the acceptance port"
+              echo "$unitText" | grep -q "mlflow" \
+                || { echo "o-05-platform-services: the kailash-mlflow unit is missing from the platform host"; exit 1; }
+              echo "$unitText" | grep -q "kailash-mlflow-start" \
+                || { echo "o-05-platform-services: the unit does not carry the kailash-mlflow-start script"; exit 1; }
+              echo "--- the WRAPPED mlflow unit script carries the server CLI + the :5000 bind"
+              SCRIPT="${platformHost.config.systemd.services."kailash-mlflow".script}"
+              echo "start script: $SCRIPT"
+              echo "$SCRIPT" | grep -q "mlflow server" \
+                || { echo "o-05-platform-services: the start script does not carry the server CLI"; exit 1; }
+              echo "$SCRIPT" | grep -q -- "--port 5000" \
+                || { echo "o-05-platform-services: the start script does not carry the :5000 bind"; exit 1; }
+              echo "--- engines-only platform host: webui stays OFF"
+              test "${lib.boolToString platformHost.config.services.open-webui.enable}" = "false" \
+                || { echo "o-05-platform-services: open-webui must stay OFF on the platform host"; exit 1; }
+              echo "--- CORE floor: both services stay OFF (opt-in by default)"
+              test "${lib.boolToString self.nixosConfigurations.kailash-minimal.config.services.ollama.enable}" = "false" \
+                || { echo "o-05-platform-services: kailash-minimal must keep services.ollama off"; exit 1; }
+              test "${lib.boolToString self.nixosConfigurations.kailash-minimal.config.services.kailash.mlflow.enable}" = "false" \
+                || { echo "o-05-platform-services: kailash-minimal must keep services.kailash.mlflow off"; exit 1; }
+              echo "o-05-platform-services: OK (platform composition pinned: ollama 127.0.0.1:11434, mlflow :5000, webui off, floor off)"
+              touch $out
+            '';
+
+        # The ACCEPTANCE-VM fixture leg (KA-08.5, kailash-os#109): the
+        # platform host extended with the DOCUMENTED lab posture the
+        # acceptance boot runs under — the qemu user-net VM is an
+        # isolated lab segment (no default-route interface), so this is
+        # exactly the module/posture docs' lab case:
+        #   * ollama binds 0.0.0.0 (the operator-move the o-04 module
+        #     docs name) so the host-side harness reaches it over the
+        #     qemu hostfwd; the guest-side loopback bind still serves
+        #     the canonical in-VM surface;
+        #   * the acceptance model rides services.ollama.loadModels —
+        #     the o-04 operator step (pull the tiny sub-1B model) carried
+        #     in the FIXTURE config so an unattended boot performs it;
+        #     the o-04 module's never-auto-pull posture governs the
+        #     module default (empty), NOT this explicit fixture choice;
+        #   * services.kailash.mlflow.labReachable = true — the module's
+        #     documented 0.0.0.0 lab bind (the ko#105 posture text).
+        # The leg pins EVERY choice through the SAME eval, so the run
+        # recorded in tests/vm-acceptance-record.json exercises a
+        # CI-pinned configuration, never free-hand qemu drift.
+        o-05-platform-acceptance =
+          let
+            accHost = self.nixosConfigurations.kailash-platform-acceptance;
+          in
+          pkgs.runCommand "o-05-platform-acceptance" { } ''
+            echo "--- acceptance fixture: the documented lab posture, pinned"
+            test "${accHost.config.services.ollama.host}" = "0.0.0.0" \
+              || { echo "o-05-platform-acceptance: ollama host must be the lab bind 0.0.0.0 on the acceptance fixture"; exit 1; }
+            test "${toString (builtins.length accHost.config.services.ollama.loadModels)}" = "1" \
+              || { echo "o-05-platform-acceptance: loadModels must carry exactly the acceptance model"; exit 1; }
+            test "${builtins.head accHost.config.services.ollama.loadModels}" = "qwen2.5:0.5b" \
+              || { echo "o-05-platform-acceptance: the acceptance model is not qwen2.5:0.5b"; exit 1; }
+            test "${lib.boolToString accHost.config.services.kailash.mlflow.labReachable}" = "true" \
+              || { echo "o-05-platform-acceptance: mlflow labReachable must be true on the acceptance fixture"; exit 1; }
+            echo "--- engines-only: webui still OFF on the acceptance fixture"
+            test "${lib.boolToString accHost.config.services.open-webui.enable}" = "false" \
+              || { echo "o-05-platform-acceptance: webui must stay OFF on the acceptance fixture"; exit 1; }
+            echo "o-05-platform-acceptance: OK (lab posture pinned: 0.0.0.0 binds, loadModels qwen2.5:0.5b, labReachable, webui off)"
+            touch $out
+          '';
+
+        # The RECORD leg (KA-08.5, kailash-os#109): the committed VM-
+        # acceptance record is machine-validated on EVERY PR — the
+        # verifier (tools/vm-acceptance-verify.py) enforces the record
+        # contract: kind 'real' needs BOTH endpoints 'ok' WITH verbatim
+        # output + command lines; kind 'pending-vm' needs every attempted
+        # command WITH its verbatim output, the host-constraint statement,
+        # and the one interactive maintainer step (qemu boot). A
+        # hand-typed 'ok' with no output behind it, or any other status,
+        # is unloadable: the leg goes red and stays red until the record
+        # is honest.
+        o-05-platform-vm-record = pkgs.runCommand "o-05-platform-vm-record"
+          {
+            nativeBuildInputs = [ (pkgs.python3.withPackages (ps: [ ])) ];
+          } ''
+          python3 ${./tools/vm-acceptance-verify.py} --record ${./tests/vm-acceptance-record.json}
+          touch $out
+        '';
+
         # ---- per-category devShells (KA-09.4: `nix develop .#<category>`) -----
         #
         # ONE shell per SHIPPED category: the category enabled on the CORE
@@ -2355,6 +2478,38 @@ PY
               unpackPhase = "true";
               installPhase = "mkdir -p $out/bin; printf '#!/bin/sh\necho gvmd-standin\n' > $out/bin/gvmd; chmod +x $out/bin/gvmd";
             };
+          }
+        ];
+      };
+
+      # The platform profile host (KA-08.5, kailash-os#109): the CORE
+      # floor + O-1 (services.kailash.mlflow :5000) + O-4 (ollama
+      # :11434) — the acceptance VM's composition, pinned by the
+      # o-05-platform-services leg through the SAME eval. NOT a product
+      # profile: images for the surface are Wave-6 items (KA-28.0
+      # QEMU-primary); the acceptance run exercises THIS toplevel.
+      nixosConfigurations.kailash-platform = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [ ./profiles/platform.nix ];
+      };
+
+      # The platform ACCEPTANCE-VM fixture (KA-08.5, kailash-os#109): the
+      # platform host with the DOCUMENTED lab posture the acceptance boot
+      # runs under — ollama binds 0.0.0.0 (the o-04 docs' operator move;
+      # the qemu user-net VM is an isolated lab segment), the tiny model
+      # rides services.ollama.loadModels (the documented operator step,
+      # carried explicitly so the boot performs the pull), MLflow's
+      # labReachable (the module's documented 0.0.0.0 lab bind). Pinned
+      # at eval by the o-05-platform-acceptance leg. NOT a product
+      # profile.
+      nixosConfigurations.kailash-platform-acceptance = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/platform.nix
+          {
+            services.ollama.host = "0.0.0.0";
+            services.ollama.loadModels = [ "qwen2.5:0.5b" ];
+            services.kailash.mlflow.labReachable = true;
           }
         ];
       };
