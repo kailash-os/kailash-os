@@ -62,7 +62,7 @@ SEED="0"                  # 1 = the unauthenticated write→read round trip
 RECORD=""
 
 usage() {
-  sed -n '2,33p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,55p' "$0" | sed 's/^# \{0,1\}//'
   echo "usage: kailash-integration-mlflow-attack [--wait-seconds N]"
   echo "           [--mlflow-url URL] [--artifacts-url URL] [--seed]"
   echo "           [--record PATH]"
