@@ -1,17 +1,15 @@
 name: release-images
 
-# KA-33 slice 3 (kailash-os#200): build EVERY hosted target of the §8.1
-# matrix (images/kailash-images-table.nix) at a tag. The slice-1 4-leg
-# subset left four targets (qemu-minimal, qemu-full, qemu-headless-agent,
-# iso-headless-agent) with no build record anywhere; the
-# images-release-completeness check leg now proves this file declares
-# every non-aarch64 table row, so a gap cannot hide here silently.
-# Dispatch may build a stated subset (comma-separated leg names) via the
-# `targets` input; unmatched legs then SKIP visibly (they stay declared).
-#
-# The images build from the SAME flake the tag pins; the Cachix cache holds
-# every package closure, so the hosted legs substitute rather than compile.
-# Artefacts land as release assets: <name>.iso / .qcow2 + SHA256SUMS.
+# KA-33 slice 3 (kailash-os#200; PR #201 merge follow-up): the #201
+# images job `if` used replace() — not a GitHub Actions expression
+# function — so this file never registered its triggers (every push run
+# failed at startup with zero jobs; workflow_dispatch 422'd "not a
+# valid workflow"). This version carries only GHA-legal expressions:
+# dispatch's optional `targets` input resolves through a tiny resolve
+# job that validates the requested names and filters the STATIC 8-leg
+# declaration below to the subset — jq-side, no expression gymnastics.
+# The static matrix stays the ONE declaration of the hosted leg set
+# (the completeness gate parses exactly this include block).
 
 on:
   release:
@@ -23,7 +21,7 @@ on:
         required: true
         type: string
       targets:
-        description: "Optional comma-separated leg names (e.g. kailash-qemu-minimal,kailash-iso-headless-agent). Empty = all eight. Invalid names fail the resolve check."
+        description: "Optional comma-separated leg names (e.g. kailash-qemu-minimal,kailash-iso-headless-agent). Empty = all eight."
         required: false
         type: string
         default: ""
@@ -40,55 +38,57 @@ permissions:
 
 jobs:
   resolve:
-    # Validate the dispatch `targets` subset BEFORE any build burns a
-    # runner hour on a typo: every requested name must be a declared leg.
-    # The declaration itself stays in the images job's static matrix below —
-    # one home (the tools/check-images-release-completeness.py gate parses
-    # exactly that include block).
+    # On release events and empty-targets dispatches this passes the full
+    # static declaration through (the images job then runs all eight
+    # legs). On a targeted dispatch it VALIDATES every requested name
+    # against the declared legs (a typo REDs here before any runner hour
+    # burns) and outputs the subset — a FILTER of the declaration below,
+    # never a re-declaration.
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && inputs.targets != ''
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
     steps:
-      - name: Validate the requested targets against the declared legs
+      - name: Resolve the matrix (full, or the requested subset)
+        id: set
+        env:
+          TARGETS: ${{ inputs.targets || '' }}
         run: |
-          DECLARED="kailash-iso-minimal kailash-iso-redteam-ai kailash-iso-full kailash-iso-headless-agent kailash-qemu-minimal kailash-qemu-redteam-ai kailash-qemu-full kailash-qemu-headless-agent"
-          BAD=0
-          for t in $(printf '%s' "${{ inputs.targets }}" | tr ',' ' '); do
-            case " $DECLARED " in
-              *" $t "*) echo "ok: $t" ;;
-              *) echo "::error::'$t' is not a declared leg — valid: $DECLARED"; BAD=1 ;;
-            esac
-          done
-          exit $BAD
+          cat > /tmp/all-legs.json <<'JSON'
+          {"include":[
+            {"name":"kailash-iso-minimal","attr":"packages.x86_64-linux.kailash-images-iso-minimal"},
+            {"name":"kailash-iso-redteam-ai","attr":"packages.x86_64-linux.kailash-images-iso-redteam-ai"},
+            {"name":"kailash-iso-full","attr":"packages.x86_64-linux.kailash-images-iso-full"},
+            {"name":"kailash-iso-headless-agent","attr":"packages.x86_64-linux.kailash-images-iso-headless-agent"},
+            {"name":"kailash-qemu-minimal","attr":"packages.x86_64-linux.kailash-images-qemu-minimal"},
+            {"name":"kailash-qemu-redteam-ai","attr":"packages.x86_64-linux.kailash-images-qemu-redteam-ai"},
+            {"name":"kailash-qemu-full","attr":"packages.x86_64-linux.kailash-images-qemu-full"},
+            {"name":"kailash-qemu-headless-agent","attr":"packages.x86_64-linux.kailash-images-qemu-headless-agent"}
+          ]}
+          JSON
+          if [ -z "$(printf '%s' "$TARGETS" | tr -d ' ,')" ]; then
+            echo "targets: ALL eight hosted legs"
+            jq -c . /tmp/all-legs.json > matrix.json
+          else
+            jq -c --arg ts "$TARGETS" '
+              ($ts | split(",") | map(gsub("^\\s+|\\s+$"; ""))) as $want
+              | {include: [.include[] | select(.name as $n | $want | index($n))]}' \
+              /tmp/all-legs.json > matrix.json
+            COUNT="$(jq '.include | length' matrix.json)"
+            WANTED="$(printf '%s' "$TARGETS" | tr ',' ' ' | wc -w | tr -d ' ')"
+            if [ "$COUNT" -ne "$WANTED" ]; then
+              echo "::error::unmatched target name(s) in '${TARGETS}' — valid legs: $(jq -r '.include[].name' /tmp/all-legs.json | tr '\n' ' ')"
+              exit 1
+            fi
+            echo "targets: ${COUNT} requested leg(s) selected"
+          fi
+          echo "matrix=$(cat matrix.json)" >> "$GITHUB_OUTPUT"
 
   images:
     needs: resolve
-    if: |
-      always() &&
-      (github.event_name == 'release' ||
-       inputs.targets == '' ||
-       contains(concat(',', replace(inputs.targets, ' ', ''), ','),
-                concat(',', matrix.name, ',')))
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - name: kailash-iso-minimal
-            attr: packages.x86_64-linux.kailash-images-iso-minimal
-          - name: kailash-iso-redteam-ai
-            attr: packages.x86_64-linux.kailash-images-iso-redteam-ai
-          - name: kailash-iso-full
-            attr: packages.x86_64-linux.kailash-images-iso-full
-          - name: kailash-iso-headless-agent
-            attr: packages.x86_64-linux.kailash-images-iso-headless-agent
-          - name: kailash-qemu-minimal
-            attr: packages.x86_64-linux.kailash-images-qemu-minimal
-          - name: kailash-qemu-redteam-ai
-            attr: packages.x86_64-linux.kailash-images-qemu-redteam-ai
-          - name: kailash-qemu-full
-            attr: packages.x86_64-linux.kailash-images-qemu-full
-          - name: kailash-qemu-headless-agent
-            attr: packages.x86_64-linux.kailash-images-qemu-headless-agent
+      matrix: ${{ fromJSON(needs.resolve.outputs.matrix) }}
     steps:
       - name: Checkout (the tag)
         uses: actions/checkout@v4.2.2
@@ -118,9 +118,9 @@ jobs:
           OUT="$(cat outpaths.txt)"
           ISO="$(find "$OUT" -name '*.iso' -type f | head -1)"
           QCOW="$(find "$OUT" -name '*.qcow2' -type f | head -1)"
+          find "$OUT" -maxdepth 1 -type f -exec ls -la {} +
           echo "iso=${ISO}" >> "$GITHUB_OUTPUT"
           echo "qcow=${QCOW}" >> "$GITHUB_OUTPUT"
-          ls -la "$OUT" | head -20
       # --- KA-48 (kailash-os#171): attestations BEFORE upload — every ---
       # --- published artefact is born with SLSA v1.0 build provenance --
       # --- + an SPDX SBOM, Sigstore-signed over the repo's OIDC --------
