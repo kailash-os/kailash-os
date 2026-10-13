@@ -14,7 +14,17 @@
 #   * `excluded` — ids deliberately NOT in any package list:
 #     status `module` → the tool ships as a systemd service module, not
 #     a package-list surface; status `data` → opt-in data-pack row
-#     (never on default profiles/ISOs — D7).
+#     (never on default profiles/ISOs — D7);
+#   * `exp` — (KA-22, ko#22) ids whose `safety.level == "exp"` rides an
+#     installable packaging.status: they LEAVE `installable` never to
+#     enter a package list from this artifact (§11.2: the double-key
+#     gate owns exp routing; the manifest row IS the routing record).
+#     The ledger exists so a category module / check leg can verify the
+#     routing both directions — an exp row present in `installable` is
+#     the watched defect. Categories with no installable-status exp row
+#     keep the old shape (no empty key). A data-status exp row stays
+#     ONLY in `excluded` (its opt-in data-pack routing is the stricter
+#     of the two owners).
 #
 # Consumers:
 #   * generated/manifest-ids.json — the committed artifact (`make
@@ -84,7 +94,7 @@ def emit_inputs(tools):
         cat = t.get("category")
         if not cat:
             continue
-        entry = categories.setdefault(cat, {"count": 0, "installable": [], "excluded": []})
+        categories.setdefault(cat, {"count": 0, "installable": [], "excluded": []})
     for t in rows:
         cat = t.get("category")
         st = (t.get("packaging") or {}).get("status")
@@ -93,6 +103,13 @@ def emit_inputs(tools):
         if entry is None or not tid:
             continue
         entry["count"] += 1
+        if (t.get("safety") or {}).get("level") == "exp" and st in INSTALLABLE:
+            # §11.2 (KA-22): an installable-status exp row NEVER rides
+            # `installable` — it lands in the category's own `exp` ledger
+            # (the double-key gate owns the routing; the manifest row is
+            # the routing record)
+            entry.setdefault("exp", []).append(tid)
+            continue
         if st in INSTALLABLE:
             entry["installable"].append(tid)
         elif st in EXCLUDED_NOTE:
@@ -288,6 +305,35 @@ tools:
         doc = yaml.safe_load(fixture)
         got2 = emit_inputs([t for t in doc["tools"] if isinstance(t, dict)])
         assert got == got2, (got, got2)
+    # §11.2 exp routing (KA-22): an installable-status exp row leaves
+    # `installable` into the category's own `exp` ledger, manifest order
+    # kept; a data-status exp row stays ONLY in `excluded` (the two
+    # ledger owners never double-record); a safe row is untouched.
+    expCase = emit_inputs([
+        {"id": "safe-tool", "category": "a-99-test",
+         "packaging": {"status": "bespoke"}, "safety": {"level": "safe"}},
+        {"id": "exp-bespoke", "category": "a-99-test",
+         "packaging": {"status": "bespoke"}, "safety": {"level": "exp"}},
+        {"id": "exp-data", "category": "a-99-test",
+         "packaging": {"status": "data"}, "safety": {"level": "exp"}},
+    ])
+    gotCat = expCase["categories"]["a-99-test"]
+    assert gotCat["installable"] == ["safe-tool"], gotCat
+    assert gotCat["exp"] == ["exp-bespoke"], gotCat
+    assert [e["id"] for e in gotCat["excluded"]] == ["exp-data"], gotCat
+    # a category with no installable-status exp row keeps the OLD shape
+    # (no empty `exp` key) — every pre-KA-22 consumer keeps working
+    noExp = emit_inputs([
+        {"id": "nmap", "category": "c-01-information-gathering",
+         "packaging": {"status": "native"}, "safety": {"level": "safe"}},
+    ])
+    assert "exp" not in noExp["categories"]["c-01-information-gathering"], noExp
+    # 3.9-era compat guard: no PEP 604 union syntax anywhere in this file
+    union = "|" + " None"
+    with open(os.path.abspath(__file__), encoding="utf-8") as fh:
+        src = fh.read()
+    for ln in src.splitlines():
+        assert union not in ln, f"PEP 604 union found (host python is 3.9): {ln}"
     return 0
 
 

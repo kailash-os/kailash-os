@@ -6,5 +6,8 @@
     ./a-01-ai-recon.nix
     ./a-02-llm-prompt-injection.nix
     ./a-02-data-packs.nix
+    # KA-22 (ko#22): the A-3/A-4 long-tail category modules join the fold
+    ./a-03-agentic-mcp-tool-use.nix
+    ./a-04-model-supply-chain.nix
   ];
 }
