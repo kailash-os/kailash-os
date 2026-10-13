@@ -20,6 +20,13 @@ on:
 
 permissions:
   contents: write
+  # The attestations sign with a short-lived Sigstore cert over the repo's
+  # OIDC identity (id-token) and store against the repo (attestations) —
+  # both REQUIRED by attest-build-provenance/attest-sbom (the first hosted
+  # run failed exactly here: "Attest build provenance" without the two
+  # grants).
+  id-token: write
+  attestations: write
 
 jobs:
   images:
