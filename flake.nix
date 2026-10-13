@@ -2023,6 +2023,101 @@ PY
           grep -q "OK (breach + exclusion + clean all proven)" self-test.out \
             || { echo "images-budget-selftest: the verifier did not prove breach+exclusion+clean:"; cat self-test.out; exit 1; }
           echo "images-budget-selftest: OK — breach+pack-leak+clean proven through the enforcement unit"
+            touch $out
+
+          '';
+
+
+
+        # ---- kailash.data.* wordlists + data packs (KA-29, ko#29) ----------
+        #
+        # The kailash-data.* lane's gate (modules/base/kailash-data.nix).
+        # Three legs:
+        #   * kailash-data-defaults-false — the defaults posture BOTH
+        #     directions: both options default FALSE on the CORE floor
+        #     and the FULL profile; NO pack name leaks onto either
+        #     host's PATH (plan §8.1 "excluded from every default ISO
+        #     by construction").
+        #   * kailash-data-compose — the opt-in mounts: fixture hosts
+        #     with the flips ON carry the packs on PATH (the §3.2 C-5
+        #     "default toggle" decision: a per-host operator flip, not
+        #     a profile change). Watched-RED: at the pre-bump packages
+        #     pin the pw-packs attr is absent from the composed set →
+        #     the name assertions fail naming the pin; GREEN after the
+        #     packages merge + lock bump (the KA-13.2 chain shape —
+        #     RED committed before the merge, GREEN flip after).
+        #   * kailash-data-pins — the derivation-provenance piece: the
+        #     composed wordlistsMega surface resolves the seclists
+        #     corpus (pname seclists, version 2026.1 — the SAME
+        #     danielmiessler 2026.1 tarball nixpkgs binds at this pin,
+        #     sha256 probed equal), proving the pin identity through
+        #     the composed overlay (never a hand-copied URL string).
+        kailash-data-defaults-false = pkgs.runCommand "kailash-data-defaults-false"
+          { nativeBuildInputs = [ pkgs.bash ]; } ''
+          MIN_WM="${lib.boolToString self.nixosConfigurations.kailash-minimal.config.kailash.data.wordlistsMega}"
+          test "$MIN_WM" = "false" \
+            || { echo "kailash.data.wordlistsMega must default FALSE on the CORE floor (§8.1: wordlist packs excluded from every default profile by construction)"; exit 1; }
+          MIN_PW="${lib.boolToString self.nixosConfigurations.kailash-minimal.config.kailash.data.pwPacks}"
+          test "$MIN_PW" = "false" \
+            || { echo "kailash.data.pwPacks must default FALSE on the CORE floor"; exit 1; }
+          FULL_WM="${lib.boolToString self.nixosConfigurations.kailash-full.config.kailash.data.wordlistsMega}"
+          test "$FULL_WM" = "false" \
+            || { echo "kailash.data.wordlistsMega must default FALSE on the FULL profile"; exit 1; }
+          FULL_PW="${lib.boolToString self.nixosConfigurations.kailash-full.config.kailash.data.pwPacks}"
+          test "$FULL_PW" = "false" \
+            || { echo "kailash.data.pwPacks must default FALSE on the FULL profile"; exit 1; }
+          MIN_NAMES="${lib.concatStringsSep " " (map (p: p.pname or (builtins.parseDrvName p.name).name) self.nixosConfigurations.kailash-minimal.config.environment.systemPackages)}"
+          case " $MIN_NAMES " in
+            *" seclists "*|*" rockyou "*|*" pw-packs "*) { echo "kailash-data-defaults-false: FAIL: a data pack leaked onto the CORE floor's PATH"; exit 1; } ;;
+          esac
+          FULL_NAMES="${lib.concatStringsSep " " (map (p: p.pname or (builtins.parseDrvName p.name).name) self.nixosConfigurations.kailash-full.config.environment.systemPackages)}"
+          case " $FULL_NAMES " in
+            *" seclists "*|*" rockyou "*|*" pw-packs "*) { echo "kailash-data-defaults-false: FAIL: a data pack leaked onto the FULL profile's PATH"; exit 1; } ;;
+          esac
+          echo "kailash-data-defaults-false: OK (both options default FALSE on minimal+full, no pack on either PATH)"
+          touch $out
+        '';
+
+        kailash-data-compose = pkgs.runCommand "kailash-data-compose"
+          { nativeBuildInputs = [ pkgs.bash ]; } ''
+          D_WM="${lib.boolToString self.nixosConfigurations.kailash-data-packs.config.kailash.data.wordlistsMega}"
+          test "$D_WM" = "true" \
+            || { echo "kailash-data-packs fixture must carry kailash.data.wordlistsMega = true (the leg's own composition flips it)"; exit 1; }
+          D_PW="${lib.boolToString self.nixosConfigurations.kailash-data-packs.config.kailash.data.pwPacks}"
+          test "$D_PW" = "true" \
+            || { echo "kailash-data-packs fixture must carry kailash.data.pwPacks = true"; exit 1; }
+          WM_NAMES="${lib.concatStringsSep " " (map (p: p.pname or (builtins.parseDrvName p.name).name) self.nixosConfigurations.kailash-data-packs-wm.config.environment.systemPackages)}"
+          case " $WM_NAMES " in
+            *" seclists "*) : ;;
+            *) echo "kailash-data-compose: FAIL: wordlistsMega-on host lacks the seclists corpus on PATH (composed set: $WM_NAMES)"; exit 1 ;;
+          esac
+          case " $WM_NAMES " in
+            *" rockyou "*|*" pw-packs "*) { echo "kailash-data-compose: FAIL: the pwPacks-off host must NOT carry the pw-packs slice"; exit 1; } ;;
+          esac
+          D_NAMES="${lib.concatStringsSep " " (map (p: p.pname or (builtins.parseDrvName p.name).name) self.nixosConfigurations.kailash-data-packs.config.environment.systemPackages)}"
+          D_HITS="$(printf '%s\n' $D_NAMES | grep -E '^(seclists|rockyou|pw-packs)$' | tr '\n' ' ')"
+          echo "kailash-data-packs composed surface pack entries: $D_HITS"
+          case " $D_NAMES " in
+            *" seclists "*) : ;;
+            *) echo "kailash-data-compose: FAIL: seclists corpus missing from the composed surface"; exit 1 ;;
+          esac
+          case " $D_NAMES " in
+            *" rockyou "*) : ;;
+            *) echo "kailash-data-compose: FAIL: pw-packs slice (rockyou) missing from the composed surface (overlay attr pw-packs absent at this packages pin — greens with the packages merge + lock bump)"; exit 1 ;;
+          esac
+          echo "kailash-data-compose: OK (both packs mount through the flips, corpus + slice both present)"
+          touch $out
+        '';
+
+        kailash-data-pins = pkgs.runCommand "kailash-data-pins"
+          { nativeBuildInputs = [ pkgs.bash ]; } ''
+          WM_PNAME="${self.nixosConfigurations.kailash-data-packs-wm.config.kailash.data.packPaths.wordlistsMega.pname or "___ABSENT___"}"
+          test "$WM_PNAME" = "seclists" \
+            || { echo "kailash-data-pins: FAIL: wordlistsMega pack resolves a non-seclists derivation: $WM_PNAME"; exit 1; }
+          WM_V="${self.nixosConfigurations.kailash-data-packs-wm.config.kailash.data.packPaths.wordlistsMega.version or "___ABSENT___"}"
+          test "$WM_V" = "2026.1" \
+            || { echo "kailash-data-pins: FAIL: seclists corpus at an unexpected version: $WM_V (expected the 2026.1 danielmiessler tarball pin)"; exit 1; }
+          echo "kailash-data-pins: OK (wordlistsMega resolves seclists-2026.1 — the 2026.1 SecLists tarball identity)"
           touch $out
         '';
       };
@@ -2100,6 +2195,30 @@ PY
           {
             kailash.layers.attack.categories.a-02.enable = true;
             kailash.layers.attack.categories.a-02.packs = true;
+          }
+        ];
+      };
+      # The kailash.data.* fixture hosts (KA-29, ko#29): synthetic lab
+      # hosts flipping the WORDLIST packs on — NOT product profiles.
+      # kailash-data-packs-wm flips ONLY wordlistsMega (the compose
+      # leg's corpus-positive/slice-negative half); kailash-data-packs
+      # flips BOTH (the both-packs positive). The floor host
+      # (kailash-minimal) proves the defaults-false + no-leakage
+      # halves of the same legs. Eval-gated by the kailash-data-* checks.
+      nixosConfigurations.kailash-data-packs-wm = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          { kailash.data.wordlistsMega = true; }
+        ];
+      };
+      nixosConfigurations.kailash-data-packs = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          {
+            kailash.data.wordlistsMega = true;
+            kailash.data.pwPacks = true;
           }
         ];
       };
