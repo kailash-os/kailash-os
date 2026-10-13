@@ -1810,11 +1810,16 @@ PY
           # This leg pins the refusal AND the ledger shape the module
           # consumes (the a-05 file is the one exp-free long-tail emit;
           # its byte-parity rides a-05-generated-drift above).
-          python3 ${./tools/gen-category-packages.py} \
+          # The FIRST python3 is EXPECTED to exit 1 (the refusal fires);
+          # under the stdenv builder's set -e a bare expected-nonzero
+          # command aborts the leg at that line (silently — nothing
+          # stdout-printed yet, CI shows an empty builder log). Probe it
+          # from an `if` CONDITION context (safety-exp-gate-run
+          # precedent: conditions are exempt from errexit).
+          if python3 ${./tools/gen-category-packages.py} \
             --manifest-file ${kailash-packages.outPath + "/manifest/tools.yaml"} \
             --category a-08-data-poisoning > gen-a-08.nix 2> refuse.err
-          rc=$?
-          if [ "$rc" -eq 0 ]; then
+          then
             echo "a-08-generated-drift: FAIL: the generator EMITTED an exp-carrying category (the §11.2 refuse did not fire)"; cat gen-a-08.nix; exit 1
           fi
           grep -q "carries safety:exp rows" refuse.err \
