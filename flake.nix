@@ -55,6 +55,23 @@
           (kailash-packages ? "overlays" && (kailash-packages.overlays ? "default"))
           [ kailash-packages.overlays.default ];
       };
+      # The aarch64-linux nixpkgs slice (SAME lock, same overlays posture):
+      # the arm image targets' pkgs (KA-36 slice 1, kailash-os#198 — the
+      # x86-hosted/arm-local arch strategy). Built LOCALLY on the lane
+      # Mac (Apple Silicon runs this slice natively).
+      armPkgs = import nixpkgs {
+        system = "aarch64-linux";
+        config = {
+          allowUnfree = true;
+          allowInsecurePredicate = p: true;  # pentest tooling posture (RedNix heritage)
+          problems.handlers = {
+            tensorflow.broken = "warn";
+          };
+        };
+        overlays = lib.optionals
+          (kailash-packages ? "overlays" && (kailash-packages.overlays ? "default"))
+          [ kailash-packages.overlays.default ];
+      };
     in
     {
       nixosModules.kailash = { imports = [ ./modules ]; };
@@ -2398,7 +2415,7 @@ PY
         images-census =
           let
             gen = import ./images/generator.nix {
-              inherit lib;
+              inherit lib armPkgs;
               pkgsLinux = pkgs;
               nixos-generators = inputs.nixos-generators;
             };
@@ -2414,7 +2431,18 @@ PY
             # heavy tokens. One lib.require-style assertion chain — the
             # first violated target throws with its name + both counts.
             proveTarget = name: cnt:
-              if snapshot.targets ? ${name} then
+              # x86 targets: snapshot-equality (the committed census).
+              # arm targets (KA-36 slice 1, ko#198): eval + pack-clean
+              # proven HERE, counts recorded — the arm snapshot lands
+              # with the first local build receipt (the walker needs the
+              # lane Mac's native arm builds to sum NarSizes for cache
+              # narinfo; recorded in scripts/gen-image-census.sh).
+              if lib.hasPrefix "aarch64" name
+                || lib.hasInfix "aarch64" name then
+                assert (builtins.length (heavyTokens name) == 0
+                  || throw "images-census: ${name} carries ${toString (builtins.length (heavyTokens name))} excluded heavy tokens — the packs must stay opt-in");
+                "aarch64:${name}=${toString cnt}"
+              else if snapshot.targets ? ${name} then
                 assert (snapshot.targets.${name}.count or (-1) == cnt
                   || throw "images-census: ${name} drift — snapshot ${toString (snapshot.targets.${name}.count or (-1))} != live ${toString cnt} (regenerate via scripts/gen-image-census.sh)");
                 assert (builtins.length (heavyTokens name) == 0
@@ -2422,10 +2450,12 @@ PY
                 "${name}=${toString cnt}"
               else
                 throw "images-census: target ${name} missing from the committed snapshot (tests/images-census.json)";
-            proofs = lib.mapAttrsToList proveTarget countsByName;
+            x86Proofs = lib.filter (p: !(lib.hasInfix "aarch64" p)) (lib.mapAttrsToList proveTarget countsByName);
+            armProofs = lib.filter (p: lib.hasInfix "aarch64" p) (lib.mapAttrsToList proveTarget countsByName);
+            proofs = x86Proofs ++ armProofs;
           in
-          assert (lib.length proofs == 8
-            || throw "images-census: expected 8 §8.1 targets, live walker produced ${toString (lib.length proofs)}");
+          assert (lib.length x86Proofs == 8
+            || throw "images-census: expected 8 §8.1 x86_64 targets, live walker produced ${toString (lib.length x86Proofs)}");
           pkgs.runCommand "images-census"
             { } ''
             # The eval-side assertions above ran BEFORE this derivation
@@ -2433,7 +2463,7 @@ PY
             cat <<EOPROOFS
             ${lib.concatStringsSep "\n" proofs}
             EOPROOFS
-            echo "images-census: 8/8 targets snapshot-equal, heavy exclusions clean (eval-proven)"
+            echo "images-census: ${toString (lib.length x86Proofs)}/${toString (lib.length x86Proofs)} x86 targets snapshot-equal + ${toString (lib.length armProofs)} aarch64 targets eval+pack-clean, heavy exclusions clean (eval-proven)"
             touch $out
           '';
 
@@ -3007,7 +3037,7 @@ PY
       packages.${system} =
         let
           gen = import ./images/generator.nix {
-            inherit lib;
+            inherit lib armPkgs;
             pkgsLinux = pkgs;
             nixos-generators = inputs.nixos-generators;
           };

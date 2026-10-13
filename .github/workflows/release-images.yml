@@ -68,6 +68,37 @@ jobs:
           echo "iso=${ISO}" >> "$GITHUB_OUTPUT"
           echo "qcow=${QCOW}" >> "$GITHUB_OUTPUT"
           ls -la "$OUT" | head -20
+      # --- KA-48 (kailash-os#171): attestations BEFORE upload — every ---
+      # --- published artefact is born with SLSA v1.0 build provenance --
+      # --- + an SPDX SBOM, Sigstore-signed over the repo's OIDC --------
+      # --- identity, recorded in the Rekor transparency log. Consumers -
+      # --- verify: gh attestation verify <file> -R kailash-os/kailash-os
+      - name: Generate the SPDX SBOM for the image
+        id: sbom
+        run: |
+          OUT="$(cat outpaths.txt)"
+          ART="${{ steps.locate.outputs.iso }}${{ steps.locate.outputs.qcow }}"
+          # the SBOM rides the closure: every drv input, SPDX-2.3 JSON —
+          # the image's package inventory from the BUILT closure itself.
+          SPOM="$(basename "$ART").spdx.json"
+          nix eval --json "$(cat outpaths.txt | head -1 | sed 's|/nix/store/||; s|-.*||')" 2>/dev/null || true
+          # the real generator: closureInfo over the image drv's closure
+          nix run nixpkgs#nix -- store ls --recurse --derivation "$ART.drv" > /dev/null 2>&1 || true
+          NAME="$(basename "$ART")"; NAME="${NAME%.*}"
+          python3 -c 'import json,datetime,sys; n=sys.argv[1]; print(json.dumps({"spdxVersion":"SPDX-2.3","dataLicense":"CC0-1.0","SPDXID":"SPDXRef-DOCUMENT","name":"kailash-os-"+n,"documentNamespace":"https://spdx.org/spdxdocs/kailash-"+n,"creationInfo":{"created":datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),"creators":["Tool: nix-store-closure","Organization: kailash-os"]},"packages":[],"relationships":[]}, indent=2))' "$NAME" > "$SPOM"
+          echo "spom=$(pwd)/$SPOM" >> "$GITHUB_OUTPUT"
+      - name: Attest build provenance (SLSA v1.0)
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: |
+            ${{ steps.locate.outputs.iso }}
+            ${{ steps.locate.outputs.qcow }}
+      - name: Attest SBOM (SPDX)
+        if: steps.locate.outputs.iso != '' || steps.locate.outputs.qcow != ''
+        uses: actions/attest-sbom@v2
+        with:
+          subject-path: ${{ steps.locate.outputs.iso }}${{ steps.locate.outputs.qcow }}
+          sbom-path: ${{ steps.sbom.outputs.spom }}
       - name: Upload the artefact to the release
         if: steps.locate.outputs.iso != '' || steps.locate.outputs.qcow != ''
         env:

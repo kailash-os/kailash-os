@@ -37,6 +37,7 @@
   lib,
   nixos-generators,
   pkgsLinux,
+  armPkgs ? pkgsLinux,
   profilesTable ? import ./kailash-images-table.nix,
 }:
 
@@ -133,12 +134,23 @@ let
 
   # One §8.1 target: the generator composition, the artifact derivation
   # AND the evaluated per-profile toplevel (the census walk surface).
+  # OPTIONAL per-target system (KA-36, kailash-os#198): x86_64-linux by
+  # default (the hosted-release posture, release-images.yml); arm targets
+  # carry `system = "aarch64-linux"` — they build LOCALLY on Apple
+  # Silicon (the standing arch strategy: x86 hosted, arm local — the
+  # lane Mac runs aarch64-linux derivations natively, no emulation).
+  # The generator receives BOTH pkgs slices from the flake (armPkgs is
+  # the flake's aarch64-linux nixpkgs — pinned, same lock); passing the
+  # x86 slice into an aarch64 nixosSystem is a contradiction, so each
+  # target picks its platform's slice.
   mkTarget = name: target:
     let
       formatModule = builtins.getAttr formatIds.${target.format} nixos-generators.nixosModules;
       image = lib.nixosSystem {
-        system = "x86_64-linux";
-        pkgs = pkgsLinux;
+        system = target.system or "x86_64-linux";
+        pkgs = if (target.system or "x86_64-linux") == "aarch64-linux"
+          then armPkgs
+          else pkgsLinux;
         modules = [
           formatModule
           formatModules.${target.format}
