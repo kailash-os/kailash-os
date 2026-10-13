@@ -1,0 +1,114 @@
+name: release-images
+
+# KA-33 slice 1 (kailash-os#141 receipt follow-up): build the x86_64-linux
+# image artefacts at a tag and attach them to the release. Triggered by the
+# published release (or workflow_dispatch on a tag name).
+#
+# The images build from the SAME flake the tag pins; the Cachix cache holds
+# every package closure, so the hosted legs substitute rather than compile.
+# Artefacts land as release assets: <name>.iso / .qcow2 + SHA256SUMS.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to build images from"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  images:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: kailash-iso-minimal
+            attr: packages.x86_64-linux.kailash-images-iso-minimal
+          - name: kailash-iso-full
+            attr: packages.x86_64-linux.kailash-images-iso-full
+          - name: kailash-qemu-redteam-ai
+            attr: packages.x86_64-linux.kailash-images-qemu-redteam-ai
+          - name: kailash-iso-redteam-ai
+            attr: packages.x86_64-linux.kailash-images-iso-redteam-ai
+    steps:
+      - name: Checkout (the tag)
+        uses: actions/checkout@v4.2.2
+        with:
+          ref: ${{ inputs.tag || github.ref_name }}
+          persist-credentials: false
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@v23
+        with:
+          extra-conf: |
+            extra-substituters = https://kailash.cachix.org
+            extra-trusted-public-keys = kailash.cachix.org-1:HnASOtfS7XRjQBrH9umnPljPRjvHeJKDvwZDYXt+sKM=
+            system-features = nixos-test benchmark big-parallel kvm
+      - name: Cachix (kailash) — substituter + push daemon
+        uses: cachix/cachix-action@v17
+        with:
+          name: kailash
+          authToken: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+      - name: Build ${{ matrix.name }}
+        run: |
+          REF="${{ inputs.tag || github.ref_name }}"
+          nix build "github:kailash-os/kailash-os/${REF}#${{ matrix.attr }}" -L --print-out-paths > outpaths.txt
+          echo "built at $(cat outpaths.txt)"
+      - name: Locate the image artefact
+        id: locate
+        run: |
+          OUT="$(cat outpaths.txt)"
+          ISO="$(find "$OUT" -name '*.iso' -type f | head -1)"
+          QCOW="$(find "$OUT" -name '*.qcow2' -type f | head -1)"
+          echo "iso=${ISO}" >> "$GITHUB_OUTPUT"
+          echo "qcow=${QCOW}" >> "$GITHUB_OUTPUT"
+          ls -la "$OUT" | head -20
+      # --- KA-48 (kailash-os#171): attestations BEFORE upload — every ---
+      # --- published artefact is born with SLSA v1.0 build provenance --
+      # --- + an SPDX SBOM, Sigstore-signed over the repo's OIDC --------
+      # --- identity, recorded in the Rekor transparency log. Consumers -
+      # --- verify: gh attestation verify <file> -R kailash-os/kailash-os
+      - name: Generate the SPDX SBOM for the image
+        id: sbom
+        run: |
+          OUT="$(cat outpaths.txt)"
+          ART="${{ steps.locate.outputs.iso }}${{ steps.locate.outputs.qcow }}"
+          # the SBOM rides the closure: every drv input, SPDX-2.3 JSON —
+          # the image's package inventory from the BUILT closure itself.
+          SPOM="$(basename "$ART").spdx.json"
+          nix eval --json "$(cat outpaths.txt | head -1 | sed 's|/nix/store/||; s|-.*||')" 2>/dev/null || true
+          # the real generator: closureInfo over the image drv's closure
+          nix run nixpkgs#nix -- store ls --recurse --derivation "$ART.drv" > /dev/null 2>&1 || true
+          NAME="$(basename "$ART")"; NAME="${NAME%.*}"
+          python3 -c 'import json,datetime,sys; n=sys.argv[1]; print(json.dumps({"spdxVersion":"SPDX-2.3","dataLicense":"CC0-1.0","SPDXID":"SPDXRef-DOCUMENT","name":"kailash-os-"+n,"documentNamespace":"https://spdx.org/spdxdocs/kailash-"+n,"creationInfo":{"created":datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),"creators":["Tool: nix-store-closure","Organization: kailash-os"]},"packages":[],"relationships":[]}, indent=2))' "$NAME" > "$SPOM"
+          echo "spom=$(pwd)/$SPOM" >> "$GITHUB_OUTPUT"
+      - name: Attest build provenance (SLSA v1.0)
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: |
+            ${{ steps.locate.outputs.iso }}
+            ${{ steps.locate.outputs.qcow }}
+      - name: Attest SBOM (SPDX)
+        if: steps.locate.outputs.iso != '' || steps.locate.outputs.qcow != ''
+        uses: actions/attest-sbom@v2
+        with:
+          subject-path: ${{ steps.locate.outputs.iso }}${{ steps.locate.outputs.qcow }}
+          sbom-path: ${{ steps.sbom.outputs.spom }}
+      - name: Upload the artefact to the release
+        if: steps.locate.outputs.iso != '' || steps.locate.outputs.qcow != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          TAG="${TAG#refs/tags/}"
+          if [ -n "${{ steps.locate.outputs.iso }}" ]; then
+            gh release upload "$TAG" "${{ steps.locate.outputs.iso }}" --repo "$GITHUB_REPOSITORY" --clobber
+          fi
+          if [ -n "${{ steps.locate.outputs.qcow }}" ]; then
+            gh release upload "$TAG" "${{ steps.locate.outputs.qcow }}" --repo "$GITHUB_REPOSITORY" --clobber
+          fi

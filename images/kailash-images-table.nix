@@ -103,5 +103,42 @@
       budgetMB = 1536;
       ref = "kailash-images-iso-headless-agent";
     };
+
+    # ---- The aarch64-linux rows (KA-36 slice 1, kailash-os#198) --------
+    # The standing arch strategy (user, 2026-10-13): x86_64 builds HOSTED
+    # (release-images.yml), aarch64 builds LOCALLY on the lane Mac
+    # (tools/build-arm-images.sh — Apple Silicon runs the arm slice
+    # natively). Same profiles, same §8.1 budgets, same formats; the
+    # system field routes the generator to the pinned arm nixpkgs.
+    # GA ladder: arm rows ship from `2026.01.1` onward (the first
+    # material re-cut) — alpha carries x86 only.
+    qemu-aarch64-minimal = {
+      profile = "minimal";
+      format = "qemu";
+      system = "aarch64-linux";
+      budgetMB = 4096;
+      ref = "kailash-images-qemu-aarch64-minimal";
+    };
+    iso-aarch64-minimal = {
+      profile = "minimal";
+      format = "iso";
+      system = "aarch64-linux";
+      budgetMB = 4096;
+      ref = "kailash-images-iso-aarch64-minimal";
+    };
+    qemu-aarch64-headless-agent = {
+      profile = "headless-agent";
+      format = "qemu";
+      system = "aarch64-linux";
+      budgetMB = 1536;
+      ref = "kailash-images-qemu-aarch64-headless-agent";
+    };
+    iso-aarch64-headless-agent = {
+      profile = "headless-agent";
+      format = "iso";
+      system = "aarch64-linux";
+      budgetMB = 1536;
+      ref = "kailash-images-iso-aarch64-headless-agent";
+    };
   };
 }
