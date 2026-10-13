@@ -776,6 +776,93 @@ PY
           touch $out
         '';
 
+        # ---- §3.2 C-2 GVM/OpenVAS service module (KA-27, ko#27) -------------
+        #
+        # The module-status manifest row's deliverable: the service module
+        # ships the manager/redis/feed surface the c-02 category module
+        # excludes. Legs (derivation-level inputs ONLY — no closure walks
+        # on the 7GB arm64 runners):
+        #   * gvm-options — the opt-in posture plus the §3.2 surface:
+        #     enable defaults FALSE on the CORE substrate and NOTHING
+        #     references the service surface on the gvm-OFF host (no gvmd
+        #     unit, no dedicated redis server, no feed units — the
+        #     no-auto-start audit, eval-time); an ENABLED host must compose
+        #     the dedicated redis server (services.redis.servers
+        #     .kailash-gvm — loopback bind, TCP off, unix socket under
+        #     /run/redis-kailash-gvm) and the feed-sync service + timer
+        #     units. RED stub: the module is enable-only, so every gvm-ON
+        #     assertion fails (the `or` guards keep the leg's eval alive —
+        #     the RED fires in the script's own output).
+        #   * gvm-manager-package — the module's package CONTRACT: gvmd is
+        #     ABSENT from the pinned nixpkgs (8c3cede — probed at RED
+        #     prep; only greenbone-feed-sync + gvm-tools exist there), so
+        #     an enabled host with NO manager package must THROW at eval
+        #     (the require — proven with builtins.tryEval, never by
+        #     building), and an operator-supplied `package` must compose.
+        gvm-options = pkgs.runCommand "gvm-options"
+          {
+            nativeBuildInputs = [ pkgs.bash ];
+          } ''
+          echo "--- gvm: enable defaults FALSE on the CORE substrate"
+          test "${lib.boolToString self.nixosConfigurations.kailash-minimal.config.services.kailash.gvm.enable}" = "false" \
+            || { echo "services.kailash.gvm.enable is not FALSE-default"; exit 1; }
+          echo "--- gvm-OFF: no gvmd unit, no dedicated redis server, no feed units on the minimal host"
+          test "${lib.boolToString (self.nixosConfigurations.kailash-minimal.config.systemd.units ? "kailash-gvmd.service")}" = "false" \
+            || { echo "kailash-gvmd.service must NOT exist on the gvm-OFF host"; exit 1; }
+          test "${lib.boolToString (self.nixosConfigurations.kailash-minimal.config.services.redis.servers ? "kailash-gvm")}" = "false" \
+            || { echo "services.redis.servers.kailash-gvm must NOT exist on the gvm-OFF host"; exit 1; }
+          test "${lib.boolToString (self.nixosConfigurations.kailash-minimal.config.systemd.units ? "kailash-gvm-feed.service")}" = "false" \
+            || { echo "kailash-gvm-feed.service must NOT exist on the gvm-OFF host"; exit 1; }
+          test "${lib.boolToString (self.nixosConfigurations.kailash-minimal.config.systemd.units ? "kailash-gvm-feed.timer")}" = "false" \
+            || { echo "kailash-gvm-feed.timer must NOT exist on the gvm-OFF host"; exit 1; }
+          echo "--- gvm-ON (kailash-gvm-enabled): the dedicated §3.2 redis server composes"
+          test "${toString (self.nixosConfigurations.kailash-gvm-enabled.config.services.redis.servers.kailash-gvm.enable or false)}" = "1" \
+            || { echo "the gvm-ON host must compose services.redis.servers.kailash-gvm (enable=true)"; exit 1; }
+          test "${lib.boolToString (self.nixosConfigurations.kailash-gvm-enabled.config.systemd.units ? "redis-kailash-gvm.service")}" = "true" \
+            || { echo "redis-kailash-gvm.service must compose on the gvm-ON host"; exit 1; }
+          SOCK="${toString (self.nixosConfigurations.kailash-gvm-enabled.config.services.redis.servers.kailash-gvm.unixSocket or "")}"
+          case "$SOCK" in
+            /run/redis-kailash-gvm/*) echo "dedicated redis unix socket: $SOCK" ;;
+            *) echo "kailash-gvm redis server must be unix-socket-only under /run/redis-kailash-gvm (got: '$SOCK')"; exit 1 ;;
+          esac
+          BIND="${toString (self.nixosConfigurations.kailash-gvm-enabled.config.services.redis.servers.kailash-gvm.bind or "")}"
+          test "$BIND" = "127.0.0.1" || { echo "kailash-gvm redis server must bind the loopback (got: '$BIND')"; exit 1; }
+          PORT="${toString (self.nixosConfigurations.kailash-gvm-enabled.config.services.redis.servers.kailash-gvm.port or "unset")}"
+          test "$PORT" = "0" || { echo "kailash-gvm redis server must NOT listen on TCP (port must be 0, got: '$PORT')"; exit 1; }
+          echo "--- gvm-ON: the feed-sync units compose"
+          test "${lib.boolToString (self.nixosConfigurations.kailash-gvm-enabled.config.systemd.units ? "kailash-gvm-feed.service")}" = "true" \
+            || { echo "kailash-gvm-feed.service must exist on the gvm-ON host"; exit 1; }
+          test "${lib.boolToString (self.nixosConfigurations.kailash-gvm-enabled.config.systemd.units ? "kailash-gvm-feed.timer")}" = "true" \
+            || { echo "kailash-gvm-feed.timer must exist on the gvm-ON host"; exit 1; }
+          echo "gvm-options: OK"
+          touch $out
+        '';
+
+        gvm-manager-package = pkgs.runCommand "gvm-manager-package" { } ''
+          echo "--- gvm-manager-package: the manager-derivation require/throw posture"
+          test "${lib.boolToString (self.nixosConfigurations.kailash-gvm-enabled.config.services.kailash.gvm ? "package")}" = "true" \
+            || { echo "services.kailash.gvm must declare the package contract option (the manager-derivation require)"; exit 1; }
+          NO_PKG_THROW="${lib.boolToString (let t = builtins.tryEval (self.nixosConfigurations.kailash-minimal.extendModules {
+            modules = [ { services.kailash.gvm.enable = true; } ];
+          }).config.systemd.units; in t.success && t.value ? "kailash-gvmd.service" && (builtins.tryEval t.value."kailash-gvmd.service".text).success)}"
+          test "$NO_PKG_THROW" = "false" \
+            || { echo "the manager require must THROW at eval when enable=true and no manager package is set (gvmd is absent from the pin)"; exit 1; }
+          WITH_PKG_COMPOSES="${lib.boolToString (let t = builtins.tryEval (self.nixosConfigurations.kailash-minimal.extendModules {
+            modules = [ {
+              services.kailash.gvm.enable = true;
+              services.kailash.gvm.package = pkgs.stdenv.mkDerivation {
+                name = "gvm-manager-standin";
+                unpackPhase = "true";
+                installPhase = "mkdir -p $out/bin; printf '#!/bin/sh\necho gvmd-standin\n' > $out/bin/gvmd; chmod +x $out/bin/gvmd";
+              };
+            } ];
+          }).config.systemd.units; in t.success && (t.value ? "kailash-gvmd.service"))}"
+          test "$WITH_PKG_COMPOSES" = "true" \
+            || { echo "an operator-supplied manager package must compose the gvmd unit (no throw)"; exit 1; }
+          echo "gvm-manager-package: OK"
+          touch $out
+        '';
+
         # ---- C-3 Web Application Assessment (KA-07.1, ko#99) ----------------
         #
         # The §4.5 category module for the tenth CLASSIC manifest category,
@@ -1886,6 +1973,34 @@ PY
           {
             networking.hostName = lib.mkForce "kailash-mlflow-enabled";
             services.kailash.mlflow.enable = true;
+          }
+        ];
+      };
+
+      # The GVM SERVICE composed (KA-27, ko#27): a synthetic host with
+      # services.kailash.gvm ENABLED — EVAL-ONLY (no check leg, no CI
+      # build): nix flake check evaluates every nixosConfiguration, so
+      # this host proves the service module composes and produces the
+      # unit tree without building its closure (the same eval-only
+      # posture the kailash-mlflow-enabled fixture owns — NOT a product
+      # profile).
+      nixosConfigurations.kailash-gvm-enabled = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          {
+            networking.hostName = lib.mkForce "kailash-gvm-enabled";
+            services.kailash.gvm.enable = true;
+            # The eval-only fixture supplies the manager stand-in (the
+            # gvmd derivation is ABSENT from the pin — the package
+            # CONTRACT requires the operator to supply it; the unit
+            # composition, not the manager's runtime, is what this
+            # fixture proves).
+            services.kailash.gvm.package = pkgs.stdenv.mkDerivation {
+              name = "gvm-manager-standin";
+              unpackPhase = "true";
+              installPhase = "mkdir -p $out/bin; printf '#!/bin/sh\necho gvmd-standin\n' > $out/bin/gvmd; chmod +x $out/bin/gvmd";
+            };
           }
         ];
       };

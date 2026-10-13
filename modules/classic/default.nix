@@ -16,5 +16,6 @@
     ./c-10-runtime-appsec-ai.nix
     ./c-08-exploitation-post-exploitation.nix
     ./c-09-forensics-ir-reporting.nix
+    ./gvm-service.nix
   ];
 }
