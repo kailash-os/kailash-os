@@ -1,8 +1,13 @@
 name: release-images
 
-# KA-33 slice 1 (kailash-os#141 receipt follow-up): build the x86_64-linux
-# image artefacts at a tag and attach them to the release. Triggered by the
-# published release (or workflow_dispatch on a tag name).
+# KA-33 slice 3 (kailash-os#200): build EVERY hosted target of the §8.1
+# matrix (images/kailash-images-table.nix) at a tag. The slice-1 4-leg
+# subset left four targets (qemu-minimal, qemu-full, qemu-headless-agent,
+# iso-headless-agent) with no build record anywhere; the
+# images-release-completeness check leg now proves this file declares
+# every non-aarch64 table row, so a gap cannot hide here silently.
+# Dispatch may build a stated subset (comma-separated leg names) via the
+# `targets` input; unmatched legs then SKIP visibly (they stay declared).
 #
 # The images build from the SAME flake the tag pins; the Cachix cache holds
 # every package closure, so the hosted legs substitute rather than compile.
@@ -17,6 +22,11 @@ on:
         description: "Tag to build images from"
         required: true
         type: string
+      targets:
+        description: "Optional comma-separated leg names (e.g. kailash-qemu-minimal,kailash-iso-headless-agent). Empty = all eight. Invalid names fail the resolve check."
+        required: false
+        type: string
+        default: ""
 
 permissions:
   contents: write
@@ -29,7 +39,35 @@ permissions:
   attestations: write
 
 jobs:
+  resolve:
+    # Validate the dispatch `targets` subset BEFORE any build burns a
+    # runner hour on a typo: every requested name must be a declared leg.
+    # The declaration itself stays in the images job's static matrix below —
+    # one home (the tools/check-images-release-completeness.py gate parses
+    # exactly that include block).
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && inputs.targets != ''
+    steps:
+      - name: Validate the requested targets against the declared legs
+        run: |
+          DECLARED="kailash-iso-minimal kailash-iso-redteam-ai kailash-iso-full kailash-iso-headless-agent kailash-qemu-minimal kailash-qemu-redteam-ai kailash-qemu-full kailash-qemu-headless-agent"
+          BAD=0
+          for t in $(printf '%s' "${{ inputs.targets }}" | tr ',' ' '); do
+            case " $DECLARED " in
+              *" $t "*) echo "ok: $t" ;;
+              *) echo "::error::'$t' is not a declared leg — valid: $DECLARED"; BAD=1 ;;
+            esac
+          done
+          exit $BAD
+
   images:
+    needs: resolve
+    if: |
+      always() &&
+      (github.event_name == 'release' ||
+       inputs.targets == '' ||
+       contains(concat(',', replace(inputs.targets, ' ', ''), ','),
+                concat(',', matrix.name, ',')))
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -37,12 +75,20 @@ jobs:
         include:
           - name: kailash-iso-minimal
             attr: packages.x86_64-linux.kailash-images-iso-minimal
-          - name: kailash-iso-full
-            attr: packages.x86_64-linux.kailash-images-iso-full
-          - name: kailash-qemu-redteam-ai
-            attr: packages.x86_64-linux.kailash-images-qemu-redteam-ai
           - name: kailash-iso-redteam-ai
             attr: packages.x86_64-linux.kailash-images-iso-redteam-ai
+          - name: kailash-iso-full
+            attr: packages.x86_64-linux.kailash-images-iso-full
+          - name: kailash-iso-headless-agent
+            attr: packages.x86_64-linux.kailash-images-iso-headless-agent
+          - name: kailash-qemu-minimal
+            attr: packages.x86_64-linux.kailash-images-qemu-minimal
+          - name: kailash-qemu-redteam-ai
+            attr: packages.x86_64-linux.kailash-images-qemu-redteam-ai
+          - name: kailash-qemu-full
+            attr: packages.x86_64-linux.kailash-images-qemu-full
+          - name: kailash-qemu-headless-agent
+            attr: packages.x86_64-linux.kailash-images-qemu-headless-agent
     steps:
       - name: Checkout (the tag)
         uses: actions/checkout@v4.2.2
@@ -83,15 +129,9 @@ jobs:
       - name: Generate the SPDX SBOM for the image
         id: sbom
         run: |
-          OUT="$(cat outpaths.txt)"
           ART="${{ steps.locate.outputs.iso }}${{ steps.locate.outputs.qcow }}"
-          # the SBOM rides the closure: every drv input, SPDX-2.3 JSON —
-          # the image's package inventory from the BUILT closure itself.
-          SPOM="$(basename "$ART").spdx.json"
-          nix eval --json "$(cat outpaths.txt | head -1 | sed 's|/nix/store/||; s|-.*||')" 2>/dev/null || true
-          # the real generator: closureInfo over the image drv's closure
-          nix run nixpkgs#nix -- store ls --recurse --derivation "$ART.drv" > /dev/null 2>&1 || true
           NAME="$(basename "$ART")"; NAME="${NAME%.*}"
+          SPOM="${NAME}.spdx.json"
           python3 -c 'import json,datetime,sys; n=sys.argv[1]; print(json.dumps({"spdxVersion":"SPDX-2.3","dataLicense":"CC0-1.0","SPDXID":"SPDXRef-DOCUMENT","name":"kailash-os-"+n,"documentNamespace":"https://spdx.org/spdxdocs/kailash-"+n,"creationInfo":{"created":datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),"creators":["Tool: nix-store-closure","Organization: kailash-os"]},"packages":[],"relationships":[]}, indent=2))' "$NAME" > "$SPOM"
           echo "spom=$(pwd)/$SPOM" >> "$GITHUB_OUTPUT"
       - name: Attest build provenance (SLSA v1.0)
@@ -110,6 +150,9 @@ jobs:
       # nixos-*.iso, every qcow2 nixos.qcow2) — the 422 on the hosted run.
       # Stage under the unique name; the bits (and their digests) are
       # unchanged, so the attestations above still cover the artefact.
+      # Per-leg checksum sheets are NAME-SUFFIXED (slice 3, ko#200): the
+      # release-side attach concatenates them into the canonical
+      # SHA256SUMS — a shared unsuffixed name invited clobber.
       - name: Stage the artefact under its release name
         id: stage
         run: |
@@ -118,17 +161,18 @@ jobs:
           EXT="${ART##*.}"
           DEST="kailash-${TAG}-${{ matrix.name }}.${EXT}"
           cp "$ART" "$DEST"
-          (sha256sum "$DEST" 2>/dev/null || shasum -a 256 "$DEST") | tee SHA256SUMS
+          (sha256sum "$DEST" 2>/dev/null || shasum -a 256 "$DEST") | tee "SHA256SUMS-${{ matrix.name }}"
           echo "dest=$(pwd)/$DEST" >> "$GITHUB_OUTPUT"
-          echo "sums=$(pwd)/SHA256SUMS" >> "$GITHUB_OUTPUT"
+          echo "sums=$(pwd)/SHA256SUMS-${{ matrix.name }}" >> "$GITHUB_OUTPUT"
       # Upload as a WORKFLOW ARTIFACT: the release-asset endpoint 404/422s
       # the workflow_dispatch github.token against a release created by an
       # outside token (the run's evidence: 404 on the ISO POST, 422 on the
       # qcow POST — while the SAME file uploads fine with the user's PAT,
       # probed with t.bin). The release attachment is the user-side step
       # (gh release upload with the user PAT) — the attestation verifies
-      # per-artefact digest regardless of who uploads. SHA256SUMS rides
-      # the artifact so the release-side attach carries the checksum.
+      # per-artefact digest regardless of who uploads. The per-leg
+      # SHA256SUMS sheet rides the artifact so the release-side attach
+      # carries the checksum.
       - name: Save the artefact as a workflow artifact
         uses: actions/upload-artifact@v4
         with:
