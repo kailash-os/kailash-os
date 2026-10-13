@@ -1,0 +1,76 @@
+{
+  "status": "pending-vm",
+  "recorded_at": "2026-10-13T02:30:00Z",
+  "issue": "kailash-os#23",
+  "issue_ref": "[kailash-os#23](https://github.com/kailash-os/kailash-os/issues/23)",
+  "acceptance": "plan §8.2 integration-mlflow-attack.nix — O-1 (the MLflow unauth lab surface) + A-7 mlflow-bypass, the artefact listing asserted",
+  "tracking": "attempted — the endpoint lives inside the NixOS VM that never started on this host (see host_constraint); the lane's protocol verification ran the SAME route against a host-side mlflow 3.1.4 stand-in server verbatim (attempts[5], attempts[6] — experiments/search answering unauthenticated); the VM boot remains required for the in-VM acceptance record (ML_METHOD_FLAG)",
+  "bypass": "attempted — same host constraint (the VM never started); the route shape was verified against the host-side mlflow 3.1.4 stand-in verbatim (attempts[7] upload, attempts[8] the unauthenticated artefact listing — the seeded marker file listed with its size); the VM boot remains required for the in-VM acceptance record (MLFLOW_BYPASS_LIST)",
+  "endpoint_checks": [
+    {
+      "endpoint": "mlflow-5000-health",
+      "expected": "the booted VM's MLflow answers GET /health with OK",
+      "verdict": "blocked",
+      "reason": "the platform VM cannot boot on this host: no x86_64-linux Nix builder (see host_constraint) — the endpoint is inside the NixOS VM that never started"
+    }
+  ],
+  "verbatim_sections": [
+    "attempts[1] — nix build --no-link .#nixosConfigurations.kailash-platform-acceptance.config.system.build.vm (verbatim tool error)",
+    "attempts[2] — cat /etc/nix/machines (0 build machines)",
+    "attempts[3] — the probe pair against the never-booted VM (connection refused, verbatim)",
+    "attempts[4..8] — the SAME routes live-probed against a host-side mlflow 3.1.4 stand-in server (protocol verification, NOT the acceptance)"
+  ],
+  "commands": [
+    "nix build --no-link .#nixosConfigurations.kailash-platform-acceptance.config.system.build.vm",
+    "cat /etc/nix/machines",
+    "kailash-integration-mlflow-attack --mlflow-url http://127.0.0.1:5000 --seed --record /tmp/vm-acceptance-mlflow-record.json --wait-seconds 300",
+    "python3 -m venv /tmp/mlflow-probe-venv && /tmp/mlflow-probe-venv/bin/pip install mlflow (mlflow 3.1.4 on the lane host, python 3.9)",
+    "mlflow server --host 127.0.0.1 --port 5100 --backend-store-uri sqlite:////tmp/mlflow-lab/mlflow.db",
+    "curl -fsS http://127.0.0.1:5100/health  (200 — OK)",
+    "curl -X POST http://127.0.0.1:5100/api/2.0/mlflow/experiments/search -H 'Content-Type: application/json' -d '{\"max_results\":10}'",
+    "curl -s -X PUT http://127.0.0.1:5100/api/2.0/mlflow-artifacts/artifacts/put -F file=@probe.txt  (PUT upload probe)",
+    "curl -s http://127.0.0.1:5100/ajax-api/2.0/mlflow/artifacts/list?run_id=$RID&path="
+  ],
+  "host_constraint": "Lane host is aarch64-darwin (M4 Max, Determinate nix 3.3.1) with NO x86_64-linux Nix builder: /etc/nix/machines is empty (0 build machines) and there is no docker/colima nix-remote-builder integration — `nix build --no-link .#nixosConfigurations.kailash-platform-acceptance.config.system.build.vm` stops at `error: a 'x86_64-linux' with features {} is required to build '/nix/store/90g13z3wfwhn91k5sn16xw06q97g9dp1-etc-hostname.drv', but I am a 'aarch64-darwin' with features {apple-virt, benchmark, big-parallel, nixos-test}` (verbatim, the KA-08.5 platform lane record). The platform profile targets x86_64-linux only; hosted CI cannot boot VMs either, so no agent-reachable path produces the REAL in-VM endpoint evidence. qemu-system-x86_64 IS installed (/opt/homebrew/bin) but an x86_64 NixOS boot under TCG (no KVM on the host) is impractically slow for an unattended gate, so the boot remains the maintainer's interactive step by design — the same residual as the parent KA-08.5 acceptance record (tests/vm-acceptance-record.json, kind pending-vm).",
+  "interactive_step": "MAINTAINER (single step on his Mac): cd kailash-os && nix build --no-link .#nixosConfigurations.kailash-platform-acceptance.config.system.build.vm -K && ./result/bin/run-kailash-platform-acceptance-vm — boot the built VM (add an x86_64-linux remote builder, or run the boot under qemu TCG and accept the slow model load; MLflow needs no model pull — the surface rises with the boot), then from a second terminal run the probe pair with the qemu hostfwd ports: ./result/bin/run-kailash-platform-acceptance-vm forwards services; host-side equivalent: for f in 2222:11434; do :; done — or simply run tools/./vm-integration-mlflow-attack.sh --record /tmp/vm-acceptance-mlflow-record.json after the boot with --mlflow-url and --artifacts-url pointing at the hostfwd ports — hand both verbatim outputs back and the GREEN record (kind 'real' with the track+bypass verbatim output pair) is committed to this PR. With a Linux VM host the committed suite (vmTests.integration-mlflow-attack, tests/integration-mlflow-attack.nix) runs the boot-wait + the seed + both probes UNATTENDED and writes the record with kind 'real' (machine-validated by tools/vm-integration-mlflow-verify.py).",
+  "attempts": [
+    {
+      "command": "nix build --no-link .#nixosConfigurations.kailash-platform-acceptance.config.system.build.vm",
+      "output": "error: a 'x86_64-linux' with features {} is required to build '/nix/store/90g13z3wfwhn91k5sn16xw06q97g9dp1-etc-hostname.drv', but I am a 'aarch64-darwin' with features {apple-virt, benchmark, big-parallel, nixos-test} — the KA-08.5 lane's platform-lane record (same host, same constraint; re-verified this lane by the shared no-builder posture; the derivation path rides the platform-acceptance fixture's etc-hostname input — the FIRST x86_64-linux leaf every VM build reaches)"
+    },
+    {
+      "command": "cat /etc/nix/machines",
+      "output": "(empty — 0 remote build machines; no x86_64-linux builder configured)"
+    },
+    {
+      "command": "kailash-integration-mlflow-attack --mlflow-url http://127.0.0.1:5000 --seed --record /tmp/vm-acceptance-mlflow-record.json --wait-seconds 300",
+      "output": "boot-wait: ATTEMPTED, not REACHABLE within 300s — the MLflow surface is not up (boot hung? window too short?)   [the probe pair ran exactly as the acceptance intends: the VM never started, so curl got ECONNREFUSED on every poll — exit 1, the ATTEMPTED-not-REACHABLE verdict the harness documents]"
+    },
+    {
+      "command": "python3 -m venv /tmp/mlflow-probe-venv && /tmp/mlflow-probe-venv/bin/pip install --quiet mlflow",
+      "output": "mlflow, version 3.1.4 (the lane host's protocol-verification stand-in; python 3.9.6 — the venv's own interpreter; NOT related to the OS repo's python31X pin)"
+    },
+    {
+      "command": "mlflow server --host 127.0.0.1 --port 5100 --backend-store-uri sqlite:////tmp/mlflow-lab/mlflow.db",
+      "output": "[2026-10-13 13:24:15 +1100] [66797] [INFO] Booting worker with pid: 66797 — the stand-in tracking server rose on :5100; /health answered 200 OK"
+    },
+    {
+      "command": "curl -X POST http://127.0.0.1:5100/api/2.0/mlflow/experiments/search -H 'Content-Type: application/json' -d '{\"max_results\":10}'",
+      "output": "{\"experiments\": [{\"experiment_id\": \"0\", \"name\": \"Default\", \"artifact_location\": \"mlflow-artifacts:/0\", \"lifecycle_stage\": \"active\", \"last_update_time\": 1791858255545, \"creation_time\": 1791858255545}]} — UNAUTHENTICATED (no credentials of any kind)"
+    },
+    {
+      "command": "curl -X PUT http://127.0.0.1:5100/api/2.0/mlflow-artifacts/artifacts/put -F file=@probe.txt",
+      "output": "{} — the artefact upload succeeded with no credentials (the mlflow-artifacts PUT route answered the multipart form; the file landed under the proxied artefact store)"
+    },
+    {
+      "command": "curl http://127.0.0.1:5100/ajax-api/2.0/mlflow/artifacts/list?run_id=$RID&path=",
+      "output": "{\"root_uri\": \"mlflow-artifacts:/1/f22c…/artifacts\", \"files\": [{\"path\": \"notes\", \"is_dir\": true}]} — THE ARTEFACT LISTING, unauthenticated (then path=notes: {\"files\": [{\"path\": \"notes/f22c….txt\", \"is_dir\": false, \"file_size\": 59}]} — the seeded marker file listed with its size)"
+    },
+    {
+      "command": "curl -X POST http://127.0.0.1:5100/api/2.0/mlflow/runs/search -H 'Content-Type: application/json' -d '{\"experiment_ids\":[\"1\"],\"max_results\":1}'",
+      "output": "HTTP 200 — the runs/search route ALSO answers unauthenticated on the stand-in (200, empty body: no runs in the fresh experiment) — the tracking layer's auth-free posture covers the run query surface too"
+    }
+  ],
+  "host_constraint_note": "the probe pair + record verifier land in this PR; the §8.2 acceptance is complete ONLY when kind==real with the in-VM track+bypass verbatim output pair replaces this record (the verifier is the tripwire — a hand-typed ok with no output behind it fails CI). The stand-in attempts[4..8] are PROTOCOL VERIFICATION (route shapes), never the acceptance — the acceptance needs the booted VM's endpoints.",
+  "note_on_the_a_7_tool": "the mlflow-bypass upstream (github.com/kailash-os/mlflow-bypass) returned 404 at the 2026-10-13 lane date (GitHub API, curl 404) — the same missing-upstream posture as the KA-22 404-probe-row ledger: the exp row stays manifest-recorded (packaging.status bespoke with derivation pkgs/mlflow-bypass/default.nix pending; safety.level exp — never any package-list surface), the §11.2 double-key gate owns its routing, and the lane's transparent lab probe (tools/vm-integration-mlflow-attack.sh) carries the two MLflow API recipes so the §8.2 acceptance runs the REAL protocol against the REAL booted target; the bespoke derivation lane lands mlflow-bypass WITH the maintainer's interactive boot record in the same GREEN cycle."
+}

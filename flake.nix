@@ -1772,9 +1772,64 @@ PY
             echo "--- engines-only: webui still OFF on the acceptance fixture"
             test "${lib.boolToString accHost.config.services.open-webui.enable}" = "false" \
               || { echo "o-05-platform-acceptance: webui must stay OFF on the acceptance fixture"; exit 1; }
-            echo "o-05-platform-acceptance: OK (lab posture pinned: 0.0.0.0 binds, loadModels qwen2.5:0.5b, labReachable, webui off)"
+            echo "--- KA-23: the a-07 pairing category is ON, its install set EMPTY by construction"
+            test "${lib.boolToString accHost.config.kailash.layers.attack.categories.a-07.enable}" = "true" \
+              || { echo "o-05-platform-acceptance: the acceptance fixture must carry the a-07 pairing category ON (the §6.5 pair — KA-23)"; exit 1; }
+            ACC_A7_NAMES="${lib.concatStringsSep " " (map (p: p.pname or (builtins.parseDrvName p.name).name) accHost.config.kailash.layers.attack.categories.a-07.packages)}"
+            test -z "$ACC_A7_NAMES" \
+              || { echo "o-05-platform-acceptance: the a-07 install set is NOT empty on the acceptance fixture (the §11.2 gate owns exp routing — KA-23)"; exit 1; }
+            echo "o-05-platform-acceptance: OK (lab posture pinned: 0.0.0.0 binds, loadModels qwen2.5:0.5b, labReachable, webui off, a-07 pairing with an empty install set)"
             touch $out
           '';
+
+        a-05-generated-drift = pkgs.runCommand "a-05-generated-drift"
+          {
+            nativeBuildInputs = [ (pkgs.python3.withPackages (ps: [ ps.pyyaml ])) ];
+          } ''
+          python3 ${./tools/gen-category-packages.py} \
+            --manifest-file ${kailash-packages.outPath + "/manifest/tools.yaml"} \
+            --category a-05-model-extraction-inversion > gen-a-05.nix
+          GENERATED=${./modules/attack/generated/a-05-model-extraction-inversion.nix}
+          if ! cmp -s gen-a-05.nix "$GENERATED"; then
+            echo "a-05 generated list DRIFTED from the generator emit:"
+            diff -u "$GENERATED" gen-a-05.nix || true
+            exit 1
+          fi
+          echo "a-05-generated-drift: OK (generator == committed)"
+          touch $out
+        '';
+
+        a-08-generated-drift = pkgs.runCommand "a-08-generated-drift"
+          {
+            nativeBuildInputs = [ (pkgs.python3.withPackages (ps: [ ps.pyyaml ])) ];
+          } ''
+          # a-08's installable rows are BOTH derivation-pending bespoke
+          # at this pin and the category carries FOUR safety:exp rows —
+          # the generator REFUSES an exp-carrying category's emit (the
+          # §11.2 contract, exit 1 + the named row list on stderr).
+          # This leg pins the refusal AND the ledger shape the module
+          # consumes (the a-05 file is the one exp-free long-tail emit;
+          # its byte-parity rides a-05-generated-drift above).
+          # The FIRST python3 is EXPECTED to exit 1 (the refusal fires);
+          # under the stdenv builder's set -e a bare expected-nonzero
+          # command aborts the leg at that line (silently — nothing
+          # stdout-printed yet, CI shows an empty builder log). Probe it
+          # from an `if` CONDITION context (safety-exp-gate-run
+          # precedent: conditions are exempt from errexit).
+          if python3 ${./tools/gen-category-packages.py} \
+            --manifest-file ${kailash-packages.outPath + "/manifest/tools.yaml"} \
+            --category a-08-data-poisoning > gen-a-08.nix 2> refuse.err
+          then
+            echo "a-08-generated-drift: FAIL: the generator EMITTED an exp-carrying category (the §11.2 refuse did not fire)"; cat gen-a-08.nix; exit 1
+          fi
+          grep -q "carries safety:exp rows" refuse.err \
+            || { echo "a-08-generated-drift: FAIL: the refusal does not name the exp rows"; cat refuse.err; exit 1; }
+          cat refuse.err
+          LEDGER=${./generated/manifest-ids.json}
+          python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); a8=d["categories"]["a-08-data-poisoning"]; assert a8["count"]==6 and len(a8["exp"])==4 and len(a8["installable"])==2, a8' "$LEDGER"
+          echo "a-08-generated-drift: OK (the §11.2 refuse fired with the named rows; ledger 6=4exp+2installable)"
+          touch $out
+        '';
 
         # The RECORD leg (KA-08.5, kailash-os#109): the committed VM-
         # acceptance record is machine-validated on EVERY PR — the
@@ -1791,6 +1846,88 @@ PY
             nativeBuildInputs = [ (pkgs.python3.withPackages (ps: [ ])) ];
           } ''
           python3 ${./tools/vm-acceptance-verify.py} --record ${./tests/vm-acceptance-record.json}
+          touch $out
+        '';
+
+        # ---- integration-mlflow-attack legs (KA-23, kailash-os#23; §8.2) ---
+        #
+        # The §8.2 integration acceptance: O-1 (the MLflow unauth lab
+        # surface, services.kailash.mlflow) + A-7 (mlflow-bypass) →
+        # asserted artefact listing — the pairing thesis executed. VM
+        # REALITY (the KA-06.3/KA-08.5 posture): hosted runners cannot
+        # BOOT (no KVM) and this lane box cannot BUILD x86_64-linux, so
+        # the boot+run rides the KA-08.5 pending-vm record discipline —
+        # verbatim attempts + the maintainer's ONE interactive step
+        # (qemu boot; the probe pair then runs against the REAL
+        # endpoints), NEVER a fabricated run output.
+        #
+        #   * integration-mlflow-attack-wiring — the eval-leg: the a-07
+        #     pairing category ON on the acceptance host, its install set
+        #     EMPTY by construction (the §11.2 gate owns exp routing),
+        #     the mlflow-bypass EXP row present in the ledger, the a-07
+        #     exp ledger exactly the nine manifest rows, and the
+        #     mlflow surface (services.kailash.mlflow) ON with the
+        #     labReachable posture on the acceptance fixture;
+        #   * integration-mlflow-attack-probe-script — the probe pair is
+        #     the committed shell (bash -n + the marker strings the
+        #     record's interactive run must show);
+        #   * integration-mlflow-attack-record — the machine-validated
+        #     record (kind real needs BOTH probes ok WITH verbatim
+        #     output; kind pending-vm needs every attempted command with
+        #     verbatim output + the host constraint + the interactive
+        #     step). The committed record starts pending-vm (the lane's
+        #     verbatim attempts recorded); the maintainer's boot flips
+        #     it to 'real'.
+        integration-mlflow-attack-wiring =
+          let
+            accHost = self.nixosConfigurations.kailash-platform-acceptance;
+            a7Ledger = (builtins.fromJSON (builtins.readFile ./generated/manifest-ids.json))
+              .categories.a-07-ai-system-exploitation;
+            require = cond: msg: if cond then true else throw msg;
+            accA7 = map (p: p.pname or (builtins.parseDrvName p.name).name)
+              accHost.config.kailash.layers.attack.categories.a-07.packages;
+            _evalProofs = [
+              (require (accHost.config.kailash.layers.attack.categories.a-07.enable)
+                "integration-mlflow-attack-wiring: the acceptance fixture does not carry the a-07 pairing category (KA-23)")
+              (require (a7Ledger.exp != [ ] && lib.elem "mlflow-bypass" a7Ledger.exp)
+                "integration-mlflow-attack-wiring: mlflow-bypass is not the a-07 exp-ledger record (KA-23)")
+              (require (accA7 == [ ])
+                "integration-mlflow-attack-wiring: the a-07 pairing installed exp tooling on the acceptance host — the §11.2 gate owns exp routing (KA-23)")
+              (require (accHost.config.services.kailash.mlflow.enable)
+                "integration-mlflow-attack-wiring: services.kailash.mlflow is not ON on the acceptance fixture (the O-1 pairing target) — KA-23")
+              (require (accHost.config.services.kailash.mlflow.labReachable)
+                "integration-mlflow-attack-wiring: the acceptance fixture must carry the documented labReachable posture (KA-23)")
+            ];
+          in
+          pkgs.runCommand "integration-mlflow-attack-wiring"
+            {
+              proofs = toString _evalProofs;
+            }
+            ''
+              echo "integration-mlflow-attack-wiring: ${toString (lib.length _evalProofs)} eval proofs passed [${toString _evalProofs}]"
+              touch $out
+            '';
+
+        integration-mlflow-attack-probe-script = pkgs.runCommand
+          "integration-mlflow-attack-probe-script"
+          {
+            nativeBuildInputs = [ pkgs.bash ];
+          } ''
+          bash -n ${./tools/vm-integration-mlflow-attack.sh}
+          grep -q "ML_METHOD_FLAG" ${./tools/vm-integration-mlflow-attack.sh} \
+            || { echo "the tracking probe lost its method flag"; exit 1; }
+          grep -q "MLFLOW_BYPASS_LIST" ${./tools/vm-integration-mlflow-attack.sh} \
+            || { echo "the bypass probe lost its listing marker"; exit 1; }
+          echo "integration-mlflow-attack-probe-script: OK (the §8.2 pair parses; markers present)"
+          touch $out
+        '';
+
+        integration-mlflow-attack-record = pkgs.runCommand
+          "integration-mlflow-attack-record"
+          {
+            nativeBuildInputs = [ (pkgs.python3.withPackages (ps: [ ])) ];
+          } ''
+          python3 ${./tools/vm-integration-mlflow-verify.py} --record ${./tests/vm-acceptance-mlflow-record.json}
           touch $out
         '';
 
@@ -1822,6 +1959,9 @@ PY
               # categories whose install sets bind at the pin).
               d-03 = "defence";
               d-04 = "defence";
+              # KA-23 (os#23): A-5 joins — the long-tail category whose
+              # install set binds at this pin (art + counterfit).
+              a-05 = "attack";
             };
             shells = (self.devShells or { }).${system} or { };
             devShellPkgs = layer: id:
@@ -2072,7 +2212,174 @@ PY
               echo "a-04-options: ${toString (lib.length _evalProofs)} eval proofs passed [${toString _evalProofs}]"
               touch $out
             '';
-        # ---- The §8.1 image-matrix eval legs (KA-28, ko#28) ----------------
+            a-05-options =
+          let
+            a5Host = (self.nixosConfigurations.kailash-minimal.extendModules {
+              modules = [ { kailash.layers.attack.categories.a-05.enable = true; } ];
+            });
+            a5PkgNames =
+              map (p: p.pname or (builtins.parseDrvName p.name).name)
+                a5Host.config.kailash.layers.attack.categories.a-05.packages;
+            a5Ledger = (builtins.fromJSON (builtins.readFile ./generated/manifest-ids.json))
+              .categories.a-05-model-extraction-inversion;
+            require = cond: msg: if cond then true else throw msg;
+            _evalProofs = [
+              (require (a5Ledger.exp or [ ] == [ ])
+                "a-05-options: the a-05 ledger carries an exp key — the category's rows are safe/requires-target only (KA-23 GREEN)")
+              (require (a5Ledger.excluded == [ ])
+                "a-05-options: the a-05 ledger records an excluded row — no data/module rows in this category (KA-23 GREEN)")
+              (require (builtins.length a5Ledger.installable == 8)
+                "a-05-options: the a-05 installable ledger is not the census's eight rows (KA-23 GREEN)")
+              (require ((lib.elem "art" a5PkgNames) && (lib.elem "counterfit" a5PkgNames))
+                "a-05-options: the landed overlay derivations (art, counterfit) did not bind into the a-05 install set (KA-23 GREEN)")
+              (require (!(lib.elem "foolbox" a5PkgNames) && !(lib.elem "cleverhans" a5PkgNames))
+                "a-05-options: a derivation-pending row (foolbox/cleverhans) unexpectedly resolved — revisit the a-05 binding-table record (KA-23)")
+            ];
+          in
+          pkgs.runCommand "a-05-options"
+            {
+              proofs = toString _evalProofs;
+            }
+            ''
+              echo "a-05 install set (pnames): ${toString a5PkgNames}"
+              echo "a-05-options: ${toString (lib.length _evalProofs)} eval proofs passed [${toString _evalProofs}]"
+              touch $out
+            '';
+
+        a-06-options =
+          let
+            a6Host = (self.nixosConfigurations.kailash-minimal.extendModules {
+              modules = [ { kailash.layers.attack.categories.a-06.enable = true; } ];
+            });
+            a6PkgNames =
+              map (p: p.pname or (builtins.parseDrvName p.name).name)
+                a6Host.config.kailash.layers.attack.categories.a-06.packages;
+            a6Ledger = (builtins.fromJSON (builtins.readFile ./generated/manifest-ids.json))
+              .categories.a-06-multimodal-physical-ai;
+            require = cond: msg: if cond then true else throw msg;
+            _evalProofs = [
+              (require (a6Ledger.exp == [ "adversarial-clothing" "audio-voice-clone-injector" ])
+                "a-06-options: the generator's exp ledger does not record exactly [adversarial-clothing, audio-voice-clone-injector] (KA-23 GREEN)")
+              (require (!(lib.elem "adversarial-clothing" a6Ledger.installable) && !(lib.elem "audio-voice-clone-injector" a6Ledger.installable))
+                "a-06-options: an exp row still rides the a-06 installable ledger (KA-23 GREEN)")
+              (require (a6Ledger.excluded == [
+                {
+                  id = "adversarial-patches-collection";
+                  note = "data-pack row (opt-in; D7) — category modules never install data rows";
+                  status = "data";
+                }
+              ])
+                "a-06-options: the a-06 excluded ledger does not record the data row adversarial-patches-collection (D7) (KA-23 GREEN)")
+              (require (!(lib.elem "adversarial-patches-collection" (a6Ledger.installable ++ a6Ledger.exp)))
+                "a-06-options: the data row adversarial-patches-collection leaked into the a-06 installable/exp ledgers (D7) (KA-23)")
+              (require (a6PkgNames == [ ])
+                "a-06-options: the a-06 install set is NOT empty — both installable rows are derivation-pending at the current packages pin; a resolved row means the binding-table record must be revisited (KA-23)")
+            ];
+          in
+          pkgs.runCommand "a-06-options"
+            {
+              proofs = toString _evalProofs;
+            }
+            ''
+              echo "a-06 install set (pnames): ${toString a6PkgNames} (empty: both rows derivation-pending)"
+              echo "a-06 exp ledger (lab-mode-gated, never installed): ${toString a6Ledger.exp}"
+              echo "a-06-options: ${toString (lib.length _evalProofs)} eval proofs passed [${toString _evalProofs}]"
+              touch $out
+            '';
+
+        a-07-options =
+          let
+            a7Host = (self.nixosConfigurations.kailash-minimal.extendModules {
+              modules = [ { kailash.layers.attack.categories.a-07.enable = true; } ];
+            });
+            a7PkgNames =
+              map (p: p.pname or (builtins.parseDrvName p.name).name)
+                a7Host.config.kailash.layers.attack.categories.a-07.packages;
+            a7Ledger = (builtins.fromJSON (builtins.readFile ./generated/manifest-ids.json))
+              .categories.a-07-ai-system-exploitation;
+            require = cond: msg: if cond then true else throw msg;
+            _evalProofs = [
+              (require (a7Ledger.exp == [
+                "mlflow-bypass"
+                "triton-pwn"
+                "torchserve-pwn"
+                "ollama-pwn"
+                "vllm-pwn"
+                "kserve-exploit"
+                "shadow-ray"
+                "vector-db-ripper"
+                "ai-gateway-bypass"
+              ])
+                "a-07-options: the generator's exp ledger does not record exactly the nine A-7 platform-exploit rows (manifest order) (KA-23 GREEN)")
+              (require (a7Ledger.installable == [ ])
+                "a-07-options: an a-07 row rides the INSTALLABLE ledger — every A-7 row is safety:exp (plan §3.6 profile Very Low; the §11.2 gate owns the surface) (KA-23)")
+              # (a-06/a-08 carry the same ledger shape). The a-07 host must
+              # still evaluate cleanly (flake check sweeps every
+              # nixosConfiguration) with ZERO a-07-named packages on PATH.
+              (require (a7PkgNames == [ ])
+                "a-07-options: the a-07 install set is NOT empty — the §11.2 gate owns the ENTIRE A-7 surface (KA-23)")
+              (require (!(lib.elem "mlflow-bypass" a7PkgNames) && !(lib.elem "mlflow-bypass" a7Ledger.installable))
+                "a-07-options: mlflow-bypass escaped the exp ledger (the §11.2 gate owns exp routing — KA-23)")
+              (require (let
+                hostNames = map (p: p.pname or (builtins.parseDrvName p.name).name)
+                  a7Host.config.environment.systemPackages;
+              in a7PkgNames == [ ] && a7PkgNames == (lib.intersectLists a7PkgNames hostNames))
+                "a-07-options: an a-07-named row reached the fixture host's PATH — nothing from a-07 may ride any package surface (KA-23)")
+            ];
+          in
+          pkgs.runCommand "a-07-options"
+            {
+              proofs = toString _evalProofs;
+            }
+            ''
+              echo "a-07 install set (pnames): ${toString a7PkgNames} (empty by construction: all nine rows are safety:exp)"
+              echo "a-07 exp ledger (lab-mode-gated, never installed): ${toString a7Ledger.exp}"
+              echo "a-07-options: ${toString (lib.length _evalProofs)} eval proofs passed [${toString _evalProofs}]"
+              touch $out
+            '';
+
+        a-08-options =
+          let
+            a8Host = (self.nixosConfigurations.kailash-minimal.extendModules {
+              modules = [ { kailash.layers.attack.categories.a-08.enable = true; } ];
+            });
+            a8PkgNames =
+              map (p: p.pname or (builtins.parseDrvName p.name).name)
+                a8Host.config.kailash.layers.attack.categories.a-08.packages;
+            a8Ledger = (builtins.fromJSON (builtins.readFile ./generated/manifest-ids.json))
+              .categories.a-08-data-poisoning;
+            require = cond: msg: if cond then true else throw msg;
+            _evalProofs = [
+              (require (a8Ledger.exp == [
+                "poison-dataset-builder"
+                "trojan-lm-toolkit"
+                "prompt-backdoor-tool"
+                "data-exfil-via-poison"
+              ])
+                "a-08-options: the generator's exp ledger does not record exactly the four A-8 poisoning-exploit rows (manifest order) (KA-23 GREEN)")
+              (require (!(lib.elem "poison-dataset-builder" a8Ledger.installable) && !(lib.elem "data-exfil-via-poison" a8Ledger.installable))
+                "a-08-options: an exp row still rides the a-08 installable ledger (KA-23 GREEN)")
+              (require (a8Ledger.excluded == [ ])
+                "a-08-options: the a-08 ledger records an excluded row — no data rows in this category (KA-23 GREEN)")
+              (require (builtins.length a8Ledger.installable == 2)
+                "a-08-options: the a-08 installable ledger is not the census's two rows (KA-23 GREEN)")
+              (require (a8PkgNames == [ ]
+                && (builtins.elem "trojai-toolkit" a8Ledger.installable)
+                && (builtins.elem "split-view-replay" a8Ledger.installable))
+                "a-08-options: the a-08 installable rows (trojai-toolkit, split-view-replay) must both remain derivation-pending drops at the current packages pin (KA-23)")
+            ];
+          in
+          pkgs.runCommand "a-08-options"
+            {
+              proofs = toString _evalProofs;
+            }
+            ''
+              echo "a-08 install set (pnames): ${toString a8PkgNames} (empty: both rows derivation-pending)"
+              echo "a-08 exp ledger (lab-mode-gated, never installed): ${toString a8Ledger.exp}"
+              echo "a-08-options: ${toString (lib.length _evalProofs)} eval proofs passed [${toString _evalProofs}]"
+              touch $out
+            '';
+    # ---- The §8.1 image-matrix eval legs (KA-28, ko#28) ----------------
         #
         # images-census: the eval-side census gate, REQUIRE/THROW at EVAL
         # time (the runCommand renders only after both assertions hold —
@@ -2487,7 +2794,9 @@ PY
       # :11434) — the acceptance VM's composition, pinned by the
       # o-05-platform-services leg through the SAME eval. NOT a product
       # profile: images for the surface are Wave-6 items (KA-28.0
-      # QEMU-primary); the acceptance run exercises THIS toplevel.
+      # QEMU-primary); the acceptance run exercises THIS toplevel, and
+      # the KA-23 mlflow-bypass integration probe pair rides the booted
+      # surface (tools/vm-integration-mlflow-attack.sh on the VM PATH).
       nixosConfigurations.kailash-platform = nixpkgs.lib.nixosSystem {
         inherit system pkgs;
         modules = [ ./profiles/platform.nix ];
@@ -2501,7 +2810,9 @@ PY
       # carried explicitly so the boot performs the pull), MLflow's
       # labReachable (the module's documented 0.0.0.0 lab bind). Pinned
       # at eval by the o-05-platform-acceptance leg. NOT a product
-      # profile.
+      # profile. KA-23: the fixture ALSO flips the a-07 pairing category
+      # (the §6.5 pair — the A-7 ledger rides the eval legs; the exp
+      # surface stays OFF PATH by construction, §11.2).
       nixosConfigurations.kailash-platform-acceptance = nixpkgs.lib.nixosSystem {
         inherit system pkgs;
         modules = [
@@ -2510,6 +2821,7 @@ PY
             services.ollama.host = "0.0.0.0";
             services.ollama.loadModels = [ "qwen2.5:0.5b" ];
             services.kailash.mlflow.labReachable = true;
+            kailash.layers.attack.categories.a-07.enable = true;
           }
         ];
       };
@@ -2607,6 +2919,56 @@ PY
           {
             networking.hostName = lib.mkForce "kailash-a-04-enabled";
             kailash.layers.attack.categories.a-04.enable = true;
+          }
+        ];
+      };
+
+      # §4.5 category-install fixtures (KA-23, kailash-os#23): the A-5 /
+      # A-6 / A-7 / A-8 hosts — the same not-a-product-profile pattern
+      # the kailash-a-03/04-enabled fixtures own. The a-07 host carries
+      # the category's ALL-EXP posture (nothing to install — the §11.2
+      # gate owns the surface); the a-05/a-06/a-08 sets are the
+      # derivation-pending drops at this pin (named in the modules).
+      nixosConfigurations.kailash-a-05-enabled = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          {
+            networking.hostName = lib.mkForce "kailash-a-05-enabled";
+            kailash.layers.attack.categories.a-05.enable = true;
+          }
+        ];
+      };
+
+      nixosConfigurations.kailash-a-06-enabled = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          {
+            networking.hostName = lib.mkForce "kailash-a-06-enabled";
+            kailash.layers.attack.categories.a-06.enable = true;
+          }
+        ];
+      };
+
+      nixosConfigurations.kailash-a-07-enabled = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          {
+            networking.hostName = lib.mkForce "kailash-a-07-enabled";
+            kailash.layers.attack.categories.a-07.enable = true;
+          }
+        ];
+      };
+
+      nixosConfigurations.kailash-a-08-enabled = nixpkgs.lib.nixosSystem {
+        inherit system pkgs;
+        modules = [
+          ./profiles/minimal.nix
+          {
+            networking.hostName = lib.mkForce "kailash-a-08-enabled";
+            kailash.layers.attack.categories.a-08.enable = true;
           }
         ];
       };
@@ -2713,6 +3075,14 @@ PY
           # of zero packages is the lie the shipped map refuses.
           d-03 = "defence";
           d-04 = "defence";
+          # ATTACK A-5 joins with KA-23 (os#23): the one long-tail
+          # category whose install set BINDS at this pin (art +
+          # counterfit via the overlay). a-01/a-02/a-04 predate this
+          # map's current shape; a-06/a-07/a-08 stay shell-less (a-06
+          # and a-08 install sets are derivation-pending at this pin;
+          # a-07 is exp-only by construction — a shell of exp-gated
+          # tools is exactly the zero-package lie the map refuses).
+          a-05 = "attack";
         };
 
       # devShells with KA-09 (landed: KA-09.4); images with the images wave
@@ -2755,6 +3125,15 @@ PY
           installSurface = builtins.mapAttrs
             (id: _: self.nixosConfigurations.kailash-full.config.kailash.layers.classic.categories.${id}.packages)
             { c-01 = null; c-02 = null; c-04 = null; c-06 = null; };
+        };
+        # The §8.2 integration test (KA-23, kailash-os#23): the platform
+        # profile boots and the mlflow-bypass probe pair executes THE
+        # PAIRING THESIS in-guest (the tracked artefact listing,
+        # asserted). Hosted CI evals this leg, never boots it (the
+        # no-VMs posture, the KA-06.3 precedent); Linux VM hosts run it
+        # per tests/README.md.
+        integration-mlflow-attack = import ./tests/integration-mlflow-attack.nix {
+          inherit lib pkgs system;
         };
       };
     };

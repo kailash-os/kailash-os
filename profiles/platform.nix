@@ -36,8 +36,15 @@
 # :11434/:5000, MLflow's systemd unit wired, and the webui sub-toggle
 # OFF here (an engines-only platform host — the open-webui↔ollama
 # pairing stays with redteam-ai, which carries ko#112).
+#
+# KA-23 (kailash-os#23): the mlflow-bypass integration joins this
+# profile — the §8.2 pairing-thesis acceptance (boot-wait + the two
+# mlflow-bypass probe pair: the unauth experiments/search + the unauth
+# artefact listing) rides TOOLS/vM-INTEGRATION (the same pending-vm
+# record discipline as its parent acceptance).
 {
   lib,
+  pkgs,
   ...
 }:
 
@@ -74,4 +81,46 @@
   # checks ollama + MLflow only; the webui pairing lives on
   # redteam-ai — ko#112's reachability item).
   kailash.layers.ops.categories.o-04.webui.enable = lib.mkDefault false;
+
+  # ---- the §8.2 mlflow-bypass acceptance harness (KA-23) ----------------
+  # On the VM's PATH for the in-guest canonical run: the probe pair
+  # rides the booted tracking surface (the same §11.2-postured,
+  # unauthenticated MLflow API this host exposes — the acceptance
+  # pairing, not a new service).
+  environment.systemPackages = [
+    (pkgs.callPackage (
+      {
+        stdenv,
+        lib,
+        makeWrapper,
+      }:
+      stdenv.mkDerivation {
+        pname = "vm-integration-mlflow-probe-pair";
+        version = "unstable-2026-10-13";
+        src = ../tools/vm-integration-mlflow-attack.sh;
+        nativeBuildInputs = [ makeWrapper ];
+        dontUnpack = true;
+        dontBuild = true;
+        installPhase = ''
+          mkdir -p $out/bin
+          cp $src $out/bin/kailash-integration-mlflow-attack
+          chmod +x $out/bin/kailash-integration-mlflow-attack
+          patchShebangs $out/bin/kailash-integration-mlflow-attack
+          wrapProgram $out/bin/kailash-integration-mlflow-attack \
+            --prefix PATH : ${
+              lib.makeBinPath [
+                pkgs.coreutils
+                pkgs.curl
+                pkgs.jq
+                pkgs.python3
+                pkgs.gnugrep
+                pkgs.gnused
+              ]
+            }
+        '';
+        meta.mainProgram = "kailash-integration-mlflow-attack";
+        meta.license = lib.licenses.mit;
+      }
+    ) { })
+  ];
 }
