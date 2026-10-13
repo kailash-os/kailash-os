@@ -57,6 +57,7 @@ let
   # + pyyaml for the manifest scope resolution.
   kaiGrant = pkgs.runCommand "kai-grant"
     {
+      pname = "kai-grant";
       nativeBuildInputs = with pkgs; [ makeBinaryWrapper ];
       passthru.grantsJson = grantsJson;
       meta.mainProgram = "kai-grant";

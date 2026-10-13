@@ -1634,10 +1634,9 @@ PY
                 "grants-mint: the deny-side defaults did not mint (allow_exp/allow_service_start/read_only_only)")
               (require (g.not_after == "2026-10-20T00:00:00Z" && g.not_before == "2026-10-13T00:00:00Z")
                 "grants-mint: the short-lived window did not mint verbatim")
-              (require (grantsHost.config.environment.systemPackages
-                ? kai-grant || (lib.any (p: (p.pname or "") == "kai-grant") grantsHost.config.environment.systemPackages))
+              (require (lib.any (p: (p.pname or (builtins.parseDrvName p.name).name) == "kai-grant") grantsHost.config.environment.systemPackages)
                 "grants-mint: kai-grant (the checker) missing from the posture-ON host's packages")
-              (require (lib.any (p: (p.name or "") == "grants.json" || (p.name or "") == "kailash/grants/grants.json")
+              (require (lib.any (p: (p.target or "") == "kailash/grants/grants.json")
                 (lib.attrValues grantsHost.config.environment.etc))
                 "grants-mint: the minted grants.json did not commit into the closure (/etc/kailash/grants/grants.json)")
               (require (let
@@ -1895,8 +1894,8 @@ PY
                 "a-03-options: the generator's exp ledger does not record exactly [mcp-unsafe-deser-probe, mcpoison] (KA-22 GREEN)")
               (require (!(lib.elem "mcp-unsafe-deser-probe" a3Ledger.installable) && !(lib.elem "mcpoison" a3Ledger.installable))
                 "a-03-options: an exp row still rides the a-03 installable ledger (KA-22 GREEN)")
-              (require (a3PkgNames == [ ])
-                "a-03-options: the a-03 module resolved a NON-empty install set at a pin with NO overlay derivations — a bare-guard binding is broken (a-03 rows must stay overlay-pending at ef70ec4, the KA-24 d-01 posture)")
+              (require (a3PkgNames == [ "mcp-scan" "mcp-guardian" "mcp-remote" "agentdojo" ])
+                "a-03-options: the a-03 install set drifted from the landed overlay set at a3cf74e (mcp-scan, mcp-guardian, mcp-remote, agentdojo — pk#55 merged; the KA-24 d-01 all-pending posture ended with the packaging merge)")
               (require (!(lib.elem "mcp-unsafe-deser-probe" a3PkgNames) && !(lib.elem "mcpoison" a3PkgNames))
                 "a-03-options: a safety:exp row reached the a-03 package list — the §11.2 gate owns that surface (KA-22)")
               (require (!(lib.elem "poisoned-skill-pack" (a3Ledger.installable ++ a3Ledger.exp)))
