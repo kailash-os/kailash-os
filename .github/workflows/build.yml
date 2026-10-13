@@ -25,8 +25,31 @@ name: build
 # secret shared by both repos; the flake's nixConfig carries the
 # substituter + key (the nixified-ai pattern, plan §8.3).
 
+# PATH SCOPING (kailash-os#194): the build matrix compiles the taxonomy into
+# package-derivation builds — a change that cannot touch a derivation input
+# (docs, the website mirror, repo meta) does not pay for 34 nix builds. The
+# ruleset's required checks (flake-check x86_64-linux + dependency-review,
+# .github/workflows/flake-check.yml) stay PATH-INDEPENDENT: they evaluate the
+# FULL option tree on every PR, so a manifest-affecting change that dodged
+# these paths would still RED at eval. The workflow re-arms itself (its own
+# path is in the list). Pushes to master ALWAYS run the matrix regardless of
+# path — the cache is fed from master whatever landed (ko#175/ko#108: the
+# build.yml push legs warm the kailash cachix for the next PR's cold pulls).
 on:
   pull_request:
+    paths:
+      - "flake.nix"
+      - "flake.lock"
+      - "modules/**"
+      - "packages/**"
+      - "profiles/**"
+      - "images/**"
+      - "menu/**"
+      - "cli/**"
+      - "tests/**"
+      - "generated/**"
+      - "tools/**"
+      - ".github/workflows/build.yml"
   push:
     branches: [master]
 
