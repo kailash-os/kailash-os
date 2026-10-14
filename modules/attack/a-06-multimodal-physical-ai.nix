@@ -25,8 +25,10 @@
 let
   cfg = config.kailash.layers.attack.categories.a-06;
 
-  ledger = (builtins.fromJSON (builtins.readFile ../../generated/manifest-ids.json))
-    .categories.a-06-multimodal-physical-ai;
+  # post-os#210 the ledger is OMITTED when the category empties —
+  # default the empty shape (absence IS the empty assertion)
+  ledger = ((builtins.fromJSON (builtins.readFile ../../generated/manifest-ids.json)).categories)
+    .a-06-multimodal-physical-ai or { installable = [ ]; excluded = [ ]; exp = [ ]; };
 
   # Bare guard (composition uniformity): post-purge the ledger's
   # installable is EMPTY — a non-empty list would mean a row reappeared
