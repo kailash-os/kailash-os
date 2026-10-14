@@ -10,8 +10,10 @@ Read the [Testing](#testing), [Pull requests](#pull-requests) and
 the codebase.
 
 The kailash specification (taxonomy, packaging shapes, phase gates and
-verification gates) renders on [kailash.site](https://kailash.site) and ships
-with this org's website repository. The roadmap board
+verification gates) is [`docs/spec.md`](https://github.com/kailash-os/kailash-os/blob/master/docs/spec.md) in this repository — the
+normative prose; the taxonomy's tool/category DATA lives in the
+[`kailash-packages` manifest](https://github.com/kailash-os/kailash-packages/tree/main/manifest).
+Its rendered site surfaces live on [kailash.site](https://kailash.site). The roadmap board
 ([org project 1](https://github.com/orgs/kailash-os/projects/1)) carries issue
 `KA-NN` items; [issue #61](https://github.com/kailash-os/kailash-os/issues/61)
 is the canon map — the dependency graph plus the sprint decomposition register
@@ -61,15 +63,19 @@ Other documents worth knowing:
 ## The layer model and the manifest (single home rule)
 
 The taxonomy lives in `kailash-packages/manifest/`: `categories.yaml` (the
-31-category census) and `tools.yaml` (the tool inventory). The layer model is
-the spec's §3.6 post-purge census — CLASSIC (~141 tool slots), ATTACK (~59),
-DEFENCE (~46), OPS (~91) — with the C-7 SDR pack recorded as
-`opt-in: data-pack`, never on default profiles or images.
+census categories — 31 shippable + 1 data-pack) and `tools.yaml` (the tool
+inventory). The layer model is [the spec's §2.6 post-purge
+census](https://github.com/kailash-os/kailash-os/blob/master/docs/spec.md#26-the-full-category-table-post-purge-census)
+— CLASSIC 141, ATTACK 58, DEFENCE 45, OPS 87 primary tool slots — with the
+C-7 SDR pack recorded as the data-pack census category, excluded from
+default profiles and images.
 
 **A fact has exactly one home.** Layer/category/tool facts are written in the
 manifest, never duplicated into modules, READMEs or site copy; generated
-artifacts regenerate from it. Deliberate exclusions (§3.7: no hardware/RF/wifi
-tools, no paid-licence tools, no unmaintained or cloud-only tools) are the
+artifacts regenerate from it. Deliberate exclusions ([spec
+§2.7](https://github.com/kailash-os/kailash-os/blob/master/docs/spec.md#27-deliberate-exclusions):
+no hardware/RF/wifi tools, no paid-licence tools, no unmaintained or
+cloud-only tools) are the
 "no-resurrection guard": do not reintroduce purged tooling, the manifest
 validator refuses it.
 
@@ -83,7 +89,7 @@ technique id.
 The repo follows the
 [hypothesis-first TDD standard](https://github.com/kailash-os/kailash-os/issues/51):
 **spec (from the issue's plan reference) → RED (watched, committed) → GREEN →
-PR**. The watched-RED discipline is what makes every GREEN commit honest: a
+PR** — the spec being [`docs/spec.md`](https://github.com/kailash-os/kailash-os/blob/master/docs/spec.md). The watched-RED discipline is what makes every GREEN commit honest: a
 failing test must exist, visibly, before the implementation lands. The
 engineering standard pairs it with
 [harness-before-capability ordering](https://github.com/kailash-os/kailash-os/issues/119):
