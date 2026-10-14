@@ -126,6 +126,40 @@ jobs:
       # --- + an SPDX SBOM, Sigstore-signed over the repo's OIDC --------
       # --- identity, recorded in the Rekor transparency log. Consumers -
       # --- verify: gh attestation verify <file> -R kailash-os/kailash-os
+      # KA-33.4 (kailash-os#206): artefacts ABOVE the 2 147 483 648-byte
+      # asset cap stage CHUNKED (split parts + parts sheet) so every
+      # matrix artefact can live on the release; under-cap artefacts keep
+      # the single-file artifact. The attested subject is the WHOLE
+      # artefact — the split is lossless packaging, the reassembled file
+      # re-verifies against the original records.
+      - name: Package the artefact (chunk when over the asset cap)
+        id: package
+        run: |
+          TAG="${{ inputs.tag || github.ref_name }}"
+          ART="${{ steps.locate.outputs.iso }}${{ steps.locate.outputs.qcow }}"
+          SIZE="$(stat -c%s "$ART")"
+          EXT="${ART##*.}"
+          NAME="kailash-${TAG}-${{ matrix.name }}.${EXT}"
+          cp "$ART" "$NAME"
+          if [ "$SIZE" -lt 2147483648 ]; then
+            echo "mode=single" >> "$GITHUB_OUTPUT"
+            echo "name=$NAME" >> "$GITHUB_OUTPUT"
+            (sha256sum "$NAME" 2>/dev/null || shasum -a 256 "$NAME") | tee "SHA256SUMS-${{ matrix.name }}"
+            echo "sums=$(pwd)/SHA256SUMS-${{ matrix.name }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=chunked" >> "$GITHUB_OUTPUT"
+            echo "name=$NAME" >> "$GITHUB_OUTPUT"
+            bash tools/split-release-artefact.sh split "$NAME" .
+            echo "sums=$(pwd)/SHA256SUMS-parts-$NAME" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Save the artefact as a workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: |
+            ${{ steps.package.outputs.name }}
+            ${{ steps.package.outputs.sums }}
+          retention-days: 30
       - name: Generate the SPDX SBOM for the image
         id: sbom
         run: |
@@ -148,40 +182,12 @@ jobs:
           sbom-path: ${{ steps.sbom.outputs.spom }}
       # Naming: every leg's basename collides on the release (all ISOs are
       # nixos-*.iso, every qcow2 nixos.qcow2) — the 422 on the hosted run.
-      # Stage under the unique name; the bits (and their digests) are
-      # unchanged, so the attestations above still cover the artefact.
-      # Per-leg checksum sheets are NAME-SUFFIXED (slice 3, ko#200): the
-      # release-side attach concatenates them into the canonical
-      # SHA256SUMS — a shared unsuffixed name invited clobber.
-      - name: Stage the artefact under its release name
-        id: stage
-        run: |
-          TAG="${{ inputs.tag || github.ref_name }}"
-          ART="${{ steps.locate.outputs.iso }}${{ steps.locate.outputs.qcow }}"
-          EXT="${ART##*.}"
-          DEST="kailash-${TAG}-${{ matrix.name }}.${EXT}"
-          cp "$ART" "$DEST"
-          (sha256sum "$DEST" 2>/dev/null || shasum -a 256 "$DEST") | tee "SHA256SUMS-${{ matrix.name }}"
-          echo "dest=$(pwd)/$DEST" >> "$GITHUB_OUTPUT"
-          echo "sums=$(pwd)/SHA256SUMS-${{ matrix.name }}" >> "$GITHUB_OUTPUT"
-      # Upload as a WORKFLOW ARTIFACT: the release-asset endpoint 404/422s
-      # the workflow_dispatch github.token against a release created by an
-      # outside token (the run's evidence: 404 on the ISO POST, 422 on the
-      # qcow POST — while the SAME file uploads fine with the user's PAT,
-      # probed with t.bin). The release attachment is the user-side step
-      # (gh release upload with the user PAT) — the attestation verifies
-      # per-artefact digest regardless of who uploads. The per-leg
-      # SHA256SUMS sheet rides the artifact so the release-side attach
-      # carries the checksum.
-      - name: Save the artefact as a workflow artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.name }}
-          path: |
-            ${{ steps.stage.outputs.dest }}
-            ${{ steps.stage.outputs.sums }}
-          retention-days: 30
+      # The Package step (above) stages under the unique release name —
+      # single-file or chunked — and emits the per-leg (per-part) sheets.
+      # The staged Artefact upload rides directly above; the release-side
+      # attach is the user-PAT step (the endpoint 404/422s the dispatch
+      # token — the t.bin probe evidence).
       - name: Attest the staged artefact name (the digest is the subject)
         uses: actions/attest-build-provenance@v3
         with:
-          subject-path: ${{ steps.stage.outputs.dest }}
+          subject-path: ${{ steps.package.outputs.name }}

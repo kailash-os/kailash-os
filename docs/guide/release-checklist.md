@@ -55,10 +55,15 @@ until it passes or the maintainer explicitly re-scopes it on the issue.
       target in `images/kailash-images-table.nix` has a build record at
       the tag — the `images-release-completeness` gate proves the
       declaration; the SHA256SUMS sheet proves the artefacts.
-- [ ] **SHA256SUMS covering every artefact.** ≤2 GiB artefacts attach as
-      release assets directly; over-cap artefacts are documented with
-      their digests + flake-pull refs (the 2 GiB cap is a hard endpoint
-      limit — never re-probed per release).
+- [ ] **SHA256SUMS covering every artefact.** The sheet's
+      whole-file lines are THE artefact-identity authority. ≤2 GiB
+      artefacts attach as release assets directly; over-cap artefacts go
+      up CHUNKED (split parts + per-part sheets via
+      `tools/split-release-artefact.sh` — lossless packaging; the
+      reassembled file re-verifies against the original attestation
+      records). Every artefact of the matrix lives on the release in one
+      of the two forms; the 2 GiB cap is a per-FILE endpoint limit, not
+      a completeness excuse.
 - [ ] **Attestations recorded + verified.** Every published artefact
       carries SLSA v1.0 provenance + SPDX SBOM from the pipeline;
       `gh attestation verify <file> -R kailash-os/kailash-os` PASS

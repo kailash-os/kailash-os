@@ -62,12 +62,15 @@ $ python3 tools/check-images-release-completeness.py \
 
 Release artefacts attach to the tagged GitHub release
 ([2026.01-alpha.1](https://github.com/kailash-os/kailash-os/releases/tag/2026.01-alpha.1)
-is the first). Two surfaces, per artefact:
+is the first). Three surfaces, per artefact:
 
-- **Release asset** (`kailash-<tag>-<ref>.iso|.qcow2`) — every artefact
-  GitHub accepts (below the 2 GiB legacy per-asset cap the
-  git-lfs-backed release store lifts). Over-cap artefacts sit in the
-  same workflow run (attested) and are fetched from the binary cache:
+- **Release asset** (`kailash-<tag>-<ref>.iso|.qcow2`) — artefacts under
+  the 2 147 483 648-byte legacy per-asset cap.
+- **Chunked release assets** — every artefact ABOVE the cap goes up
+  anyway: byte-exact split parts (`<…>.part-000`, each ≤1900 MiB) plus a
+  per-part sheet (`SHA256SUMS-parts-<name>`), all attached to the same
+  release. The split is lossless packaging: reassemble with `cat` and
+  the file is BIT-IDENTICAL to the attested subject.
 - **Flake pull** — any artefact, any tag, from the Cachix-held closure:
 
   ```console
@@ -76,9 +79,26 @@ is the first). Two surfaces, per artefact:
 
 The release notes' artefact table states each artefact's surface for
 that release. The checksum sheet `SHA256SUMS` on the release covers
-every artefact (attached or flake-pulled); the arm builder writes its
-own suffixed sheet `SHA256SUMS-aarch64-local` that concatenates into
-the release sheet at attach time.
+every artefact (attached or chunked or flake-pulled) at WHOLE-file
+digest level — THE authority on artefact identity; the per-part sheets
+(`SHA256SUMS-parts-<name>`) authenticate each chunk in transit and ride
+beside, never replacing it. The arm builder writes its own suffixed
+sheet `SHA256SUMS-aarch64-local` that concatenates into the release
+sheet at attach time.
+
+## Reassemble a chunked artefact
+
+```console
+$ sha256sum -c SHA256SUMS-parts-kailash-2026.01-alpha.1-kailash-qemu-full.qcow2
+$ cat kailash-2026.01-alpha.1-kailash-qemu-full.qcow2.part-* > kailash-2026.01-alpha.1-kailash-qemu-full.qcow2
+$ sha256sum -c SHA256SUMS                                   # the WHOLE-file line (the identity check)
+$ gh attestation verify kailash-2026.01-alpha.1-kailash-qemu-full.qcow2 -R kailash-os/kailash-os
+```
+
+(`tools/split-release-artefact.sh verify <artefact> <dir>` drives the
+whole chain; the attestation check passes against the ORIGINAL build's
+records — the attested subject is the whole file, and `cat` reproduces
+its exact bytes.)
 
 ## Verify before you run
 
