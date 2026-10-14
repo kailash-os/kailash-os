@@ -108,7 +108,7 @@ Offline only — online brute-forcing stays out (that's live-target attack terri
 ghidra, radare2, rizin, cutter, iaito, gdb + gef/pwndbg/peda, capstone, cstool, checksec, binwalk (**stays**: firmware-image analysis is appsec), jadx, apktool, dex2jar, javasnoop, jd-gui, smali, bytecode-viewer, unicorn, angr, qiling, unipacker, pyinstaller-extractor, edb-debugger. **No RF/wireless/hardware RE tooling.** **Profile: Very High.**
 
 ### C-7. Signal & SDR Analysis — the one carve-out (~6, opt-in)
-**Kept deliberately narrow, by design:** the SDR toolset that supports AI/ML signal research (GNURadio-driven DSP feeding ML training corpora; audio/signal-based ML work; the audio-voice-clone-injector research in A-6 needs software DSP, not RF hardware). Shipped: gnuradio, gqrx, hackrf-tools, sox, librosa, pysox-as-data — **opt-in via `kailash-data.sdr-tools` toggle, never on an ISO default profile.** Everything else RF (rfcat, spooftooph, ubertooth stack, chirp, fang, and friend) **does not ship**. Revisit only if a specific engagement proves otherwise.
+**Kept deliberately narrow, by design:** the SDR toolset that supports AI/ML signal research (GNURadio-driven DSP feeding ML training corpora; audio/signal-based ML work; when an A-6 voice-clone/audio-LM attack tool is rebuilt per its registry entry it will need software DSP, not RF hardware). Shipped: gnuradio, gqrx, hackrf-tools, sox, librosa, pysox-as-data — **opt-in via `kailash-data.sdr-tools` toggle, never on an ISO default profile.** Everything else RF (rfcat, spooftooph, ubertooth stack, chirp, fang, and friend) **does not ship**. Revisit only if a specific engagement proves otherwise.
 
 ### C-8. Exploitation & Post-Exploitation — software-only (~9)
 metasploit-framework (pinned; web/API module selection documented), msfvenom, beef-xss, weevely, laudanum, peass-ng (linpeas/winpeas), unix-privesc-check, pspy. **Nothing network-infrastructure: no impacket suite, no mimikatz/rubeus/bloodhound/sharphound/responder/netexec/smbmap/enum4linux/evil-winrm/kerberoast/krbrelayx/pypykatz/certipy/mitm6/pywsus/dsniff/fragrouter/sniffjoke/evilgrade/veil/shellter/backdoor-factory/armitage** — dropped wholesale vs Kali (the AD/lateral-movement arsenal is out by §1.2). **Profile: Medium.**
@@ -129,7 +129,7 @@ The AI-native offensive categories Kali doesn't map at all — mapped from MITRE
 The "which AI surfaces does this target expose?" step. trufflehog (leaked AI-provider keys; primary A-1, secondary C-8). The four bespoke recon rows (recon-ai, llm-recon, huggingface-org-scan, colab-crawler) were phantom-upstream and are removed — aspirational names in [the phantom-upstream registry (os#210)](https://github.com/kailash-os/kailash-os/issues/210). **Profile: Very Low.**
 
 ### A-2. LLM Prompt Injection & Jailbreaking (~8)
-garak (flagship), pyrit, promptfoo, plus the payload/data packs: jailbreak-payloads, libertas-prompts (L1B3RT-4S), llm-jailbreak-bench. The inj3ct-llm row was phantom-upstream (removed [the phantom-upstream registry (os#210)](https://github.com/kailash-os/kailash-os/issues/210)); llm-red-team-col's pack rides this category's registry record until built. **Profile: Low-Medium.**
+garak (flagship), pyrit, promptfoo, plus the payload/data packs: jailbreak-payloads, libertas-prompts (L1B3RT-4S), llm-jailbreak-bench. The inj3ct-llm row was phantom-upstream (removed [the phantom-upstream registry (os#210)](https://github.com/kailash-os/kailash-os/issues/210)); the pre-purge llm-red-team-col data row was phantom-upstream too and is removed — aspirational names in the registry. **Profile: Low-Medium.**
 
 ### A-3. Agentic, MCP & Tool-Use Attacks (~9)
 mcp-scan, mcp-guardian, mcp-remote/proxy, mcpoison, agent-dojo — mcp-inspector rides as O-7-primary with A-3 secondary. The phantom rows (mcp-unsafe-deser-probe, langchain-vuln-hunter, llm-agent-fuzzer, poisoned-skill-pack) are removed; aspirational names in [the phantom-upstream registry (os#210)](https://github.com/kailash-os/kailash-os/issues/210). **Profile: Very Low — the most novel packaging surface in the spec.**
@@ -192,8 +192,8 @@ langchain, langgraph, llama-index, openai-python, anthropic-python, google-genai
 ### O-6. Documentation, Reporting & Authoring (~10)
 quarto, pandoc, typst, mdbook, drawio, excalidraw, mermaid-cli, obsidian, texlive-full (opt-in data), dradis (pwndoc-ng/faraday primary in C-9, secondary here). **Profile: High.**
 
-### O-7. Agent & MCP Operability (~8)
-hexstrike-ai (third-party deliverable, exp), mcp-kali-server (deliverable, exp), malicious-mcp-poc + insecure-mcp-lab (lab packs), kailash-mcp (first-party, generated from manifest), kailash-container, headless-agent image, mcp-inspector (dogfood duty). **Profile: mixed** — two Flask-derivable third-party deliverables plus first-party work: grants + schema stability. The grant system: short-lived human-minted capability grants scoping enable-able categories, service start, and exp execution; unsupervised agents list/search/read only; grant-scoped actions logged; the CI dogfood loop runs the A-3 scanner suite against the distro's own kailash-mcp.
+### O-7. Agent & MCP Operability (~4)
+hexstrike-ai (third-party deliverable, exp), mcp-kali-server (deliverable, exp), kailash-mcp (first-party, generated from manifest), mcp-inspector (dogfood duty). The pre-purge O-7 rows (malicious-mcp-poc, insecure-mcp-lab, kailash-container, headless-agent) were phantom-upstream and are removed — aspirational names in [the phantom-upstream registry (os#210)](https://github.com/kailash-os/kailash-os/issues/210); the `headless-agent` IMAGE profile is a separate real deliverable (KA-28/KA-43, unrelated to the removed manifest row). **Profile: mixed** — two Flask-derivable third-party deliverables plus first-party work: grants + schema stability. The grant system: short-lived human-minted capability grants scoping enable-able categories, service start, and exp execution; unsupervised agents list/search/read only; grant-scoped actions logged; the CI dogfood loop runs the A-3 scanner suite against the distro's own kailash-mcp.
 
 ## 2.6 The full category table (post-purge census)
 
@@ -813,7 +813,7 @@ Legend: **status** = native (nixpkgs, lockfile pin) / stale (native + override) 
 | A-2 | pyrit | bespoke (pip) | MIT | target | AML.T0051; LLM01 |
 | A-2 | promptfoo | bespoke | MIT | target | LLM01 |
 | A-2 | — (inj3ct-llm was phantom-upstream; removed, name rides the os#210 registry) | — | — | — | LLM01 |
-| A-2 | llm-red-team-col, jailbreak-payloads, libertas-prompts, llm-jailbreak-bench | data | varies | n/a | LLM01 |
+| A-2 | jailbreak-payloads, libertas-prompts, llm-jailbreak-bench | data | varies | n/a (llm-red-team-col removed: phantom-upstream, os#210) | LLM01 |
 | A-3 | mcp-inspector (primary O-7, A-3 secondary/dogfood) | native/overlay | Apache-2.0 | free | AML agentic set |
 | A-3 | mcp-scan | bespoke | new | free | AML.T0051 |
 | A-3 | mcp-guardian, mcp-remote/proxy | bespoke | new | free | AML agentic |
@@ -874,8 +874,8 @@ Legend: **status** = native (nixpkgs, lockfile pin) / stale (native + override) 
 | O-6 | texlive-full | data/opt-in | GPL-class | free |
 | O-6 | dradis (module; pwndoc-ng + faraday primary C-9) | module | GPL etc | free |
 | O-7 | hexstrike-ai, mcp-kali-server | bespoke (deliverable) | Apache-2.0 etc | exp (grant-gated) |
-| O-7 | malicious-mcp-poc, insecure-mcp-lab | bespoke/data | varies | exp |
-| O-7 | kailash-mcp, kailash-container, headless-agent(own), mcp-inspector(dogfood) | first-party | MIT | exp/mixed |
+| O-7 | — (malicious-mcp-poc + insecure-mcp-lab were phantom-upstream; removed, name rides the os#210 registry) | — | — | — |
+| O-7 | kailash-mcp, mcp-inspector(dogfood) | first-party | MIT | exp/mixed (kailash-container + headless-agent removed: phantom-upstream, os#210) |
 
 **Post-purge total: 270 primary slots** — bespoke-declared rows name their overlay derivations, the rest native/pinned (corrected census at §2.6; the os#210 phantom purge re-based it).
 

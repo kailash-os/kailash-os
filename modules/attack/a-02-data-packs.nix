@@ -14,8 +14,11 @@
 # typed a-02 surface; the category module's install leg ships them with
 # the category.
 #
-# The four a-02 manifest DATA rows and their honest state at this
-# revision (manifest/tools.yaml at the packages pin, KA-05.3 census):
+# The three a-02 manifest DATA rows post-purge (os#210, 2026-10-14) and
+# their honest state at this revision (manifest/tools.yaml at the packages
+# pin; the pre-purge fourth data row llm-red-team-col was a
+# phantom-upstream row — its claimed kailash-os repo never existed —
+# REMOVED per the os#210 decision, registry: kailash-os#210):
 #   * jailbreak-payloads  → packaged (packages overlay; sha256-pinned
 #     fetchFromGitHub of elder-plinius/L1B3RT4S@64960b78 — repo AGPL-3.0,
 #     per-file corpus licences NOT established: opt-in data pack, never
@@ -26,13 +29,16 @@
 #   * llm-jailbreak-bench → packaged (JailbreakBench/jailbreakbench at
 #     tag v1.0.0, repo MIT; the live behavior corpus rides HuggingFace
 #     at harness runtime — the pack is harness + metadata, recorded);
-#   * llm-red-team-col    → NOT packaged: the row's upstream
-#     (github.com/kailash-os/llm-red-team-col) does not exist (404,
-#     verified 2026-10-12 via the GitHub API) — no pinned fetch exists
-#     to package, so the honest scope here leaves the manifest row
-#     intact and ships no derivation for it. It joins this surface the
-#     moment a real upstream lands; this module's pack list and the
-#     flake's check leg read the same landed set.
+#   * llm-red-team-col    → NOT packaged AND NO LONGER A MANIFEST ROW:
+#     the row was REMOVED by the os#210 phantom purge (2026-10-14) — its
+#     claimed upstream (github.com/kailash-os/llm-red-team-col) never
+#     existed; the earlier "manifest row stays intact" posture (the
+#     kailash-os#104 keep-rows precedent) is superseded by the os#210
+#     decision-record. Aspirational names wait in the registry
+#     (kailash-os#210): a re-derivation may appear only together with a
+#     real verified upstream + a fresh manifest row (the flake's
+#     a-02-data-packs-pins leg carries the standing no-resurrection
+#     guard); this module's pack list reads the same landed set.
 #
 # Opt-in by default (packs default FALSE per kailash-os#104 + the
 # manifest banner's data-pack rule): the packs never ride a default
