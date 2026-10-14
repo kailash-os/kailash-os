@@ -29,6 +29,7 @@ enforcement unit over synthetic breach + clean cases (the watched-RED
 shape, mirroring tools/kailash-images-budget.py's self-test).
 """
 import argparse
+import json
 import re
 import sys
 
@@ -55,22 +56,28 @@ def parse_table(path):
 
 
 def parse_workflow(path):
-    """Return the set of target refs the matrix DECLARES (via each leg's attr:)."""
-    lines = open(path, encoding="utf-8").read().splitlines()
-    include_idx = next(i for i, l in enumerate(lines) if l.strip() == "include:")
-    base_indent = len(lines[include_idx]) - len(lines[include_idx].lstrip())
+    """Return the set of target refs the workflow DECLARES.
+
+    The declaration lives in TWO places that must agree, both parsed here:
+    the resolve job's heredoc JSON block (the runtime matrix source —
+    {"name": ..., "attr": "packages.x86_64-linux.<ref>"} rows) and, for
+    belt-and-braces, any static YAML `- attr:` rows if they ever return.
+    """
+    text = open(path, encoding="utf-8").read()
     refs = set()
-    for line in lines[include_idx + 1:]:
-        if not line.strip():
-            continue
-        indent = len(line) - len(line.lstrip())
-        if indent <= base_indent:
-            break
-        m = re.match(r"\s+attr: packages\.[a-z0-9_-]+\.(kailash-images-[a-z0-9-]+)", line)
-        if m:
+    # The resolve job's heredoc: <<'JSON' ... JSON
+    for block in re.findall(r"<<'JSON'\n(.*?)\n\s*JSON\n", text, re.S):
+        doc = json.loads(block)
+        for leg in doc.get("include", []):
+            m = re.match(r"packages\.[a-z0-9_-]+\.(kailash-images-[a-z0-9-]+)", leg.get("attr", ""))
+            if not m:
+                raise SystemExit(f"{path}: heredoc leg without a kailash-images attr: {leg}")
             refs.add(m.group(1))
+    # A static YAML matrix (if the file ever carries one again)
+    for m in re.finditer(r"attr: packages\.[a-z0-9_-]+\.(kailash-images-[a-z0-9-]+)", text):
+        refs.add(m.group(1))
     if not refs:
-        raise SystemExit(f"{path}: no kailash-images matrix attrs found — parser drift")
+        raise SystemExit(f"{path}: no declared kailash-images legs — parser drift")
     return refs
 
 
