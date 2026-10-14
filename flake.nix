@@ -2225,7 +2225,7 @@ PY
             }
             ''
               echo "a-04 install set (pnames, all three bind): ${toString a4PkgNames}"
-              echo "a-04 exp ledger (lab-mode-gated, never installed): ${toString a4Ledger.exp}"
+              echo "a-04 exp ledger (lab-mode-gated, never installed): ${toString (a4Ledger.exp or [ ])} (empty post-os#210 — the generator omits the key when empty)"
               echo "a-04-options: ${toString (lib.length _evalProofs)} eval proofs passed [${toString _evalProofs}]"
               touch $out
             '';
@@ -2323,7 +2323,7 @@ PY
               # nixosConfiguration) with ZERO a-07-named packages on PATH.
               (require (a7PkgNames == [ ])
                 "a-07-options: the a-07 install set is NOT empty — the category is empty post-os#210; a resolved row means something reappeared without the rebuild contract")
-              (require (!(lib.elem "mlflow-bypass" (a7PkgNames ++ a7Ledger.installable ++ a7Ledger.exp)))
+              (require (!(lib.elem "mlflow-bypass" (a7PkgNames ++ a7Ledger.installable ++ (a7Ledger.exp or [ ]))))
                 "a-07-options: the phantom row mlflow-bypass reappeared in any a-07 ledger surface — rows cannot re-enter without a verified upstream (os#210)")
               (require (let
                 hostNames = map (p: p.pname or (builtins.parseDrvName p.name).name)
@@ -2363,7 +2363,7 @@ PY
                 "a-08-options: the a-08 installable ledger is not exactly [trojai-toolkit] (os#210 purge: split-view-replay was a phantom row, removed)")
               (require (a8PkgNames == [ ])
                 "a-08-options: the a-08 install set is NOT empty — trojai-toolkit's derivation stays overlay-pending at this pin (KA-23)")
-              (require (!(lib.elem "split-view-replay" (a8PkgNames ++ a8Ledger.installable ++ a8Ledger.exp)))
+              (require (!(lib.elem "split-view-replay" (a8PkgNames ++ a8Ledger.installable ++ (a8Ledger.exp or [ ]))))
                 "a-08-options: the phantom row split-view-replay reappeared in any a-08 ledger surface — rows cannot re-enter without a verified upstream (os#210)")
             ];
           in
@@ -2373,7 +2373,7 @@ PY
             }
             ''
               echo "a-08 install set (pnames): ${toString a8PkgNames} (empty: trojai-toolkit derivation-pending)"
-              echo "a-08 exp ledger (lab-mode-gated, never installed): ${toString a8Ledger.exp}"
+              echo "a-08 exp ledger (lab-mode-gated, never installed): ${toString (a8Ledger.exp or [ ])} (empty post-os#210 — the generator omits the key when empty)"
               echo "a-08-options: ${toString (lib.length _evalProofs)} eval proofs passed [${toString _evalProofs}]"
               touch $out
             '';
