@@ -1,5 +1,5 @@
 # Layer DEFENCE — D-1 AI Runtime Defence & Guardrails (KA-24, os#24;
-# plan §4.5, §9 Phase 6). The §4.5 category module — config-only mount
+# spec §3.5, §9 Phase 6). The §4.5 category module — config-only mount
 # on the typed spine (modules/base/layer-tree.nix declares enable +
 # packages at kailash.layers.defence.categories.d-01), the KA-13.1
 # exemplar shape (modules/attack/a-01-ai-recon.nix).

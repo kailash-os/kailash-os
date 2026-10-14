@@ -1,4 +1,4 @@
-# VM smoke harness helpers (KA-06.3, ko#98; plan §9 Phase 2).
+# VM smoke harness helpers (KA-06.3, ko#98; spec §8 Phase 2).
 #
 # Shared machinery for tests/c-01.nix, tests/c-04.nix, tests/c-02.nix,
 # tests/c-06.nix and tests/full-profile-boot.nix — the booted-VM

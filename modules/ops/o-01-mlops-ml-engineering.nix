@@ -1,4 +1,4 @@
-# Layer OPS — O-1 MLOps & ML Engineering Suite (KA-08.1, ko#105; plan §3.5,
+# Layer OPS — O-1 MLOps & ML Engineering Suite (KA-08.1, ko#105; spec §2.5,
 # §9 Phase 3). The §4.5 category module, config-only on the §3.6 typed
 # spine (modules/base/layer-tree.nix — the per-id option-decl tree; the
 # same mount the exemplar modules/classic/c-01-information-gathering.nix

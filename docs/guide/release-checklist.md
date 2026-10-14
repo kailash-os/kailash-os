@@ -110,7 +110,7 @@ a reason, checked is recorded:
 ## The rc stage — what makes it different from alpha
 
 `-alpha.N` cuts iterate freely (build records optional per leg, the
-reduced §8.9 artefact set may ship with explicit gaps, attestations
+reduced [§7.9 artefact set](https://github.com/kailash-os/kailash-os/blob/master/docs/spec.md#79-what-a-full-release-looks-like-the-artefact-manifest) may ship with explicit gaps, attestations
 punctual). `-rc.N` commits to GA readiness:
 
 - The FULL checklist above is filled — no box left unticked, no box

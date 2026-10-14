@@ -1,7 +1,7 @@
 # The §8.1 image generator (KA-28, kailash-os#28): one source profile eval,
 # two formats (the ratified [kailash-os#132](https://github.com/kailash-os/kailash-os/issues/132)
 # decision — QEMU image PRIMARY, bootable ISO secondary), nixos-generators
-# as the plan §8.1 names (the input rides flake.nix and this module binds
+# as the spec §7.1 names (the input rides flake.nix and this module binds
 # it at the call site, so hosted eval never re-resolves).
 #
 # Per target: the EXACT nixos-generators composition (format module + the

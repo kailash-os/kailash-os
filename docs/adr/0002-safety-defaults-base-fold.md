@@ -4,7 +4,7 @@ Status: accepted
 
 ## Context
 
-KA-18.1/Ka-18.2 (os#92, os#93; plan §11.2) make the safety doctrine
+KA-18.1/KA-18.2 (os#92, os#93; [spec §9.2](https://github.com/kailash-os/kailash-os/blob/master/docs/spec.md#92-safety-defaults-module-basesafety-defaultsnix)) make the safety doctrine
 executable: the double-key lab gate for `safety:exp` tooling, a standing
 no-auto-start audit, and sops-nix secrets hygiene. These are distribution
 posture, not per-package behaviour, and they must hold on every profile the

@@ -1,4 +1,4 @@
-# Layer CLASSIC — C-3 Web Application Assessment (KA-07.1, ko#99; plan §4.5).
+# Layer CLASSIC — C-3 Web Application Assessment (KA-07.1, ko#99; spec §3.5).
 #
 # The tenth §4.5 category module — the exemplar's shape (c-01, KA-06.1;
 # c-06's namedDrops extension) on the tenth manifest category: the typed

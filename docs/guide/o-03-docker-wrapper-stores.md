@@ -1,6 +1,6 @@
 # O-3 docker-wrapper stores — wrapper posture (KA-09.2, ko#111)
 
-The kailash specification (§5.4, Shape 3) defines the **docker-wrapper**
+The kailash specification ([§4.3, Shape 3](https://github.com/kailash-os/kailash-os/blob/master/docs/spec.md#43-bespoke-derivations-the-patterns)) defines the **docker-wrapper**
 packaging shape: a service that ships as an honest wrapper module around
 a container image, never as a pretence of a native derivation. This
 document records the posture of every O-3 store that rides the wrapper
@@ -35,7 +35,7 @@ shape, per the module's `backends` option
    (`modules/ops/o-03-vector-stores-retrieval.nix`); the pull happens at
    service start, never at eval.
 
-2. **Operator-started (no-auto-start posture, §11.2).** Every wrapper
+2. **Operator-started (no-auto-start posture, [spec §9.2](https://github.com/kailash-os/kailash-os/blob/master/docs/spec.md#92-safety-defaults-module-basesafety-defaultsnix)).** Every wrapper
    container declares `autoStart = false`: the store container is
    present and configured in the closure, and the operator starts it
    explicitly (`systemctl start kailash-o-03-<store>`). A heavy vector

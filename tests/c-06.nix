@@ -1,4 +1,4 @@
-# VM smoke test — C-6 Reverse Engineering (KA-06.3, ko#98; plan §9 Phase 2).
+# VM smoke test — C-6 Reverse Engineering (KA-06.3, ko#98; spec §8 Phase 2).
 #
 # The booted-VM acceptance leg for the c-06 category module
 # (modules/classic/c-06-reverse-engineering.nix): kailash-full boots,

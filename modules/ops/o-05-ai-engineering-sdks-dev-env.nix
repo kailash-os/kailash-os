@@ -1,5 +1,5 @@
 # Layer OPS — O-5 AI Engineering SDKs & Dev Environment (KA-08.3, os#107;
-# plan §3.5, §9 Phase 3). The §4.5 category module, config-only on the
+# spec §2.5, §9 Phase 3). The §4.5 category module, config-only on the
 # §3.6 typed spine (modules/base/layer-tree.nix — the per-id option-decl
 # tree; the same mount every Wave-5/6 category module copies). The spine
 # owns enable + packages at kailash.layers.ops.categories.o-05 (the SHORT

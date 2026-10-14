@@ -1,5 +1,5 @@
 # VM integration test — mlflow-bypass against the O-1 lab surface
-# (KA-23, kailash-os#23; plan §8.2 — the pairing thesis executed).
+# (KA-23, kailash-os#23; spec §7.2 — the pairing thesis executed).
 #
 # The booted-VM acceptance leg: the PLATFORM profile boots
 # (services.kailash.mlflow on :5000 — the unauth lab surface, §11.2

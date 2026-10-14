@@ -5,7 +5,7 @@ Status: accepted
 ## Context
 
 The distribution's release surfaces stated a semver-flavoured scheme,
-`vMAJOR.YYYYMM.<patch>` (plan §8.6, then recorded in the cadence guide
+`vMAJOR.YYYYMM.<patch>` (the plan's release-chapter, now consolidated as [spec §7.6](https://github.com/kailash-os/kailash-os/blob/master/docs/spec.md#76-release-versioning-cadence-how-a-release-version-is-created); recorded in the releases guide
 and the README `versionScheme` line), while the project intends
 calendar-flavoured releases — the scheme exists to answer "how fresh is
 this system" and to make two machines with the same version agree on
@@ -60,7 +60,7 @@ groups by train. The user-facing policy document is
 (git mv, history preserved) and extended to cover update cadence,
 version scheme and the naming ladder as one document, rendered on the
 site's Build section and cited by the README `versionScheme` pointer.
-The plan revision (§8.6 supersession) remains the canonical scheme
+The scheme of record is [spec §7.6](https://github.com/kailash-os/kailash-os/blob/master/docs/spec.md#76-release-versioning-cadence-how-a-release-version-is-created) (the plan revision's supersession record)
 record; the guide document is its user-facing rendering.
 
 ## Consequences
@@ -78,5 +78,5 @@ record; the guide document is its user-facing rendering.
   other repos' surfaces (kailash-packages, kailash-website) are swept
   there, not here.
 - Deferred: the plan-master revision (§8.6 supersession) is a separate
-  artefact on the parent lane, not this repository; until it renders,
-  the issue comments cited above are the decision record.
+  artefact on the parent lane, not this repository; the scheme of record
+  now renders as [spec §7.6](https://github.com/kailash-os/kailash-os/blob/master/docs/spec.md#76-release-versioning-cadence-how-a-release-version-is-created).

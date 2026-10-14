@@ -4,7 +4,7 @@
 Usage: kai-grant check <holder> <action> [<tool-id>]
        action ∈ {read, exec, service-start}
 
-Posture (plan §11.2 KA-25 v1):
+Posture (spec §9.2 KA-25 v1):
   * read            — the unsupervised-agent floor; always allowed for
                       EXISTING holders (a grants file with no such
                       holder denies even reads — the holder IS the grant);

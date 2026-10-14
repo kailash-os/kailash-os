@@ -1,11 +1,11 @@
-# Secrets hygiene (KA-18.2, os#93; plan §11.2) — the sops-nix skeleton.
+# Secrets hygiene (KA-18.2, os#93; spec §9.2) — the sops-nix skeleton.
 #
 # Declarative secret management via sops-nix (the flake input is already
 # pinned): `kailash.secrets.sopsFile` wires a host's encrypted secret file;
 # the module defaults to the config-class and keeps the store clean of
 # secrets. Model API keys are read at RUNTIME from ~/.config/kailash/keys/
 # by the consuming tools — never materialised into the store (store paths
-# are world-readable; plan §11.2).
+# are world-readable; spec §9.2).
 #
 # Class posture (documented defaults, never defaulted weakness):
 #   * service module defaults stay mkEnableOption-off — the D-layer service
@@ -41,7 +41,7 @@
     # the lightest carrier; full rendering lands with the desktop wave).
     {
       environment.etc."kailash/secrets-policy".text = ''
-        kailash secrets hygiene (plan §11.2):
+        kailash secrets hygiene (spec §9.2):
         - declarative secrets: sops-nix (kailash.secrets.sopsFile)
         - model API keys: read at runtime from ${config.kailash.secrets.runtimeKeyDir}
         - nothing secret lives in the Nix store (paths are world-readable)

@@ -1,4 +1,4 @@
-# VM smoke test — C-4 Database Assessment (KA-06.3, ko#98; plan §9 Phase 2).
+# VM smoke test — C-4 Database Assessment (KA-06.3, ko#98; spec §8 Phase 2).
 #
 # The booted-VM acceptance leg for the c-04 category module
 # (modules/classic/c-04-database-assessment.nix): kailash-full boots,

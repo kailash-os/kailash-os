@@ -1,4 +1,4 @@
-# Layer CLASSIC — C-4 Database Assessment (KA-06.2, ko#97; plan §4.5).
+# Layer CLASSIC — C-4 Database Assessment (KA-06.2, ko#97; spec §3.5).
 #
 # The second-four category module off the KA-06.1 exemplar: same shape —
 # the typed spine (modules/base/layer-tree.nix) owns enable/packages on

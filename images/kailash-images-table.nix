@@ -6,7 +6,7 @@
 # one QEMU qcow2 target + one ISO target, EMITTED FROM THE SAME PROFILE EVAL
 # (one source, two formats — the decision's proposal-item-2 language).
 #
-# The budgets here are the plan §8.1 numbers, translated verbatim onto the
+# The budgets here are the spec §7.1 numbers, translated verbatim onto the
 # two shipped formats for the profiles that exist today:
 #
 #   * qemu-minimal    — the §8.1 `iso-standard` scope (the CORE substrate +

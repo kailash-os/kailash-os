@@ -1,5 +1,5 @@
 # services.kailash.gvm — the GVM/OpenVAS vulnerability-management service
-# module (KA-27, ko#27; plan §3.2 C-2).
+# module (KA-27, ko#27; spec §2.2 C-2).
 #
 # The module-status manifest row's deliverable (ko#97's explicit deferral):
 # the Greenbone/GVM vulnerability manager ships as THIS service module, not

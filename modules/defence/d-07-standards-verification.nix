@@ -1,5 +1,5 @@
 # Layer DEFENCE — D-7 Standards Verification Toolkit (KA-24, os#24;
-# plan §4.5, §9 Phase 6 — the ASVS 5.0 / AISVS 1.0 / MLSVS / LLM Top 10
+# spec §3.5, §9 Phase 6 — the ASVS 5.0 / AISVS 1.0 / MLSVS / LLM Top 10
 # both-epochs evidence tooling feeding the kailash verifier). The §4.5
 # category module — config-only mount on the typed spine (enable +
 # packages at kailash.layers.defence.categories.d-07), the KA-13.1

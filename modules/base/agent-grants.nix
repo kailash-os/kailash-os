@@ -1,4 +1,4 @@
-# Agent capability grants v1 (KA-25, os#25; plan §3.5 O-7, §11.2 — the
+# Agent capability grants v1 (KA-25, os#25; spec §2.5 O-7, §11.2 — the
 # "Agent capability grants" bullet). The §11.2 posture, as an option
 # tree + a minted state file + a checker script:
 #
@@ -177,7 +177,7 @@ in
       # unlimited window; read-only holders may omit it).
       assertions = lib.mapAttrsToList (name: g: {
         assertion = (g.readOnlyOnly && !g.allowServiceStart) || g.notAfter != null;
-        message = "kailash.agentGrants.holders.${name}: the holder grants non-read scope but carries no notAfter — capability grants v1 are short-lived (plan §11.2); mint an expiry window.";
+        message = "kailash.agentGrants.holders.${name}: the holder grants non-read scope but carries no notAfter — capability grants v1 are short-lived (spec §9.2); mint an expiry window.";
       }) cfg.holders;
 
       kailash.agentGrants.grantsReport = grantsJson;

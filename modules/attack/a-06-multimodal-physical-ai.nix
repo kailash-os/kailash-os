@@ -1,5 +1,5 @@
 # Layer ATTACK — A-6 Multi-modal & Physical-AI Attacks (KA-23,
-# kailash-os#23; plan §4.5, §9 Phase 5). The §4.5 category module — the
+# kailash-os#23; spec §3.5, §9 Phase 5). The §4.5 category module — the
 # same config-only mount as the a-03/a-04 exemplars: spine-owned typed
 # surface (enable + packages live on
 # kailash.layers.attack.categories.a-06, declared by

@@ -1,4 +1,4 @@
-# The hardened minimal profile (KA-17.2, os#115; plan §9 Phase-5 image
+# The hardened minimal profile (KA-17.2, os#115; spec §8 Phase-5 image
 # posture, §11.2 safety posture).
 #
 # Composition: the CORE substrate floor (profiles/minimal.nix — the

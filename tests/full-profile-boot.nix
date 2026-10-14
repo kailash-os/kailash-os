@@ -1,4 +1,4 @@
-# VM smoke test — full-profile boot (KA-06.3, ko#98; plan §9 Phase 2).
+# VM smoke test — full-profile boot (KA-06.3, ko#98; spec §8 Phase 2).
 #
 # The kailash-full PROFILE's booted acceptance leg: the CORE floor +
 # the four shipped CLASSIC categories in one boot; the per-category

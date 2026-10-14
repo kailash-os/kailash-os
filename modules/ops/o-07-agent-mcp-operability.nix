@@ -1,4 +1,4 @@
-# Layer OPS — O-7 Agent & MCP Operability (KA-25, os#25; plan §3.5,
+# Layer OPS — O-7 Agent & MCP Operability (KA-25, os#25; spec §2.5,
 # §9 Phase 3, §11.2). The §4.5 category module — config-only mount on
 # the typed spine (modules/base/layer-tree.nix declares enable +
 # packages at kailash.layers.ops.categories.o-07), the D-layer shape

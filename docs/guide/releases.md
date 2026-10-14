@@ -112,7 +112,7 @@ the year's GA is `2027.01`.
 | Material re-cut of a shipped GA | `2026.01.1` | only if a shipped GA artefact actually changes | `2026.01.1` |
 
 **The two pre-GA stages differ by commitment, not by form.** `alpha.N`
-cuts iterate freely — the reduced §8.9 artefact set may ship with
+cuts iterate freely — the reduced [§7.9 artefact set](https://github.com/kailash-os/kailash-os/blob/master/docs/spec.md#79-what-a-full-release-looks-like-the-artefact-manifest) may ship with
 explicitly-documented gaps, and attestation/build coverage is punctual.
 `rc.1` is the **GA-readiness gate**: the standing release checklist
 ([`release-checklist.md`](release-checklist.md), tracked per cut from
