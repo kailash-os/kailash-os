@@ -1904,8 +1904,10 @@ PY
         integration-mlflow-attack-wiring =
           let
             accHost = self.nixosConfigurations.kailash-platform-acceptance;
-            a7Ledger = (builtins.fromJSON (builtins.readFile ./generated/manifest-ids.json))
-              .categories.a-07-ai-system-exploitation;
+            # post-os#210 the a-07 ledger is ABSENT (the generator omits
+            # empty categories) — absence IS the empty assertion
+            a7All = (builtins.fromJSON (builtins.readFile ./generated/manifest-ids.json)).categories;
+            a7Ledger = a7All.a-07-ai-system-exploitation or { installable = [ ]; excluded = [ ]; exp = [ ]; };
             require = cond: msg: if cond then true else throw msg;
             accA7 = map (p: p.pname or (builtins.parseDrvName p.name).name)
               accHost.config.kailash.layers.attack.categories.a-07.packages;
@@ -2207,7 +2209,7 @@ PY
               .categories.a-04-model-supply-chain;
             require = cond: msg: if cond then true else throw msg;
             _evalProofs = [
-              (require (a4Ledger.exp == [ ])
+              (require ((a4Ledger.exp or [ ]) == [ ])
                 "a-04-options: the generator's exp ledger is non-empty post-os#210 — torch-load-poc was a phantom row (removed; kailash-os#210)")
               (require (builtins.length a4Ledger.installable == 3)
                 "a-04-options: the a-04 installable ledger is not the three real rows (modelscan, guarddog, picklescan — os#210 purge basis)")
@@ -2249,7 +2251,7 @@ PY
                 "a-05-options: the landed overlay derivations (art, counterfit) did not bind into the a-05 install set (KA-23 GREEN)")
               (require (!(lib.elem "foolbox" a5PkgNames) && !(lib.elem "cleverhans" a5PkgNames))
                 "a-05-options: a derivation-pending row (foolbox/cleverhans) unexpectedly resolved — revisit the a-05 binding-table record (KA-23)")
-              (require (!(lib.elem "model-extraction-attack" (a5Ledger.installable ++ a5Ledger.exp ++ a5Ledger.excluded)))
+              (require (!(lib.elem "model-extraction-attack" (a5Ledger.installable ++ (a5Ledger.exp or [ ]) ++ a5Ledger.excluded)))
                 "a-05-options: the phantom row model-extraction-attack reappeared in the a-05 ledger — rows cannot re-enter without a verified upstream (os#210)")
             ];
           in
@@ -2271,8 +2273,10 @@ PY
             a6PkgNames =
               map (p: p.pname or (builtins.parseDrvName p.name).name)
                 a6Host.config.kailash.layers.attack.categories.a-06.packages;
-            a6Ledger = (builtins.fromJSON (builtins.readFile ./generated/manifest-ids.json))
-              .categories.a-06-multimodal-physical-ai;
+            # post-os#210 the a-06 ledger is ABSENT (the generator omits
+            # empty categories) — absence IS the empty assertion
+            a6All = (builtins.fromJSON (builtins.readFile ./generated/manifest-ids.json)).categories;
+            a6Ledger = a6All.a-06-multimodal-physical-ai or { installable = [ ]; excluded = [ ]; exp = [ ]; };
             require = cond: msg: if cond then true else throw msg;
             _evalProofs = [
               (require (a6Ledger.exp == [ ])
@@ -2304,8 +2308,10 @@ PY
             a7PkgNames =
               map (p: p.pname or (builtins.parseDrvName p.name).name)
                 a7Host.config.kailash.layers.attack.categories.a-07.packages;
-            a7Ledger = (builtins.fromJSON (builtins.readFile ./generated/manifest-ids.json))
-              .categories.a-07-ai-system-exploitation;
+            # post-os#210 the a-07 ledger is ABSENT (the generator omits
+            # empty categories) — absence IS the empty assertion
+            a7All = (builtins.fromJSON (builtins.readFile ./generated/manifest-ids.json)).categories;
+            a7Ledger = a7All.a-07-ai-system-exploitation or { installable = [ ]; excluded = [ ]; exp = [ ]; };
             require = cond: msg: if cond then true else throw msg;
             _evalProofs = [
               (require (a7Ledger.exp == [ ])
@@ -2349,7 +2355,7 @@ PY
               .categories.a-08-data-poisoning;
             require = cond: msg: if cond then true else throw msg;
             _evalProofs = [
-              (require (a8Ledger.exp == [ ])
+              (require ((a8Ledger.exp or [ ]) == [ ])
                 "a-08-options: the generator's exp ledger is non-empty post-os#210 — the four poisoning-workbench rows were phantom-upstream (removed; kailash-os#210)")
               (require (a8Ledger.excluded == [ ])
                 "a-08-options: the a-08 ledger records an excluded row post-os#210 — no data rows remain in this category")
