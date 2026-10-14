@@ -42,20 +42,20 @@ alone:
   `safety: exp` installs only through a gate wrapper that refuses to run
   unless BOTH the host option `kailash.labMode` is enabled AND the
   individual invocation sets `KAILASH_LAB_MODE=1`
-  (plan §11.2; `modules/base/safety-defaults.nix`; the refusal text cites
+  ([spec §9.2](https://github.com/kailash-os/kailash-os/blob/master/docs/spec.md#92-safety-defaults-module-basesafety-defaultsnix); `modules/base/safety-defaults.nix`; the refusal text cites
   this file).
 - **No auto-start** — no service in the flake auto-starts an exp-class
   tool, and no service module self-enables; every service is
-  `mkEnableOption`-off by default (plan §11.2).
+  `mkEnableOption`-off by default ([spec §9.2](https://github.com/kailash-os/kailash-os/blob/master/docs/spec.md#92-safety-defaults-module-basesafety-defaultsnix)).
 - **Secrets hygiene** — keys (including model API keys) live outside the
   Nix store, whose paths are world-readable; sops-nix is the declarative
   mechanism, and model API keys are read at runtime from
-  `~/.config/kailash/keys/` (plan §11.2).
+  `~/.config/kailash/keys/` ([spec §9.2](https://github.com/kailash-os/kailash-os/blob/master/docs/spec.md#92-safety-defaults-module-basesafety-defaultsnix)).
 
 ## Scope of the statement
 
 This file is the data source the desktop MOTD, the `kailash doctor` output
 and the site's Layer-ATTACK pages render from — the statement ships with the
 distribution so the reminder travels wherever the tooling does. The
-authoritative safety doctrine is the spec's §11; the tool manifest's
+authoritative safety doctrine is [the specification's Chapter 9](https://github.com/kailash-os/kailash-os/blob/master/docs/spec.md#chapter-9-safety-governance-licensing); the tool manifest's
 `safety` field is the enforcement data.

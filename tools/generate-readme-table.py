@@ -296,7 +296,9 @@ def render_table(rows, per_layer, pin_rev=None):
     )
     lines.append(
         "Per-layer primary tool slots: %s — %d categories, %d tool slots "
-        "across the four layers (data-packs excluded from counts, plan §3.6), "
+        "across the four layers (data-packs excluded from counts, "
+        "[spec §2.6](https://github.com/kailash-os/kailash-os/blob/master/docs/spec.md"
+        "#26-the-full-category-table-post-purge-census)), "
         "generated from [`categories.yaml`](%s) — the taxonomy's "
         "single home — on the `kailash-packages` main HEAD%s."
         % (breakdown, len(rows), total, LIVE_URL, pin_clause)

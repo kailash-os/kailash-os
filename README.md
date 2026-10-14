@@ -66,7 +66,7 @@ chain, ATTACK).
 | 31 | Standards Verification Toolkit | DEFENCE | 5 |
 | — | **Total** | 31 categories | **337** |
 
-Per-layer primary tool slots: CLASSIC 142 · ATTACK 58 · DEFENCE 46 · OPS 91 — 31 categories, 337 tool slots across the four layers (data-packs excluded from counts, plan §3.6), generated from [`categories.yaml`](https://github.com/kailash-os/kailash-packages/blob/main/manifest/categories.yaml) — the taxonomy's single home — on the `kailash-packages` main HEAD.
+Per-layer primary tool slots: CLASSIC 142 · ATTACK 58 · DEFENCE 46 · OPS 91 — 31 categories, 337 tool slots across the four layers (data-packs excluded from counts, [spec §2.6](https://github.com/kailash-os/kailash-os/blob/master/docs/spec.md#26-the-full-category-table-post-purge-census)), generated from [`categories.yaml`](https://github.com/kailash-os/kailash-packages/blob/main/manifest/categories.yaml) — the taxonomy's single home — on the `kailash-packages` main HEAD.
 <!-- END GENERATED CATEGORY TABLE -->
 
 The table is **generated** from the Kailash packages manifest — never

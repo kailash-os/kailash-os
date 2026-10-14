@@ -10,7 +10,7 @@ Hosted CI **evals** these legs, never **boots** them (the no-VMs posture,
 KA-06.3): `nix flake check` exercises every leg's eval and the option
 tree, and the eval-side contract check
 (`checks.x86_64-linux.classic-vm-smoke-contract`) binds the suite to the
-§4.5 module options — so a module lane that moves a reviewed row REDs CI
+[spec §3.5](https://github.com/kailash-os/kailash-os/blob/master/docs/spec.md#35-the-category-module-contract) module options — so a module lane that moves a reviewed row REDs CI
 the day it lands. The BOOT itself runs wherever a Linux VM host is:
 a maintainer's box or CI with KVM.
 
