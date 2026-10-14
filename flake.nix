@@ -2496,14 +2496,21 @@ PY
         # aarch64 rows must be producible by tools/build-arm-images.sh's
         # default expansion, and the builder's default must not expand
         # rows OUTSIDE the table. Drift = RED at eval/build time before
-        # any release could repeat the gap. The assertions run through
-        # the SAME checker a user runs locally via the tools script —
-        # expected-nonzero probes ride an ||-guard context (the errexit
-        # rule), never a bare `CMD; rc=$?`.
+        # any release could repeat the gap. KA-33.4 (ko#206): the leg
+        # also proves the chunked-artefact tooling — the round-trip
+        # self-test of tools/split-release-artefact.sh (split →
+        # order-proven cat-join → whole-file digest == sheet line →
+        # corrupted part detected) — the lossless-packaging claim behind
+        # over-cap uploads is a TESTED claim, not prose. Assertions run
+        # expected-nonzero probes from ||-guard context (the errexit
+        # rule); never a bare `CMD; rc=$?`.
         images-release-completeness = pkgs.runCommand "images-release-completeness"
           {
-            nativeBuildInputs = [ pkgs.python3 ];
+            nativeBuildInputs = [ pkgs.python3 pkgs.bash pkgs.coreutils ];
           } ''
+          ${pkgs.bash}/bin/bash ${./tools/split-release-artefact.sh} self-test > split-selftest.log 2>&1 \
+            || { echo "images-release-completeness: RED — split-release-artefact self-test failed:"; cat split-selftest.log; exit 1; }
+          echo "split-release-artefact self-test: $(cat split-selftest.log)"
           ${pkgs.python3}/bin/python3 ${./tools/check-images-release-completeness.py} \
               --table ${./images/kailash-images-table.nix} \
               --workflow ${./.github/workflows/release-images.yml} \
