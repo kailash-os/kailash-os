@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # integration-mlflow-attack — the pairing-thesis acceptance probe pair (KA-23,
-# kailash-os#23; plan §8.2).
+# kailash-os#23; spec §7.2).
 #
 # Boots nothing and fabricates nothing on CI. The §8.2 name carries the
 # INTEGRATION acceptance: O-1 (the MLflow unauth lab default,

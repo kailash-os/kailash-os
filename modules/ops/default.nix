@@ -10,7 +10,7 @@
 # stack native rows + the bespoke overlay rows) + the mlflow SERVICE
 # module (the pairing-thesis target — enable defaults false, loopback
 # bind default, the lab-default unauth binding documented never
-# defaulted — plan §9 Phase 3).
+# defaulted — spec §8 Phase 3).
 #
 # KA-09.4 (ko#113): the O-6 Docs & Authoring category module (the
 # publishing/authoring stack; texlive-full stays the opt-in data row,

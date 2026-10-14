@@ -1,12 +1,12 @@
 # services.kailash.mlflow — the MLflow tracking server (KA-08.1, ko#105;
-# plan §9 Phase 3: "mlflow reachable on :5000"; issue ko#105: "MLflow
+# spec §8 Phase 3: "mlflow reachable on :5000"; issue ko#105: "MLflow
 # reachable on :5000 in the VM").
 #
 # POSTURE (the ko#105 contract, verbatim plan clause "lab-default unauth
 # documented, not defaulted"): an MLflow tracking server on
 # services.mlflow's postgres/sqlite backends has NO authentication layer —
 # an unauthenticated, lab-only surface (the pairing-thesis target the A-7
-# mlflow-bypass probe trains against, plan §6.5). The posture is a
+# mlflow-bypass probe trains against, spec §5.5). The posture is a
 # DOCUMENTED opt-in, never a default:
 #
 #   * enable defaults FALSE — the service only runs when the operator
@@ -93,10 +93,10 @@ in
       type = lib.types.bool;
       default = false;
       description = ''
-        THE DOCUMENTED LAB POSTURE (never defaulted — plan §9 Phase 3:
+        THE DOCUMENTED LAB POSTURE (never defaulted — spec §8 Phase 3:
         "lab-default unauth documented, not defaulted"). The lab-exposed
         configuration an operator copies for the pairing-thesis lab (the
-        A-7 mlflow-bypass surface, plan §6.5):
+        A-7 mlflow-bypass surface, spec §5.5):
 
             services.kailash.mlflow = {
               enable = true;

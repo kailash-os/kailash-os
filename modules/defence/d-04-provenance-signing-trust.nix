@@ -1,5 +1,5 @@
 # Layer DEFENCE — D-4 Model Provenance, Signing & Trust (KA-24, os#24;
-# plan §4.5, §9 Phase 6 — the cosign/sigstore/modelsign/cdxgen AI-BOM
+# spec §3.5, §9 Phase 6 — the cosign/sigstore/modelsign/cdxgen AI-BOM
 # flow). The §4.5 category module — config-only mount on the typed
 # spine (enable + packages at kailash.layers.defence.categories.d-04),
 # the KA-13.1 exemplar shape.

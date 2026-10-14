@@ -1,4 +1,4 @@
-# Safety defaults (KA-18.1, os#92; plan §11.2) — the lab-mode double-key gate.
+# Safety defaults (KA-18.1, os#92; spec §9.2) — the lab-mode double-key gate.
 #
 # Every tool the packages manifest tags safety:exp installs only through a
 # generated gate wrapper and refuses to execute unless BOTH keys are set:
@@ -24,7 +24,7 @@
         Host-side key of the lab-mode double-key gate. All exp-tagged
         tooling refuses to run unless this option AND the per-invocation
         KAILASH_LAB_MODE=1 shell opt-in are both explicitly set
-        (double-key, no default-on — plan §11.2).
+        (double-key, no default-on — spec §9.2).
       '';
     };
 

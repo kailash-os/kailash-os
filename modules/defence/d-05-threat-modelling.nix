@@ -1,4 +1,4 @@
-# Layer DEFENCE — D-5 AI Threat Modelling (KA-24, os#24; plan §4.5,
+# Layer DEFENCE — D-5 AI Threat Modelling (KA-24, os#24; spec §3.5,
 # §9 Phase 6). The §4.5 category module — config-only mount on the
 # typed spine (enable + packages at
 # kailash.layers.defence.categories.d-05), the KA-13.1 exemplar shape.

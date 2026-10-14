@@ -1,10 +1,10 @@
 # CORE substrate — kailash.data.* DATA-PACK composition namespace
-# (KA-29, kailash-os#29; plan §3.2 C-5 + §8.1 data-pack posture).
+# (KA-29, kailash-os#29; spec §2.2 C-5 + §8.1 data-pack posture).
 #
 # The landed kailash-data.* DATA pack derivations live in
 # kailash-packages (pkgs/seclists — the wordlists-mega corpus, and
 # pkgs/pw-packs — the small rockyou.txt slice; the KA-29 lane). DATA
-# packs NEVER ride a default profile or ISO by construction (plan §8.1:
+# packs NEVER ride a default profile or ISO by construction (spec §7.1:
 # "the wordlist packs are excluded from every default ISO by
 # construction"; §3.2 C-5: seclists ~100 MB behind
 # kailash-data.wordlists-mega — toggle vs data-ISO decision logged,

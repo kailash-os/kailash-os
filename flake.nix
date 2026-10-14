@@ -335,7 +335,7 @@ open(sys.argv[2], "w", encoding="utf-8").write(chr(10).join(gen) + chr(10))
 
         # The responsible-use statement is data: profiles and gates
         # reference docs/responsible-use.md — the file must exist and carry
-        # the AU provisions the plan §11.1 names (statutes by name, never
+        # the AU provisions the spec §9.1 names (statutes by name, never
         # invented legal text).
         responsible-use-file = pkgs.runCommand "responsible-use-file"
           {
@@ -2329,7 +2329,7 @@ PY
               ])
                 "a-07-options: the generator's exp ledger does not record exactly the nine A-7 platform-exploit rows (manifest order) (KA-23 GREEN)")
               (require (a7Ledger.installable == [ ])
-                "a-07-options: an a-07 row rides the INSTALLABLE ledger — every A-7 row is safety:exp (plan §3.6 profile Very Low; the §11.2 gate owns the surface) (KA-23)")
+                "a-07-options: an a-07 row rides the INSTALLABLE ledger — every A-7 row is safety:exp (spec §2.6 profile Very Low; the §11.2 gate owns the surface) (KA-23)")
               # (a-06/a-08 carry the same ledger shape). The a-07 host must
               # still evaluate cleanly (flake check sweeps every
               # nixosConfiguration) with ZERO a-07-named packages on PATH.
@@ -2530,7 +2530,7 @@ PY
         #   * kailash-data-defaults-false — the defaults posture BOTH
         #     directions: both options default FALSE on the CORE floor
         #     and the FULL profile; NO pack name leaks onto either
-        #     host's PATH (plan §8.1 "excluded from every default ISO
+        #     host's PATH (spec §7.1 "excluded from every default ISO
         #     by construction").
         #   * kailash-data-compose — the opt-in mounts: fixture hosts
         #     with the flips ON carry the packs on PATH (the §3.2 C-5
@@ -3048,7 +3048,7 @@ PY
       # the ratified deliverable-shape decision (ko#132) ships — the QEMU qcow2
       # (PRIMARY, drives KA-32's golden-image gate + KA-43's boot polish) and
       # the bootable ISO (SECONDARY, bare-metal evaluation). The budget table
-      # (images/kailash-images-table.nix) carries the plan §8.1 budgets, the
+      # (images/kailash-images-table.nix) carries the spec §7.1 budgets, the
       # committed census snapshot (tests/images-census.json) the
       # derivation-level closure evidence, scripts/gen-image-census.sh the
       # regeneration cycle, tools/kailash-images-budget.py the verifier.

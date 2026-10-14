@@ -1,4 +1,4 @@
-# The flat layers option tree (KA-17.1, os#114; plan §4.5).
+# The flat layers option tree (KA-17.1, os#114; spec §3.5).
 #
 #   kailash.layers.<layer>.enable          — layer-level switch
 #   kailash.layers.<layer>.categories.<id> — typed per-category entries

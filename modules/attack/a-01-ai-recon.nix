@@ -1,4 +1,4 @@
-# Layer ATTACK — A-1 AI Recon (KA-13.1, ko#103; plan §4.5, §3.3).
+# Layer ATTACK — A-1 AI Recon (KA-13.1, ko#103; spec §3.5, §3.3).
 #
 # The §4.5 category module for the ATTACK layer's first flagged
 # category — the same mount the exemplar

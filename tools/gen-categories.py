@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # tools/gen-categories.py — the §4.5 category-package-list generator
-# (KA-06.1, ko#96; plan §4.5).
+# (KA-06.1, ko#96; spec §3.5).
 #
 # The manifest (kailash-packages manifest/tools.yaml) is the ONLY
 # hand-maintained tool registry; this generator derives the per-category

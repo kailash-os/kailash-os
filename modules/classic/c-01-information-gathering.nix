@@ -1,4 +1,4 @@
-# Layer CLASSIC — C-1 Information Gathering (KA-06.1, ko#96; plan §4.5).
+# Layer CLASSIC — C-1 Information Gathering (KA-06.1, ko#96; spec §3.5).
 #
 # The §4.5 EXEMPLAR category module — the shape every later category
 # module copies. The composition is config-only data (the KA-09.1 typed

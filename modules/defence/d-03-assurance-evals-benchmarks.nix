@@ -1,5 +1,5 @@
 # Layer DEFENCE — D-3 AI Assurance, Evals & Benchmarks (KA-24, os#24;
-# plan §4.5, §9 Phase 6). The §4.5 category module — config-only mount
+# spec §3.5, §9 Phase 6). The §4.5 category module — config-only mount
 # on the typed spine (enable + packages at
 # kailash.layers.defence.categories.d-03), the KA-13.1 exemplar shape.
 #

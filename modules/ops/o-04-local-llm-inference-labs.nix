@@ -1,4 +1,4 @@
-# Layer OPS — O-4 Local LLM & Inference Labs (KA-09.3, ko#112; plan §4.5).
+# Layer OPS — O-4 Local LLM & Inference Labs (KA-09.3, ko#112; spec §3.5).
 #
 # The §4.5 category module, config-only on the §3.6 typed spine
 # (modules/base/layer-tree.nix — the same mount as the O-1/O-2/O-3

@@ -1,4 +1,4 @@
-# The PLATFORM profile (KA-08.5, kailash-os#109; plan §9 Phase 3 — "the
+# The PLATFORM profile (KA-08.5, kailash-os#109; spec §8 Phase 3 — "the
 # parent's acceptance run: platform-profile VM boots, working ollama (tiny
 # model completes a prompt), MLflow reachable on :5000").
 #

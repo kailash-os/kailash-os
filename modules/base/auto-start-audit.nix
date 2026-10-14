@@ -1,4 +1,4 @@
-# No-auto-start audit (KA-18.2, os#93; plan §11.2) — the standing check.
+# No-auto-start audit (KA-18.2, os#93; spec §9.2) — the standing check.
 #
 # Contract: no service in this flake auto-starts exp-class tooling. A
 # service is a violation when it is wanted into a boot target AND either

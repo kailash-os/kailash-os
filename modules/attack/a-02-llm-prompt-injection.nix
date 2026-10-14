@@ -1,5 +1,5 @@
 # Layer ATTACK — A-2 Prompt Injection & Jailbreaks (KA-13.1, ko#103;
-# plan §4.5, §3.3).
+# spec §3.5, §3.3).
 #
 # The §4.5 category module — the same mount as the exemplar
 # modules/classic/c-01-information-gathering.nix and the sibling

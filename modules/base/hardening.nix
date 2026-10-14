@@ -1,4 +1,4 @@
-# Hardening module (KA-17.2, os#115; plan §8.3 — `hardening.nix`: sysctl,
+# Hardening module (KA-17.2, os#115; spec §7.3 — `hardening.nix`: sysctl,
 # firewall default-deny, sudo policy — nothing exotic).
 #
 # Why a whole module (not profile-local settings): the hardened posture
@@ -24,7 +24,7 @@ in
       type = lib.types.bool;
       default = true;
       description = ''
-        Apply the CORE hardening posture (KA-17.2, plan §8.3): the
+        Apply the CORE hardening posture (KA-17.2, spec §7.3): the
         kernel-exposure sysctl set, a default-deny firewall, and the
         wheel-only sudo policy. The base fold carries it; disable ONLY
         with an explicit review note in the host configuration.
@@ -33,7 +33,7 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    # ---- Firewall: default-deny (plan §8.3 "firewall default-deny") ----
+    # ---- Firewall: default-deny (spec §7.3 "firewall default-deny") ----
     #
     # Every inbound connection refused unless a profile explicitly opens
     # a port. Lab-relevant listeners (O-1 MLflow :5000, O-3 vector DBs)
@@ -44,7 +44,7 @@ in
     networking.firewall.allowedTCPPorts = lib.mkDefault [ ];
     networking.firewall.allowedUDPPorts = lib.mkDefault [ ];
 
-    # ---- Sysctl: the kernel-exposure set (plan §8.3 hardening.nix) ----
+    # ---- Sysctl: the kernel-exposure set (spec §7.3 hardening.nix) ----
     #
     # Restricts what an UNPRIVILEGED local process (the common case when
     # a lab tool drops privileges or a malicious payload escapes a
@@ -89,7 +89,7 @@ in
       "fs.protected_regular" = lib.mkDefault 2;
     };
 
-    # ---- sudo: wheel-only, password required (plan §8.3 "sudo policy") --
+    # ---- sudo: wheel-only, password required (spec §7.3 "sudo policy") --
     #
     #  * wheel-only: only the wheel group escalates (the plan's `kailash`
     #    user is wheel; no other group gets sudo by default).
@@ -113,7 +113,7 @@ in
     # reviewable path for granting a second agent account wheel —
     # never a sudo Alias.)
     security.sudo.extraConfig = lib.mkDefault ''
-      # Kailash CORE posture (KA-17.2, plan §8.3): wheel-only sudo,
+      # Kailash CORE posture (KA-17.2, spec §7.3): wheel-only sudo,
       # password required per invocation. NOPASSWD grants do not exist
       # on the substrate — a host needing one writes it as a reviewed
       # per-host override in that host's configuration, never here.

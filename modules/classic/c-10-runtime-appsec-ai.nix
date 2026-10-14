@@ -1,5 +1,5 @@
 # Layer CLASSIC — C-10 Runtime AppSec for AI Systems (KA-07.4, ko#102;
-# plan §4.5).
+# spec §3.5).
 #
 # The fifth §4.5 category module off the KA-06.1 exemplar (same shape —
 # spine-owned typed surface, config-only install mount, mkIf enable).

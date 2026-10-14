@@ -5,7 +5,7 @@
 #
 # No emit exists for this category BY CONSTRUCTION: a-08's rows are 4
 # safety:exp + 2 derivation-pending bespoke — the generator REFUSES an
-# exp-carrying category's package-list emit (plan §11.2: the double-key
+# exp-carrying category's package-list emit (spec §9.2: the double-key
 # gate owns exp routing; the refusal IS the contract, exit 1 + the
 # named row list on stderr). The category module consumes
 # generated/manifest-ids.json directly (bare guard); the a-08 drift

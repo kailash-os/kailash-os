@@ -177,7 +177,7 @@ def _emit_list(category, rows):
     if exp_ids:
         print(
             "gen-category-packages: %s carries safety:exp rows (%s) — exp rows "
-            "NEVER enter package lists (plan §11.2); refusing to emit"
+            "NEVER enter package lists (spec §9.2); refusing to emit"
             % (category, ", ".join(exp_ids)),
             file=sys.stderr,
         )

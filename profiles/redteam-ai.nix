@@ -1,4 +1,4 @@
-# Layer ATTACK AI red-team profile (KA-17.1, os#114; plan §4.2, §3.3).
+# Layer ATTACK AI red-team profile (KA-17.1, os#114; spec §3.2, §3.3).
 #
 # Composition: the CORE substrate floor (modules tree, bootable-VM floor)
 # + Layer ATTACK's eight category modules + O-4 (Local LLM & Inference

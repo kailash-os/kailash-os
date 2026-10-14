@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # tools/generate-readme-table.py — README category table from categories.yaml.
 #
-# KA-20.1 (kailash-os#116, plan §1.1) — the no-hand-sync rule: the README's
+# KA-20.1 (kailash-os#116, spec §1.1) — the no-hand-sync rule: the README's
 # category table is GENERATED from the taxonomy, never hand-maintained.
 #
 # Source resolution (no hand-copies, ever):

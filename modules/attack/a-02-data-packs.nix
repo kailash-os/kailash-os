@@ -1,5 +1,5 @@
 # Layer ATTACK — A-2 LLM Prompt Injection & Jailbreaking, DATA-PACKS
-# composition (KA-13.2, kailash-os#104; plan §9 Phase 4).
+# composition (KA-13.2, kailash-os#104; spec §8 Phase 4).
 #
 # This is the SIBLING composition module for a-02: it DECLARES the extra
 # typed member `packs` at the same §4.5 option path and appends the

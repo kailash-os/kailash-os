@@ -1,4 +1,4 @@
-# The headless-agent profile (KA-28, kailash-os#28; plan §8.1 row 4).
+# The headless-agent profile (KA-28, kailash-os#28; spec §7.1 row 4).
 #
 # "base + CLI, no desktop" — the boot-to-agent target: the CORE substrate
 # floor (zero categories on) + the manifest-aware kailash CLI (the packages
@@ -10,7 +10,7 @@
 #
 # No desktop and no GUI stack is installed (the §4.5 tree stays all-off —
 # the minimal import is the whole floor). The desktop-carrying iso-standard /
-# iso-lite variants of plan §8.1 land with their desktop modules (KA-01
+# iso-lite variants of spec §7.1 land with their desktop modules (KA-01
 # wave, §3.4), not here.
 { lib, pkgs, ... }:
 
