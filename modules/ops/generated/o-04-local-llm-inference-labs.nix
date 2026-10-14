@@ -20,7 +20,6 @@
       [ "open-webui" ]
     ];
     bespoke = [
-      { id = "gguf-quantiser"; derivation = "pkgs/gguf-quantiser/default.nix"; }
       { id = "text-generation-webui"; derivation = "pkgs/text-generation-webui/default.nix"; }
     ];
   };

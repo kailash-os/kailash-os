@@ -1,748 +1,570 @@
 {
- "categories": {
-  "a-01-ai-recon": {
-   "count": 5,
-   "excluded": [],
-   "installable": [
-    "recon-ai",
-    "llm-recon",
-    "trufflehog",
-    "huggingface-org-scan",
-    "colab-crawler"
-   ]
-  },
-  "a-02-prompt-injection-jailbreaks": {
-   "count": 8,
-   "excluded": [
-    {
-     "id": "llm-red-team-col",
-     "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
-     "status": "data"
+  "categories": {
+    "a-01-ai-recon": {
+      "count": 1,
+      "excluded": [],
+      "installable": [
+        "trufflehog"
+      ]
     },
-    {
-     "id": "jailbreak-payloads",
-     "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
-     "status": "data"
+    "a-02-prompt-injection-jailbreaks": {
+      "count": 6,
+      "excluded": [
+        {
+          "id": "jailbreak-payloads",
+          "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
+          "status": "data"
+        },
+        {
+          "id": "libertas-prompts",
+          "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
+          "status": "data"
+        },
+        {
+          "id": "llm-jailbreak-bench",
+          "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
+          "status": "data"
+        }
+      ],
+      "installable": [
+        "garak",
+        "promptfoo",
+        "pyrit"
+      ]
     },
-    {
-     "id": "libertas-prompts",
-     "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
-     "status": "data"
+    "a-03-agentic-mcp-tool-use": {
+      "count": 5,
+      "excluded": [],
+      "exp": [
+        "mcpoison"
+      ],
+      "installable": [
+        "mcp-scan",
+        "mcp-guardian",
+        "mcp-remote",
+        "agent-dojo"
+      ]
     },
-    {
-     "id": "llm-jailbreak-bench",
-     "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
-     "status": "data"
+    "a-04-model-supply-chain": {
+      "count": 3,
+      "excluded": [],
+      "installable": [
+        "guarddog",
+        "picklescan",
+        "modelscan"
+      ]
+    },
+    "a-05-model-extraction-inversion": {
+      "count": 7,
+      "excluded": [],
+      "installable": [
+        "art",
+        "counterfit",
+        "foolbox",
+        "cleverhans",
+        "knockoffnets",
+        "tf-privacy",
+        "privacy-meter"
+      ]
+    },
+    "a-08-data-poisoning": {
+      "count": 1,
+      "excluded": [],
+      "installable": [
+        "trojai-toolkit"
+      ]
+    },
+    "c-01-information-gathering": {
+      "count": 38,
+      "excluded": [],
+      "installable": [
+        "nmap",
+        "masscan",
+        "rustscan",
+        "zenmap",
+        "the-harvester",
+        "amass",
+        "recon-ng",
+        "sublist3r",
+        "maltego-community",
+        "dmitry",
+        "fierce",
+        "dnsrecon",
+        "dnsenum",
+        "dnsmap",
+        "massdns",
+        "assetfinder",
+        "findomain",
+        "gobuster",
+        "dirb",
+        "dirsearch",
+        "feroxbuster",
+        "ffuf",
+        "wfuzz",
+        "whatweb",
+        "wafw00f",
+        "arjun",
+        "uro",
+        "photon",
+        "sherlock",
+        "spiderfoot",
+        "httpx",
+        "gospider",
+        "hakrawler",
+        "arp-scan",
+        "netdiscover",
+        "katana",
+        "subfinder",
+        "puredns"
+      ]
+    },
+    "c-02-vulnerability-analysis": {
+      "count": 7,
+      "excluded": [
+        {
+          "id": "gvm",
+          "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
+          "status": "module"
+        }
+      ],
+      "installable": [
+        "nikto",
+        "lynis",
+        "wapiti",
+        "legion",
+        "searchsploit",
+        "nuclei"
+      ]
+    },
+    "c-03-web-application-assessment": {
+      "count": 10,
+      "excluded": [],
+      "installable": [
+        "burpsuite",
+        "zaproxy",
+        "caido",
+        "graphw00f",
+        "clairvoyance",
+        "inql",
+        "kiterunner",
+        "gopherus",
+        "commix",
+        "sstimap"
+      ]
+    },
+    "c-04-database-assessment": {
+      "count": 7,
+      "excluded": [],
+      "installable": [
+        "sqlmap",
+        "mssql-cli",
+        "psql",
+        "redis-cli",
+        "mongosh",
+        "sqlitebrowser",
+        "mycli"
+      ]
+    },
+    "c-05-password-offline-credential": {
+      "count": 16,
+      "excluded": [
+        {
+          "id": "seclists",
+          "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
+          "status": "data"
+        },
+        {
+          "id": "pw-packs",
+          "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
+          "status": "data"
+        }
+      ],
+      "installable": [
+        "hashcat",
+        "john",
+        "johnny",
+        "ophcrack",
+        "crunch",
+        "cewl",
+        "maskgen",
+        "policygen",
+        "statsgen",
+        "hashid",
+        "hash-identifier",
+        "bopscrk",
+        "rsmangler",
+        "twofi"
+      ]
+    },
+    "c-06-reverse-engineering": {
+      "count": 26,
+      "excluded": [],
+      "installable": [
+        "ghidra",
+        "radare2",
+        "rizin",
+        "cutter",
+        "iaito",
+        "gdb",
+        "gef",
+        "pwndbg",
+        "peda",
+        "capstone",
+        "cstool",
+        "checksec",
+        "jadx",
+        "bytecode-viewer",
+        "apktool",
+        "dex2jar",
+        "javasnoop",
+        "jd-gui",
+        "smali",
+        "unicorn",
+        "angr",
+        "qiling",
+        "unipacker",
+        "pyinstaller-extractor",
+        "edb-debugger",
+        "binwalk"
+      ]
+    },
+    "c-07-signal-sdr": {
+      "count": 6,
+      "excluded": [
+        {
+          "id": "gnuradio",
+          "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
+          "status": "data"
+        },
+        {
+          "id": "gqrx",
+          "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
+          "status": "data"
+        },
+        {
+          "id": "hackrf-tools",
+          "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
+          "status": "data"
+        },
+        {
+          "id": "sox",
+          "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
+          "status": "data"
+        },
+        {
+          "id": "librosa",
+          "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
+          "status": "data"
+        }
+      ],
+      "installable": [
+        "pysox"
+      ]
+    },
+    "c-08-exploitation-post-exploitation": {
+      "count": 8,
+      "excluded": [],
+      "installable": [
+        "metasploit-framework",
+        "msfvenom",
+        "beef-xss",
+        "weevely",
+        "laudanum",
+        "peass-ng",
+        "unix-privesc-check",
+        "pspy"
+      ]
+    },
+    "c-09-forensics-ir-reporting": {
+      "count": 21,
+      "excluded": [
+        {
+          "id": "sysmon-modular",
+          "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
+          "status": "data"
+        },
+        {
+          "id": "timesketch",
+          "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
+          "status": "module"
+        },
+        {
+          "id": "faraday",
+          "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
+          "status": "module"
+        },
+        {
+          "id": "pwndoc-ng",
+          "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
+          "status": "module"
+        }
+      ],
+      "installable": [
+        "autopsy",
+        "sleuthkit",
+        "volatility3",
+        "hashdeep",
+        "chkrootkit",
+        "rkhunter",
+        "dc3dd",
+        "ewfacquire",
+        "guymager",
+        "regripper",
+        "testdisk",
+        "photorec",
+        "bulk_extractor",
+        "chainsaw",
+        "hayabusa",
+        "sigma-cli",
+        "plaso"
+      ]
+    },
+    "c-10-runtime-appsec-ai": {
+      "count": 1,
+      "excluded": [],
+      "installable": [
+        "mitmproxy"
+      ]
+    },
+    "d-01-runtime-defence": {
+      "count": 4,
+      "excluded": [],
+      "installable": [
+        "nemo-guardrails",
+        "llm-guard",
+        "guardrails-ai",
+        "rebuff"
+      ]
+    },
+    "d-02-detection-monitoring-observability": {
+      "count": 6,
+      "excluded": [
+        {
+          "id": "langfuse",
+          "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
+          "status": "module"
+        }
+      ],
+      "installable": [
+        "phoenix",
+        "whylogs",
+        "evidently",
+        "otel-ai",
+        "giskard"
+      ]
+    },
+    "d-03-assurance-evals-benchmarks": {
+      "count": 6,
+      "excluded": [],
+      "installable": [
+        "lm-eval-harness",
+        "deepeval",
+        "robustbench",
+        "huggingface-evaluate",
+        "fairlearn",
+        "aif360"
+      ]
+    },
+    "d-04-provenance-signing-trust": {
+      "count": 8,
+      "excluded": [],
+      "installable": [
+        "cosign",
+        "syft",
+        "grype",
+        "trivy",
+        "cyclonedx-cli",
+        "cdxgen",
+        "modelsign",
+        "model-card-toolkit"
+      ]
+    },
+    "d-05-threat-modelling": {
+      "count": 1,
+      "excluded": [],
+      "installable": [
+        "maestro"
+      ]
+    },
+    "o-01-mlops-ml-engineering": {
+      "count": 18,
+      "excluded": [
+        {
+          "id": "mlflow",
+          "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
+          "status": "module"
+        },
+        {
+          "id": "clearml",
+          "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
+          "status": "module"
+        },
+        {
+          "id": "airflow",
+          "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
+          "status": "module"
+        },
+        {
+          "id": "prefect",
+          "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
+          "status": "module"
+        }
+      ],
+      "installable": [
+        "dvc",
+        "git-lfs",
+        "bentoml",
+        "feast",
+        "kedro",
+        "kedro-datasets",
+        "wandb-cli",
+        "pandas",
+        "polars",
+        "scikit-learn",
+        "numpy",
+        "scipy",
+        "xgboost",
+        "lightgbm"
+      ]
+    },
+    "o-02-compute-serving-infrastructure": {
+      "count": 11,
+      "excluded": [
+        {
+          "id": "triton-inference-server",
+          "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
+          "status": "module"
+        },
+        {
+          "id": "ray",
+          "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
+          "status": "module"
+        }
+      ],
+      "installable": [
+        "vllm",
+        "tgi",
+        "torchserve",
+        "kserve",
+        "k3s",
+        "minikube",
+        "kind",
+        "podman",
+        "nvidia-container-toolkit"
+      ]
+    },
+    "o-03-vector-stores-retrieval": {
+      "count": 9,
+      "excluded": [
+        {
+          "id": "weaviate",
+          "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
+          "status": "module"
+        },
+        {
+          "id": "pgvector",
+          "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
+          "status": "module"
+        },
+        {
+          "id": "elasticsearch",
+          "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
+          "status": "module"
+        },
+        {
+          "id": "milvus",
+          "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
+          "status": "module"
+        }
+      ],
+      "installable": [
+        "chromadb",
+        "qdrant",
+        "faiss",
+        "txtai",
+        "jina-embeddings-cli"
+      ]
+    },
+    "o-04-local-llm-inference-labs": {
+      "count": 4,
+      "excluded": [],
+      "installable": [
+        "ollama",
+        "llama.cpp",
+        "text-generation-webui",
+        "open-webui"
+      ]
+    },
+    "o-05-ai-engineering-sdks-dev-env": {
+      "count": 26,
+      "excluded": [],
+      "installable": [
+        "langchain",
+        "langgraph",
+        "llama-index",
+        "openai-python",
+        "anthropic-python",
+        "google-genai",
+        "autogen",
+        "crewai",
+        "pytorch",
+        "torchvision",
+        "torchaudio",
+        "tensorflow",
+        "jax",
+        "onnxruntime",
+        "transformers",
+        "datasets",
+        "peft",
+        "trl",
+        "vscode",
+        "code-server",
+        "neovim",
+        "python-lsp-server",
+        "uv",
+        "ruff",
+        "mypy",
+        "python313"
+      ]
+    },
+    "o-06-documentation-reporting-authoring": {
+      "count": 10,
+      "excluded": [
+        {
+          "id": "texlive-full",
+          "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
+          "status": "data"
+        },
+        {
+          "id": "dradis",
+          "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
+          "status": "module"
+        }
+      ],
+      "installable": [
+        "quarto",
+        "pandoc",
+        "typst",
+        "mdbook",
+        "drawio",
+        "excalidraw",
+        "mermaid-cli",
+        "obsidian"
+      ]
+    },
+    "o-07-agent-mcp-operability": {
+      "count": 4,
+      "excluded": [],
+      "exp": [
+        "hexstrike-ai",
+        "mcp-kali-server",
+        "kailash-mcp"
+      ],
+      "installable": [
+        "mcp-inspector"
+      ]
     }
-   ],
-   "installable": [
-    "garak",
-    "promptfoo",
-    "pyrit",
-    "inj3ct-llm"
-   ]
   },
-  "a-03-agentic-mcp-tool-use": {
-   "count": 9,
-   "excluded": [
-    {
-     "id": "poisoned-skill-pack",
-     "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
-     "status": "data"
-    }
-   ],
-   "exp": [
-    "mcp-unsafe-deser-probe",
-    "mcpoison"
-   ],
-   "installable": [
-    "mcp-scan",
-    "mcp-guardian",
-    "mcp-remote",
-    "langchain-vuln-hunter",
-    "llm-agent-fuzzer",
-    "agent-dojo"
-   ]
-  },
-  "a-04-model-supply-chain": {
-   "count": 8,
-   "excluded": [],
-   "exp": [
-    "torch-load-poc"
-   ],
-   "installable": [
-    "guarddog",
-    "picklescan",
-    "modelscan",
-    "gguf-template-inspector",
-    "safetensors-checker",
-    "hf-repo-inspector",
-    "namespace-reuse-check"
-   ]
-  },
-  "a-05-model-extraction-inversion": {
-   "count": 8,
-   "excluded": [],
-   "installable": [
-    "art",
-    "counterfit",
-    "foolbox",
-    "cleverhans",
-    "model-extraction-attack",
-    "knockoffnets",
-    "tf-privacy",
-    "privacy-meter"
-   ]
-  },
-  "a-06-multimodal-physical-ai": {
-   "count": 5,
-   "excluded": [
-    {
-     "id": "adversarial-patches-collection",
-     "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
-     "status": "data"
-    }
-   ],
-   "exp": [
-    "adversarial-clothing",
-    "audio-voice-clone-injector"
-   ],
-   "installable": [
-    "vlm-image-injector",
-    "camera-adversarial-toolkit"
-   ]
-  },
-  "a-07-ai-system-exploitation": {
-   "count": 9,
-   "excluded": [],
-   "exp": [
-    "mlflow-bypass",
-    "triton-pwn",
-    "torchserve-pwn",
-    "ollama-pwn",
-    "vllm-pwn",
-    "kserve-exploit",
-    "shadow-ray",
-    "vector-db-ripper",
-    "ai-gateway-bypass"
-   ],
-   "installable": []
-  },
-  "a-08-data-poisoning": {
-   "count": 6,
-   "excluded": [],
-   "exp": [
-    "poison-dataset-builder",
-    "trojan-lm-toolkit",
-    "prompt-backdoor-tool",
-    "data-exfil-via-poison"
-   ],
-   "installable": [
-    "trojai-toolkit",
-    "split-view-replay"
-   ]
-  },
-  "c-01-information-gathering": {
-   "count": 38,
-   "excluded": [],
-   "installable": [
-    "nmap",
-    "masscan",
-    "rustscan",
-    "zenmap",
-    "the-harvester",
-    "amass",
-    "recon-ng",
-    "sublist3r",
-    "maltego-community",
-    "dmitry",
-    "fierce",
-    "dnsrecon",
-    "dnsenum",
-    "dnsmap",
-    "massdns",
-    "assetfinder",
-    "findomain",
-    "gobuster",
-    "dirb",
-    "dirsearch",
-    "feroxbuster",
-    "ffuf",
-    "wfuzz",
-    "whatweb",
-    "wafw00f",
-    "arjun",
-    "uro",
-    "photon",
-    "sherlock",
-    "spiderfoot",
-    "httpx",
-    "gospider",
-    "hakrawler",
-    "arp-scan",
-    "netdiscover",
-    "katana",
-    "subfinder",
-    "puredns"
-   ]
-  },
-  "c-02-vulnerability-analysis": {
-   "count": 7,
-   "excluded": [
-    {
-     "id": "gvm",
-     "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
-     "status": "module"
-    }
-   ],
-   "installable": [
-    "nikto",
-    "lynis",
-    "wapiti",
-    "legion",
-    "searchsploit",
-    "nuclei"
-   ]
-  },
-  "c-03-web-application-assessment": {
-   "count": 10,
-   "excluded": [],
-   "installable": [
-    "burpsuite",
-    "zaproxy",
-    "caido",
-    "graphw00f",
-    "clairvoyance",
-    "inql",
-    "kiterunner",
-    "gopherus",
-    "commix",
-    "sstimap"
-   ]
-  },
-  "c-04-database-assessment": {
-   "count": 7,
-   "excluded": [],
-   "installable": [
-    "sqlmap",
-    "mssql-cli",
-    "psql",
-    "redis-cli",
-    "mongosh",
-    "sqlitebrowser",
-    "mycli"
-   ]
-  },
-  "c-05-password-offline-credential": {
-   "count": 16,
-   "excluded": [
-    {
-     "id": "seclists",
-     "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
-     "status": "data"
-    },
-    {
-     "id": "pw-packs",
-     "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
-     "status": "data"
-    }
-   ],
-   "installable": [
-    "hashcat",
-    "john",
-    "johnny",
-    "ophcrack",
-    "crunch",
-    "cewl",
-    "maskgen",
-    "policygen",
-    "statsgen",
-    "hashid",
-    "hash-identifier",
-    "bopscrk",
-    "rsmangler",
-    "twofi"
-   ]
-  },
-  "c-06-reverse-engineering": {
-   "count": 26,
-   "excluded": [],
-   "installable": [
-    "ghidra",
-    "radare2",
-    "rizin",
-    "cutter",
-    "iaito",
-    "gdb",
-    "gef",
-    "pwndbg",
-    "peda",
-    "capstone",
-    "cstool",
-    "checksec",
-    "jadx",
-    "bytecode-viewer",
-    "apktool",
-    "dex2jar",
-    "javasnoop",
-    "jd-gui",
-    "smali",
-    "unicorn",
-    "angr",
-    "qiling",
-    "unipacker",
-    "pyinstaller-extractor",
-    "edb-debugger",
-    "binwalk"
-   ]
-  },
-  "c-07-signal-sdr": {
-   "count": 6,
-   "excluded": [
-    {
-     "id": "gnuradio",
-     "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
-     "status": "data"
-    },
-    {
-     "id": "gqrx",
-     "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
-     "status": "data"
-    },
-    {
-     "id": "hackrf-tools",
-     "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
-     "status": "data"
-    },
-    {
-     "id": "sox",
-     "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
-     "status": "data"
-    },
-    {
-     "id": "librosa",
-     "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
-     "status": "data"
-    }
-   ],
-   "installable": [
-    "pysox"
-   ]
-  },
-  "c-08-exploitation-post-exploitation": {
-   "count": 9,
-   "excluded": [
-    {
-     "id": "webshell-analysis-pack",
-     "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
-     "status": "data"
-    }
-   ],
-   "installable": [
-    "metasploit-framework",
-    "msfvenom",
-    "beef-xss",
-    "weevely",
-    "laudanum",
-    "peass-ng",
-    "unix-privesc-check",
-    "pspy"
-   ]
-  },
-  "c-09-forensics-ir-reporting": {
-   "count": 21,
-   "excluded": [
-    {
-     "id": "sysmon-modular",
-     "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
-     "status": "data"
-    },
-    {
-     "id": "timesketch",
-     "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
-     "status": "module"
-    },
-    {
-     "id": "faraday",
-     "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
-     "status": "module"
-    },
-    {
-     "id": "pwndoc-ng",
-     "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
-     "status": "module"
-    }
-   ],
-   "installable": [
-    "autopsy",
-    "sleuthkit",
-    "volatility3",
-    "hashdeep",
-    "chkrootkit",
-    "rkhunter",
-    "dc3dd",
-    "ewfacquire",
-    "guymager",
-    "regripper",
-    "testdisk",
-    "photorec",
-    "bulk_extractor",
-    "chainsaw",
-    "hayabusa",
-    "sigma-cli",
-    "plaso"
-   ]
-  },
-  "c-10-runtime-appsec-ai": {
-   "count": 7,
-   "excluded": [
-    {
-     "id": "vulnerable-llm-apps",
-     "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
-     "status": "data"
-    },
-    {
-     "id": "asvs-verification-toolkit",
-     "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
-     "status": "data"
-    }
-   ],
-   "installable": [
-    "mitmproxy",
-    "oauth-mcp-prober",
-    "sdl3-stream-fuzzer",
-    "llm-fuzzer",
-    "ais"
-   ]
-  },
-  "d-01-runtime-defence": {
-   "count": 7,
-   "excluded": [],
-   "installable": [
-    "nemo-guardrails",
-    "llm-guard",
-    "guardrails-ai",
-    "rebuff",
-    "gaskunk",
-    "llm-firewall",
-    "whisper-gate"
-   ]
-  },
-  "d-02-detection-monitoring-observability": {
-   "count": 8,
-   "excluded": [
-    {
-     "id": "langfuse",
-     "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
-     "status": "module"
-    }
-   ],
-   "installable": [
-    "phoenix",
-    "whylogs",
-    "evidently",
-    "otel-ai",
-    "prompt-injection-detector-bert",
-    "canary-token-generator",
-    "giskard"
-   ]
-  },
-  "d-03-assurance-evals-benchmarks": {
-   "count": 6,
-   "excluded": [],
-   "installable": [
-    "lm-eval-harness",
-    "deepeval",
-    "robustbench",
-    "huggingface-evaluate",
-    "fairlearn",
-    "aif360"
-   ]
-  },
-  "d-04-provenance-signing-trust": {
-   "count": 10,
-   "excluded": [],
-   "installable": [
-    "cosign",
-    "syft",
-    "grype",
-    "trivy",
-    "cyclonedx-cli",
-    "cdxgen",
-    "sigstore-tools",
-    "modelsign",
-    "hf-repo-auditor",
-    "model-card-toolkit"
-   ]
-  },
-  "d-05-threat-modelling": {
-   "count": 6,
-   "excluded": [
-    {
-     "id": "genai-threat-modelling-templates",
-     "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
-     "status": "data"
-    },
-    {
-     "id": "stride-ai-worksheet",
-     "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
-     "status": "data"
-    },
-    {
-     "id": "atlas-case-study-explorer",
-     "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
-     "status": "data"
-    },
-    {
-     "id": "ai-incident-playbook-packs",
-     "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
-     "status": "data"
-    }
-   ],
-   "installable": [
-    "atlas-visualiser",
-    "maestro"
-   ]
-  },
-  "d-06-governance-regulation-mapping": {
-   "count": 4,
-   "excluded": [
-    {
-     "id": "nist-ai-rmf-toolkit",
-     "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
-     "status": "data"
-    },
-    {
-     "id": "iso-42001-templates",
-     "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
-     "status": "data"
-    },
-    {
-     "id": "genai-vendor-review-form",
-     "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
-     "status": "data"
-    }
-   ],
-   "installable": [
-    "ai-act-compliance-checker"
-   ]
-  },
-  "d-07-standards-verification": {
-   "count": 4,
-   "excluded": [
-    {
-     "id": "aisvs-1.0-toolkit",
-     "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
-     "status": "data"
-    },
-    {
-     "id": "mlsvs-toolkit",
-     "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
-     "status": "data"
-    },
-    {
-     "id": "llm-top10-toolkit",
-     "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
-     "status": "data"
-    }
-   ],
-   "installable": [
-    "kailash-verifier"
-   ]
-  },
-  "o-01-mlops-ml-engineering": {
-   "count": 18,
-   "excluded": [
-    {
-     "id": "mlflow",
-     "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
-     "status": "module"
-    },
-    {
-     "id": "clearml",
-     "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
-     "status": "module"
-    },
-    {
-     "id": "airflow",
-     "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
-     "status": "module"
-    },
-    {
-     "id": "prefect",
-     "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
-     "status": "module"
-    }
-   ],
-   "installable": [
-    "dvc",
-    "git-lfs",
-    "bentoml",
-    "feast",
-    "kedro",
-    "kedro-datasets",
-    "wandb-cli",
-    "pandas",
-    "polars",
-    "scikit-learn",
-    "numpy",
-    "scipy",
-    "xgboost",
-    "lightgbm"
-   ]
-  },
-  "o-02-compute-serving-infrastructure": {
-   "count": 11,
-   "excluded": [
-    {
-     "id": "triton-inference-server",
-     "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
-     "status": "module"
-    },
-    {
-     "id": "ray",
-     "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
-     "status": "module"
-    }
-   ],
-   "installable": [
-    "vllm",
-    "tgi",
-    "torchserve",
-    "kserve",
-    "k3s",
-    "minikube",
-    "kind",
-    "podman",
-    "nvidia-container-toolkit"
-   ]
-  },
-  "o-03-vector-stores-retrieval": {
-   "count": 9,
-   "excluded": [
-    {
-     "id": "weaviate",
-     "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
-     "status": "module"
-    },
-    {
-     "id": "pgvector",
-     "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
-     "status": "module"
-    },
-    {
-     "id": "elasticsearch",
-     "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
-     "status": "module"
-    },
-    {
-     "id": "milvus",
-     "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
-     "status": "module"
-    }
-   ],
-   "installable": [
-    "chromadb",
-    "qdrant",
-    "faiss",
-    "txtai",
-    "jina-embeddings-cli"
-   ]
-  },
-  "o-04-local-llm-inference-labs": {
-   "count": 5,
-   "excluded": [],
-   "installable": [
-    "ollama",
-    "llama.cpp",
-    "text-generation-webui",
-    "open-webui",
-    "gguf-quantiser"
-   ]
-  },
-  "o-05-ai-engineering-sdks-dev-env": {
-   "count": 26,
-   "excluded": [],
-   "installable": [
-    "langchain",
-    "langgraph",
-    "llama-index",
-    "openai-python",
-    "anthropic-python",
-    "google-genai",
-    "autogen",
-    "crewai",
-    "pytorch",
-    "torchvision",
-    "torchaudio",
-    "tensorflow",
-    "jax",
-    "onnxruntime",
-    "transformers",
-    "datasets",
-    "peft",
-    "trl",
-    "vscode",
-    "code-server",
-    "neovim",
-    "python-lsp-server",
-    "uv",
-    "ruff",
-    "mypy",
-    "python313"
-   ]
-  },
-  "o-06-documentation-reporting-authoring": {
-   "count": 10,
-   "excluded": [
-    {
-     "id": "texlive-full",
-     "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
-     "status": "data"
-    },
-    {
-     "id": "dradis",
-     "note": "service-module row \u2014 the tool ships as a systemd service, not a package-list surface",
-     "status": "module"
-    }
-   ],
-   "installable": [
-    "quarto",
-    "pandoc",
-    "typst",
-    "mdbook",
-    "drawio",
-    "excalidraw",
-    "mermaid-cli",
-    "obsidian"
-   ]
-  },
-  "o-07-agent-mcp-operability": {
-   "count": 8,
-   "excluded": [
-    {
-     "id": "malicious-mcp-poc",
-     "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
-     "status": "data"
-    },
-    {
-     "id": "insecure-mcp-lab",
-     "note": "data-pack row (opt-in; D7) \u2014 category modules never install data rows",
-     "status": "data"
-    }
-   ],
-   "exp": [
-    "hexstrike-ai",
-    "mcp-kali-server",
-    "kailash-mcp",
-    "kailash-container",
-    "headless-agent"
-   ],
-   "installable": [
-    "mcp-inspector"
-   ]
-  }
- },
- "schema": "manifest-ids-v1",
- "tools_total": 337
+  "schema": "manifest-ids-v1",
+  "tools_total": 270
 }

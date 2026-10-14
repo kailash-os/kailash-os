@@ -4,8 +4,9 @@
 #
 # Boots nothing and fabricates nothing on CI. The §8.2 name carries the
 # INTEGRATION acceptance: O-1 (the MLflow unauth lab default,
-# services.kailash.mlflow) up, the A-7 mlflow-bypass surface paired
-# against it, the artefact listing asserted. CI legs assert the
+# services.kailash.mlflow) up, the A-7 MLflow-exploit probe pair
+# (transparent, real API protocol) paired against it, the artefact
+# listing asserted. CI legs assert the
 # COMPOSITION (flake.nix checks.integration-mlflow-attack-*); this
 # probe pair runs where the booted VM's endpoints are — inside the booted
 # Kailash VM, or from the host at the qemu hostfwd ports (the
@@ -36,14 +37,13 @@
 #                  existing run id on an already-seeded experiment
 #                  (the maintainer's seeded lab).
 #
-# THE A-7 TOOL ITSELF stays off PATH — the mlflow-bypass manifest row is
-# safety.level == "exp"; the §11.2 double-key gate owns that surface and
-# no bare upstream derivation substitutes for its bespoke recipe either
-# (the 2026-10-13 lane record for the mlflow-bypass upstream is a
-# missing-repository note on kailash-os#23; the lane's transparent
-# lab probe carries the two API recipes so the acceptance runs the
-# REAL protocol against the REAL target, and the maintainer's
-# interactive boot records the REAL tool when it lands).
+# THE A-7 TOOL NAME rides the registry — os#210 (2026-10-14) audit:
+# the pre-purge manifest row's claimed kailash-os upstream was NEVER
+# created (a phantom row, removed), so the acceptance runs the REAL
+# protocol directly: this transparent lab probe carries the two API
+# recipes against the REAL target, per the no-invented-transcripts
+# rule. When a real A-7 tool ships (rebuild contract, os#210), the
+# maintainer's interactive boot records it here.
 #
 # Verdict discipline mirrors tools/vm-acceptance-harness.sh: the probes
 # print ATTEMPTED/ok/FAIL — never "PASS" — and every probe's verbatim
@@ -171,7 +171,7 @@ if [ "$SEED" = "1" ]; then
     # the artefact: marker + a local temp file (the proxied file store
     # uploads by file — the multipart form the REST API documents)
     tmp="$(mktemp)"
-    printf 'kailash KA-23 mlflow-bypass listing probe — %s\n' "$marker" > "$tmp"
+    printf 'kailash KA-23 A-7 MLflow listing probe — %s\n' "$marker" > "$tmp"
     echo "--- bypass(seed): PUT /api/2.0/mlflow-artifacts/artifacts/put (UNAUTH multipart)"
     put_out="$(curl -fsS -m 30 -X PUT "$ARTIFACTS_URL/api/2.0/mlflow-artifacts/artifacts/put?path=0%2F$run_id%2Fartifacts%2Fka23-listing.txt" \
       -F "file=@$tmp" 2>&1)"

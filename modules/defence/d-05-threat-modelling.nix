@@ -11,13 +11,13 @@
 #     row stays bespoke (overlay-pending); binding the colliding attr
 #     would install the wrong tool — the D-4-side NATIVE_BINDINGS gate
 #     records no entry for it on purpose;
-#   * atlas-visualiser — bespoke, derivation pending (its
-#     kailash-os/atlas-visualiser upstream is 404 at this date — the
-#     ko-record rule): drops via the bare guard, returns with its lane;
-#   * genai-threat-modelling-templates, stride-ai-worksheet,
-#     atlas-case-study-explorer, ai-incident-playbook-packs —
-#     status:data rows, EXCLUDED by the generator (the opt-in data-pack
-#     rule; never install sets).
+#   * (os#210 purge, 2026-10-14) atlas-visualiser and the four
+#     template/data rows (genai-threat-modelling-templates,
+#     stride-ai-worksheet, atlas-case-study-explorer,
+#     ai-incident-playbook-packs) were phantom-upstream — their
+#     claimed kailash-os repos never existed: removed; names in the
+#     registry (kailash-os#210). The category's real surface is maestro
+#     (upstream agentic-threat-modeling/MAESTRO, overlay-pending).
 #
 # SAFETY: every d-05 row is safety.level "safe" at this revision.
 { config, lib, pkgs, ... }:
@@ -28,18 +28,17 @@ let
   ids = (builtins.fromJSON (builtins.readFile ../../generated/manifest-ids.json))
     .categories.d-05-threat-modelling.installable;
 
-  # No binding at this pin: maestro is the collision above (NOT bound),
-  # atlas-visualiser is overlay-pending — the bare guard drops both.
+  # No binding at this pin: maestro is the collision above (NOT bound;
+  # its real overlay derivation is pending) — the bare guard drops it.
   attrFor = id: pkgs."${id}" or null;
 
   installSet = lib.filter (p: p != null) (map attrFor ids);
 in
 {
   config = {
-    # The manifest-driven install set (0 of the 2 installable rows bind
-    # at this pin — the maestro collision + the atlas-visualiser
-    # pending lane, both named above; the four data rows sit in the
-    # generator's excluded ledger).
+    # The manifest-driven install set (0 rows bind at this pin — the
+    # maestro collision means its real derivation is the pending lane;
+    # the pre-purge data/visualiser rows were removed per os#210).
     kailash.layers.defence.categories.d-05.packages = installSet;
 
     environment.systemPackages = lib.mkIf cfg.enable cfg.packages;

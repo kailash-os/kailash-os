@@ -5,27 +5,19 @@
 # modules/base/layer-tree.nix), `mkIf enable` installs (opt-in by
 # default — nothing on PATH until the category switch is ON).
 #
-# SAFETY (§11.2 posture, read from the generator's ledger — the manifest
-# is the single home of the facts; KA-22 extended gen-categories.py to
-# carry the exp ledger):
-#   * torch-load-poc is the lone exp row — it rides the ledger's `exp`
-#     key, NEVER `installable`, never a package-list surface (the §11.2
-#     double-key gate owns exp routing);
-#   * no data row in this category (the ledger's `excluded` is empty);
-#   * the seven installable rows are package-list surfaces.
-#
-# BINDING TABLE (probed at nixpkgs 8c3ced + packages pin ef70ec4 — never
-# assumed id==attr): modelscan is the category's NATIVE row — it binds
-# the bare top-level nixpkgs attr at this pin (modelscan 0.8.8, probed
-# via the sentinel eval; NOT a python3Packages attr). guarddog,
-# picklescan, gguf-template-inspector, safetensors-checker,
-# hf-repo-inspector, namespace-reuse-check are manifest-BESPOKE rows
-# whose kailash-packages derivations have NOT landed at this pin — they
-# fall to the bare guard, resolve null and DROP (named above) without
-# breaking eval; guarddog + picklescan return with their derivation
-# lane (the kailash-packages pkgs/guarddog pkgs/picklescan dirs), the
-# 404-upstream probe rows keep the derivation-free record (the
-# kailash-os#22 lane notes on BOTH repos).
+# SAFETY (§11.2 posture; os#210 purge update 2026-10-14): the exp row
+# (torch-load-poc) and the four supply-chain inspector rows
+# (gguf-template-inspector, safetensors-checker, hf-repo-inspector,
+# namespace-reuse-check) were phantom-upstream — claimed kailash-os
+# repos never created, removed by the os#210 audit; the aspirational
+# names live in the registry (kailash-os#210). The three real rows:
+#   * guarddog, picklescan — bespoke, derivations LANDED in
+#     kailash-packages pkgs/ (the KA-22 lanes);
+#   * modelscan — NATIVE (upstream protectai/modelscan; binds the bare
+#     top-level nixpkgs attr, modelscan 0.8.8 probed 2026-10-14 per the
+#     os#210 gate receipt — NOT a python3Packages attr).
+# No data row in this category; the three installable rows are
+# package-list surfaces.
 { config, lib, pkgs, ... }:
 
 let
@@ -34,18 +26,18 @@ let
   ledger = (builtins.fromJSON (builtins.readFile ../../generated/manifest-ids.json))
     .categories.a-04-model-supply-chain;
 
-  # No non-bare bindings at this pin: the six pending bespoke rows keep
-  # the bare guard; modelscan resolves bare (id == pinned-nixpkgs attr).
+  # Binding: guarddog/picklescan bind their landed overlay derivations;
+  # modelscan resolves bare (id == pinned-nixpkgs attr).
   attrFor = id: pkgs."${id}" or null;
 
   installSet = lib.filter (p: p != null) (map attrFor ledger.installable);
 in
 {
   config = {
-    # The manifest-driven install set (1 of the 7 rows at this pin:
-    # modelscan native; guarddog + picklescan return with their
-    # derivation lane; the four 404-upstream probe rows stay
-    # derivation-free).
+    # The manifest-driven install set (all three real rows bind after
+    # the KA-22 derivation lanes: guarddog + picklescan overlay,
+    # modelscan native; the four inspector rows + torch-load-poc were
+    # phantom-upstream, removed per os#210).
     kailash.layers.attack.categories.a-04.packages = installSet;
 
     environment.systemPackages = lib.mkIf cfg.enable cfg.packages;

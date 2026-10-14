@@ -8,9 +8,12 @@
 # manifest is the single home of the facts — recorded per row from the
 # pinned packages manifest):
 #
-#   * SAFETY — SEVEN of the eight o-07 rows are safety.level "exp"
-#     (hexstrike-ai, mcp-kali-server, malicious-mcp-poc, insecure-mcp-lab,
-#     kailash-mcp, kailash-container, headless-agent). §11.2: exp rows
+#   * SAFETY — THREE of the four o-07 rows are safety.level "exp"
+#     (hexstrike-ai, mcp-kali-server, kailash-mcp; os#210 purge update
+#     2026-10-14: malicious-mcp-poc, insecure-mcp-lab, kailash-container,
+#     headless-agent were phantom-upstream rows — claimed kailash-os
+#     upstream repos never created — removed by the audit; names in the
+#     registry, kailash-os#210). §11.2: exp rows
 #     NEVER enter an install set — the lab-mode double-key gate owns
 #     exp routing. The landed bespoke exp faces (kailash-mcp,
 #     hexstrike-ai, mcp-kali-server — from the packages overlay at this
@@ -23,17 +26,12 @@
 #   * mcp-inspector is the ONE safe row (dogfood duty — the CI loop
 #     runs the A-3 scanner suite against kailash-mcp): resolves into
 #     the ordinary §4.5 package-list surface (mkIf enable).
-#   * malicious-mcp-poc + insecure-mcp-lab are DATA rows (opt-in lab
-#     packs, D7) — data rows never ride a category install set; their
-#     fetchable upstreams do not exist at this pin (the manifest rows
-#     record the kailash-os org repos; the data-pack lanes land them).
-#   * kailash-container + headless-agent are manifest-bespoke rows
-#     WITHOUT landed derivations (first-party DELIVERABLES: the image
-#     matrix's boot-to-agent target and the container image — the
-#     images wave lands them; ko#173 records the deliverable-shape
-#     decision). They stay the named drops below — overlay-pending,
-#     resolving null without breaking eval (the D-layer precedent),
-#     each returning when its lane lands.
+#   * (os#210 purge) malicious-mcp-poc + insecure-mcp-lab were DATA
+#     rows and kailash-container + headless-agent were
+#     manifest-bespoke DELIVERABLE rows — all four phantom-upstream
+#     (never-created kailash-os repos), removed by the audit; the
+#     deliverable-shape decision (ko#173) rides the registry's rebuild
+#     contract when the tools exist for real.
 #
 # BINDING TABLE (probed at the OS pin nixpkgs 8c3cede7 + packages
 # overlay ef70ec4 — never assumed id == attr):

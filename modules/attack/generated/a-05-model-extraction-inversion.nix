@@ -22,7 +22,6 @@
       { id = "counterfit"; derivation = "pkgs/counterfit/default.nix"; }
       { id = "foolbox"; derivation = "pkgs/foolbox/default.nix"; }
       { id = "knockoffnets"; derivation = "pkgs/knockoffnets/default.nix"; }
-      { id = "model-extraction-attack"; derivation = "pkgs/model-extraction-attack/default.nix"; }
       { id = "privacy-meter"; derivation = "pkgs/privacy-meter/default.nix"; }
       { id = "tf-privacy"; derivation = "pkgs/tf-privacy/default.nix"; }
     ];

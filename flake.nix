@@ -1261,10 +1261,12 @@ PY
         # pack dirs do not exist → the leg exits 1 ("no derivation for
         # data pack … at the packages pin"); GREEN: with the pin bumped
         # to the KA-13.2 packages side, all three derivations read and
-        # pin-match. The fourth a-02 data row (llm-red-team-col) stays
-        # UNPACKAGED on purpose — its upstream is a 404 (kailash-os#104
-        # lane record); a derivation appearing for it while this leg is
-        # green is the tripwire that forces the record's revisit.
+        # pin-match. (os#210 purge, 2026-10-14: the pre-purge fourth
+        # data row llm-red-team-col was a phantom-upstream row — its
+        # claimed kailash-os repo never existed — REMOVED; the
+        # no-derivation tripwire below is kept as the standing
+        # no-resurrection guard: a derivation for it may only appear
+        # together with a real verified upstream + a valid manifest row.)
         a-02-data-packs-pins = pkgs.runCommand "a-02-data-packs-pins"
           {
             nativeBuildInputs = [ pkgs.bash ];
@@ -1285,7 +1287,7 @@ PY
             echo "a-02-data-packs-pins: FAIL: llm-red-team-col has a derivation but its upstream was a 404 (kailash-os#104 record) — revisit the lane record"
             exit 1
           fi
-          echo "llm-red-team-col: no derivation (upstream 404, recorded) — correct at this pin"
+          echo "llm-red-team-col: manifest row removed (os#210 phantom purge); any re-derivation must ride the registry rebuild contract"
           echo "a-02-data-packs-pins: OK"
           touch $out
         '';
@@ -1869,8 +1871,11 @@ PY
         # ---- integration-mlflow-attack legs (KA-23, kailash-os#23; §8.2) ---
         #
         # The §8.2 integration acceptance: O-1 (the MLflow unauth lab
-        # surface, services.kailash.mlflow) + A-7 (mlflow-bypass) →
-        # asserted artefact listing — the pairing thesis executed. VM
+        # surface, services.kailash.mlflow) + the A-7 MLflow-exploit
+        # probe pair → asserted artefact listing — the pairing thesis
+        # executed (the aspirational tool name rides the os#210
+        # registry; the probe pair is the transparent real-protocol
+        # implementation). VM
         # REALITY (the KA-06.3/KA-08.5 posture): hosted runners cannot
         # BOOT (no KVM) and this lane box cannot BUILD x86_64-linux, so
         # the boot+run rides the KA-08.5 pending-vm record discipline —
@@ -1881,8 +1886,9 @@ PY
         #   * integration-mlflow-attack-wiring — the eval-leg: the a-07
         #     pairing category ON on the acceptance host, its install set
         #     EMPTY by construction (the §11.2 gate owns exp routing),
-        #     the mlflow-bypass EXP row present in the ledger, the a-07
-        #     exp ledger exactly the nine manifest rows, and the
+        #     the a-07 ledger EMPTY post-os#210 (the exp rows were
+        #     phantom-upstream, removed — the pairing runs the REAL
+        #     protocol transparently), and the
         #     mlflow surface (services.kailash.mlflow) ON with the
         #     labReachable posture on the acceptance fixture;
         #   * integration-mlflow-attack-probe-script — the probe pair is
@@ -1906,8 +1912,8 @@ PY
             _evalProofs = [
               (require (accHost.config.kailash.layers.attack.categories.a-07.enable)
                 "integration-mlflow-attack-wiring: the acceptance fixture does not carry the a-07 pairing category (KA-23)")
-              (require (a7Ledger.exp != [ ] && lib.elem "mlflow-bypass" a7Ledger.exp)
-                "integration-mlflow-attack-wiring: mlflow-bypass is not the a-07 exp-ledger record (KA-23)")
+              (require (a7Ledger.exp == [ ])
+                "integration-mlflow-attack-wiring: the a-07 exp ledger is non-empty post-os#210 — every phantom row was removed (kailash-os#210); the probe pair runs the real protocol transparently")
               (require (accA7 == [ ])
                 "integration-mlflow-attack-wiring: the a-07 pairing installed exp tooling on the acceptance host — the §11.2 gate owns exp routing (KA-23)")
               (require (accHost.config.services.kailash.mlflow.enable)
@@ -2133,27 +2139,23 @@ PY
         # regenerated manifest-ids artifact, and the SAME assertions pass
         # through the SAME eval.
         #
-        #   * a-03 (9 rows: 1 data + 2 exp + 6 installable): the two exp
-        #     rows (mcp-unsafe-deser-probe, mcpoison) ride the ledger's
-        #     `exp` key — NEVER installable (the §11.2 double-key gate
-        #     owns exp routing); poisoned-skill-pack is the status:data
-        #     row (ledger `excluded`, D7); the six installable rows are
-        #     ALL manifest-bespoke whose overlay derivations are pending
-        #     at this pin (ef70ec4 — no pkgs/mcp-scan / mcp-guardian /
-        #     mcp-remote / agent-dojo dirs) — the empty install set is
-        #     the CORRECT posture at this pin (the KA-24 d-01
-        #     all-pending precedent), the rows return with their lanes,
-        #     and NO lane may resurrect an exp row into installable
-        #     (the tripwire fires first). mcp-inspector — the §3.1
-        #     attack-chain primary — is an o-07 row (this category
+        # os#210 purge re-basis (2026-10-14): the phantom-upstream rows
+        # (claimed kailash-os repos never created — mcp-unsafe-deser-probe,
+        # poisoned-skill-pack, langchain-vuln-hunter, llm-agent-fuzzer,
+        # torch-load-poc, the four supply-chain inspectors, the model-
+        # extraction row, and every a-06/a-07 bespoke) are REMOVED from
+        # the manifest; registry: kailash-os#210.
+        #   * a-03 (5 rows, all bespoke, derivations LANDED — pk#55):
+        #     mcpoison rides the ledger's `exp` key — NEVER installable
+        #     (the §11.2 double-key gate owns exp routing; its overlay
+        #     derivation is pending); the four installable rows bind
+        #     their landed overlay derivations. mcp-inspector — the
+        #     §3.1 attack-chain primary — is an o-07 row (this category
         #     carries it as a SECONDARY): it composes through the OPS
         #     surface, never here.
-        #   * a-04 (8 rows, none data, 1 exp): torch-load-poc rides the
-        #     ledger's `exp` key; of the seven installable rows ONLY
-        #     modelscan binds at this pin (NATIVE, bare top-level
-        #     nixpkgs attr 0.8.8, sentinel-probed) — guarddog +
-        #     picklescan return with their derivation lane, the four
-        #     404-upstream probe rows keep the derivation-free record.
+        #   * a-04 (3 rows, none data, none exp): modelscan NATIVE
+        #     (bare top-level nixpkgs attr 0.8.8, probed); guarddog +
+        #     picklescan bind their landed derivation lanes.
         a-03-options =
           let
             a3Host = (self.nixosConfigurations.kailash-minimal.extendModules {
@@ -2170,18 +2172,16 @@ PY
             # check at EVAL with its named message — never a silent
             # vacuous touch.
             _evalProofs = [
-              (require (a3Ledger.exp == [ "mcp-unsafe-deser-probe" "mcpoison" ])
-                "a-03-options: the generator's exp ledger does not record exactly [mcp-unsafe-deser-probe, mcpoison] (KA-22 GREEN)")
-              (require (!(lib.elem "mcp-unsafe-deser-probe" a3Ledger.installable) && !(lib.elem "mcpoison" a3Ledger.installable))
-                "a-03-options: an exp row still rides the a-03 installable ledger (KA-22 GREEN)")
+              (require (a3Ledger.exp == [ "mcpoison" ])
+                "a-03-options: the generator's exp ledger does not record exactly [mcpoison] (os#210 purge basis: mcp-unsafe-deser-probe was removed)")
+              (require (!(lib.elem "mcpoison" a3Ledger.installable))
+                "a-03-options: the exp row mcpoison still rides the a-03 installable ledger (KA-22 GREEN)")
               (require (a3PkgNames == [ "mcp-scan" "mcp-guardian" "mcp-remote" "agentdojo" ])
-                "a-03-options: the a-03 install set drifted from the landed overlay set at a3cf74e (mcp-scan, mcp-guardian, mcp-remote, agentdojo — pk#55 merged; the KA-24 d-01 all-pending posture ended with the packaging merge)")
-              (require (!(lib.elem "mcp-unsafe-deser-probe" a3PkgNames) && !(lib.elem "mcpoison" a3PkgNames))
-                "a-03-options: a safety:exp row reached the a-03 package list — the §11.2 gate owns that surface (KA-22)")
-              (require (!(lib.elem "poisoned-skill-pack" (a3Ledger.installable ++ a3Ledger.exp)))
-                "a-03-options: the data row poisoned-skill-pack leaked into the a-03 installable/exp ledgers (D7)")
-              (require (lib.elem "poisoned-skill-pack" (map (e: e.id) a3Ledger.excluded))
-                "a-03-options: the data row poisoned-skill-pack left the ledger's excluded set (D7)")
+                "a-03-options: the a-03 install set drifted from the landed overlay set at a3cf74e (mcp-scan, mcp-guardian, mcp-remote, agentdojo — pk#55 merged)")
+              (require (!(lib.elem "mcpoison" a3PkgNames))
+                "a-03-options: the safety:exp row mcpoison reached the a-03 package list — the §11.2 gate owns that surface (KA-22)")
+              (require (a3Ledger.excluded == [ ])
+                "a-03-options: the a-03 excluded ledger is non-empty post-os#210 — every phantom row was removed; a reappearing data row must come through the os#210 rebuild contract")
             ];
           in
           pkgs.runCommand "a-03-options"
@@ -2207,16 +2207,14 @@ PY
               .categories.a-04-model-supply-chain;
             require = cond: msg: if cond then true else throw msg;
             _evalProofs = [
-              (require (a4Ledger.exp == [ "torch-load-poc" ])
-                "a-04-options: the generator's exp ledger does not record exactly [torch-load-poc] (KA-22 GREEN)")
-              (require (!(lib.elem "torch-load-poc" a4Ledger.installable))
-                "a-04-options: the exp row torch-load-poc still rides the a-04 installable ledger (KA-22 GREEN)")
+              (require (a4Ledger.exp == [ ])
+                "a-04-options: the generator's exp ledger is non-empty post-os#210 — torch-load-poc was a phantom row (removed; kailash-os#210)")
+              (require (builtins.length a4Ledger.installable == 3)
+                "a-04-options: the a-04 installable ledger is not the three real rows (modelscan, guarddog, picklescan — os#210 purge basis)")
               (require (a4PkgNames != [ ])
                 "a-04-options: install set EMPTY — the a-04 category module has not landed (KA-22 GREEN)")
-              (require (!(lib.elem "torch-load-poc" a4PkgNames))
-                "a-04-options: a safety:exp row reached the a-04 package list — the §11.2 gate owns that surface (KA-22)")
-              (require (lib.elem "modelscan" a4PkgNames)
-                "a-04-options: the a-04 category module did not bind the NATIVE modelscan row (KA-22 GREEN)")
+              (require ((lib.elem "modelscan" a4PkgNames) && (lib.elem "guarddog" a4PkgNames) && (lib.elem "picklescan" a4PkgNames))
+                "a-04-options: the a-04 category module did not bind modelscan (NATIVE) + the guarddog/picklescan overlay lanes (KA-22/KA-24 GREEN)")
             ];
           in
           pkgs.runCommand "a-04-options"
@@ -2224,7 +2222,7 @@ PY
               proofs = toString _evalProofs;
             }
             ''
-              echo "a-04 install set (pnames): ${toString a4PkgNames}"
+              echo "a-04 install set (pnames, all three bind): ${toString a4PkgNames}"
               echo "a-04 exp ledger (lab-mode-gated, never installed): ${toString a4Ledger.exp}"
               echo "a-04-options: ${toString (lib.length _evalProofs)} eval proofs passed [${toString _evalProofs}]"
               touch $out
@@ -2245,12 +2243,14 @@ PY
                 "a-05-options: the a-05 ledger carries an exp key — the category's rows are safe/requires-target only (KA-23 GREEN)")
               (require (a5Ledger.excluded == [ ])
                 "a-05-options: the a-05 ledger records an excluded row — no data/module rows in this category (KA-23 GREEN)")
-              (require (builtins.length a5Ledger.installable == 8)
-                "a-05-options: the a-05 installable ledger is not the census's eight rows (KA-23 GREEN)")
+              (require (builtins.length a5Ledger.installable == 7)
+                "a-05-options: the a-05 installable ledger is not the seven real rows (os#210 purge: model-extraction-attack was a phantom row, removed)")
               (require ((lib.elem "art" a5PkgNames) && (lib.elem "counterfit" a5PkgNames))
                 "a-05-options: the landed overlay derivations (art, counterfit) did not bind into the a-05 install set (KA-23 GREEN)")
               (require (!(lib.elem "foolbox" a5PkgNames) && !(lib.elem "cleverhans" a5PkgNames))
                 "a-05-options: a derivation-pending row (foolbox/cleverhans) unexpectedly resolved — revisit the a-05 binding-table record (KA-23)")
+              (require (!(lib.elem "model-extraction-attack" (a5Ledger.installable ++ a5Ledger.exp ++ a5Ledger.excluded)))
+                "a-05-options: the phantom row model-extraction-attack reappeared in the a-05 ledger — rows cannot re-enter without a verified upstream (os#210)")
             ];
           in
           pkgs.runCommand "a-05-options"
@@ -2275,22 +2275,14 @@ PY
               .categories.a-06-multimodal-physical-ai;
             require = cond: msg: if cond then true else throw msg;
             _evalProofs = [
-              (require (a6Ledger.exp == [ "adversarial-clothing" "audio-voice-clone-injector" ])
-                "a-06-options: the generator's exp ledger does not record exactly [adversarial-clothing, audio-voice-clone-injector] (KA-23 GREEN)")
-              (require (!(lib.elem "adversarial-clothing" a6Ledger.installable) && !(lib.elem "audio-voice-clone-injector" a6Ledger.installable))
-                "a-06-options: an exp row still rides the a-06 installable ledger (KA-23 GREEN)")
-              (require (a6Ledger.excluded == [
-                {
-                  id = "adversarial-patches-collection";
-                  note = "data-pack row (opt-in; D7) — category modules never install data rows";
-                  status = "data";
-                }
-              ])
-                "a-06-options: the a-06 excluded ledger does not record the data row adversarial-patches-collection (D7) (KA-23 GREEN)")
-              (require (!(lib.elem "adversarial-patches-collection" (a6Ledger.installable ++ a6Ledger.exp)))
-                "a-06-options: the data row adversarial-patches-collection leaked into the a-06 installable/exp ledgers (D7) (KA-23)")
+              (require (a6Ledger.exp == [ ])
+                "a-06-options: the generator's exp ledger is non-empty post-os#210 — every a-06 row was phantom-upstream (removed; kailash-os#210)")
+              (require (a6Ledger.excluded == [ ])
+                "a-06-options: the a-06 excluded ledger is non-empty post-os#210 — the data row was phantom-origin (removed; kailash-os#210)")
+              (require (a6Ledger.installable == [ ])
+                "a-06-options: the a-06 installable ledger is non-empty post-os#210 — rows cannot re-enter without a verified upstream (kailash-os#210 rebuild contract)")
               (require (a6PkgNames == [ ])
-                "a-06-options: the a-06 install set is NOT empty — both installable rows are derivation-pending at the current packages pin; a resolved row means the binding-table record must be revisited (KA-23)")
+                "a-06-options: the a-06 install set is NOT empty — the category is aspirational-only post-purge; a resolved row means something reappeared without the rebuild contract (os#210)")
             ];
           in
           pkgs.runCommand "a-06-options"
@@ -2298,7 +2290,7 @@ PY
               proofs = toString _evalProofs;
             }
             ''
-              echo "a-06 install set (pnames): ${toString a6PkgNames} (empty: both rows derivation-pending)"
+              echo "a-06 install set (pnames): ${toString a6PkgNames} (empty post-os#210: every phantom row removed)"
               echo "a-06 exp ledger (lab-mode-gated, never installed): ${toString a6Ledger.exp}"
               echo "a-06-options: ${toString (lib.length _evalProofs)} eval proofs passed [${toString _evalProofs}]"
               touch $out
@@ -2316,27 +2308,17 @@ PY
               .categories.a-07-ai-system-exploitation;
             require = cond: msg: if cond then true else throw msg;
             _evalProofs = [
-              (require (a7Ledger.exp == [
-                "mlflow-bypass"
-                "triton-pwn"
-                "torchserve-pwn"
-                "ollama-pwn"
-                "vllm-pwn"
-                "kserve-exploit"
-                "shadow-ray"
-                "vector-db-ripper"
-                "ai-gateway-bypass"
-              ])
-                "a-07-options: the generator's exp ledger does not record exactly the nine A-7 platform-exploit rows (manifest order) (KA-23 GREEN)")
+              (require (a7Ledger.exp == [ ])
+                "a-07-options: the generator's exp ledger is non-empty post-os#210 — every A-7 platform-exploit row was phantom-upstream (removed; kailash-os#210)")
               (require (a7Ledger.installable == [ ])
-                "a-07-options: an a-07 row rides the INSTALLABLE ledger — every A-7 row is safety:exp (spec §2.6 profile Very Low; the §11.2 gate owns the surface) (KA-23)")
+                "a-07-options: an a-07 row rides the INSTALLABLE ledger post-os#210 — the category is aspirational-only (rebuild contract, kailash-os#210)")
               # (a-06/a-08 carry the same ledger shape). The a-07 host must
               # still evaluate cleanly (flake check sweeps every
               # nixosConfiguration) with ZERO a-07-named packages on PATH.
               (require (a7PkgNames == [ ])
-                "a-07-options: the a-07 install set is NOT empty — the §11.2 gate owns the ENTIRE A-7 surface (KA-23)")
-              (require (!(lib.elem "mlflow-bypass" a7PkgNames) && !(lib.elem "mlflow-bypass" a7Ledger.installable))
-                "a-07-options: mlflow-bypass escaped the exp ledger (the §11.2 gate owns exp routing — KA-23)")
+                "a-07-options: the a-07 install set is NOT empty — the category is empty post-os#210; a resolved row means something reappeared without the rebuild contract")
+              (require (!(lib.elem "mlflow-bypass" (a7PkgNames ++ a7Ledger.installable ++ a7Ledger.exp)))
+                "a-07-options: the phantom row mlflow-bypass reappeared in any a-07 ledger surface — rows cannot re-enter without a verified upstream (os#210)")
               (require (let
                 hostNames = map (p: p.pname or (builtins.parseDrvName p.name).name)
                   a7Host.config.environment.systemPackages;
@@ -2349,8 +2331,8 @@ PY
               proofs = toString _evalProofs;
             }
             ''
-              echo "a-07 install set (pnames): ${toString a7PkgNames} (empty by construction: all nine rows are safety:exp)"
-              echo "a-07 exp ledger (lab-mode-gated, never installed): ${toString a7Ledger.exp}"
+              echo "a-07 install set (pnames): ${toString a7PkgNames} (empty post-os#210: the category is aspirational-only)"
+              echo "a-07 exp ledger (lab-mode-gated, never installed): ${toString a7Ledger.exp} (empty post-os#210)"
               echo "a-07-options: ${toString (lib.length _evalProofs)} eval proofs passed [${toString _evalProofs}]"
               touch $out
             '';
@@ -2367,23 +2349,16 @@ PY
               .categories.a-08-data-poisoning;
             require = cond: msg: if cond then true else throw msg;
             _evalProofs = [
-              (require (a8Ledger.exp == [
-                "poison-dataset-builder"
-                "trojan-lm-toolkit"
-                "prompt-backdoor-tool"
-                "data-exfil-via-poison"
-              ])
-                "a-08-options: the generator's exp ledger does not record exactly the four A-8 poisoning-exploit rows (manifest order) (KA-23 GREEN)")
-              (require (!(lib.elem "poison-dataset-builder" a8Ledger.installable) && !(lib.elem "data-exfil-via-poison" a8Ledger.installable))
-                "a-08-options: an exp row still rides the a-08 installable ledger (KA-23 GREEN)")
+              (require (a8Ledger.exp == [ ])
+                "a-08-options: the generator's exp ledger is non-empty post-os#210 — the four poisoning-workbench rows were phantom-upstream (removed; kailash-os#210)")
               (require (a8Ledger.excluded == [ ])
-                "a-08-options: the a-08 ledger records an excluded row — no data rows in this category (KA-23 GREEN)")
-              (require (builtins.length a8Ledger.installable == 2)
-                "a-08-options: the a-08 installable ledger is not the census's two rows (KA-23 GREEN)")
-              (require (a8PkgNames == [ ]
-                && (builtins.elem "trojai-toolkit" a8Ledger.installable)
-                && (builtins.elem "split-view-replay" a8Ledger.installable))
-                "a-08-options: the a-08 installable rows (trojai-toolkit, split-view-replay) must both remain derivation-pending drops at the current packages pin (KA-23)")
+                "a-08-options: the a-08 ledger records an excluded row post-os#210 — no data rows remain in this category")
+              (require (a8Ledger.installable == [ "trojai-toolkit" ])
+                "a-08-options: the a-08 installable ledger is not exactly [trojai-toolkit] (os#210 purge: split-view-replay was a phantom row, removed)")
+              (require (a8PkgNames == [ ])
+                "a-08-options: the a-08 install set is NOT empty — trojai-toolkit's derivation stays overlay-pending at this pin (KA-23)")
+              (require (!(lib.elem "split-view-replay" (a8PkgNames ++ a8Ledger.installable ++ a8Ledger.exp)))
+                "a-08-options: the phantom row split-view-replay reappeared in any a-08 ledger surface — rows cannot re-enter without a verified upstream (os#210)")
             ];
           in
           pkgs.runCommand "a-08-options"
@@ -2391,7 +2366,7 @@ PY
               proofs = toString _evalProofs;
             }
             ''
-              echo "a-08 install set (pnames): ${toString a8PkgNames} (empty: both rows derivation-pending)"
+              echo "a-08 install set (pnames): ${toString a8PkgNames} (empty: trojai-toolkit derivation-pending)"
               echo "a-08 exp ledger (lab-mode-gated, never installed): ${toString a8Ledger.exp}"
               echo "a-08-options: ${toString (lib.length _evalProofs)} eval proofs passed [${toString _evalProofs}]"
               touch $out

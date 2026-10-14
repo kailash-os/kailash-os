@@ -12,22 +12,22 @@
 # eight rows are package-list surfaces.
 #
 # BINDING TABLE (probed at nixpkgs 8c3ced + packages pin a3cf74e — never
-# assumed id==attr): all eight rows are manifest-BESPOKE (status
-# bespoke, derivation pkgs/<id>/default.nix). At this pin TWO have
-# landed in kailash-packages pkgs/ and bind through the composed
-# overlay: art 1.20.1 (pkgs/art, KA-12.1) and counterfit 1.1.0
-# (pkgs/counterfit, KA-12.2). The SIX derivation-pending rows —
-# foolbox, cleverhans, knockoffnets, model-extraction-attack,
-# tf-privacy, privacy-meter — fall to the bare guard, resolve null and
-# DROP (named above) without breaking eval — the same honest-pending
-# posture a-03 and a-04 record: `foolbox` and `cleverhans` are the
-# plan's "week-after" rows (the manifest tags say so on the row), and
-# tf-privacy/privacy-meter/knockoffnets/model-extraction-attack bind
-# upstream python sources (tensorflow/privacy, privacytrustlab/
-# ml_privacy_meter — note the manifest's `privacy-meter` id maps the
-# ml_privacy_meter repo, not a same-named repo — and
-# tribhuvanesh/knockoffnets) whose derivation lanes land after this
-# module. Each row returns through the SAME bare guard the moment its
+# assumed id==attr): seven real rows post-os#210 (the pre-purge
+# model-extraction-attack row was a phantom — claimed kailash-os repo
+# never created — removed per os#210). At this pin TWO have landed in
+# kailash-packages pkgs/ and bind through the composed overlay:
+# art 1.20.1 (pkgs/art, KA-12.1) and counterfit 1.1.0
+# (pkgs/counterfit, KA-12.2). The FIVE derivation-pending rows —
+# foolbox, cleverhans, knockoffnets, tf-privacy, privacy-meter —
+# fall to the bare guard, resolve null and DROP (named above) without
+# breaking eval — the same honest-pending posture a-03 and a-04
+# record: `foolbox` and `cleverhans` are the plan's "week-after" rows
+# (the manifest tags say so on the row), and
+# tf-privacy/privacy-meter/knockoffnets bind upstream python sources
+# (tensorflow/privacy, privacytrustlab/ml_privacy_meter — note the
+# manifest's `privacy-meter` id maps the ml_privacy_meter repo, not a
+# same-named repo — and tribhuvanesh/knockoffnets) whose derivation
+# lanes land after this module. Each row returns through the SAME bare guard the moment its
 # pkgs/<id> dir lands in kailash-packages and the lock rides forward;
 # the a-05-ledger legs (a-05-options) own the count proof every PR.
 { config, lib, pkgs, ... }:
