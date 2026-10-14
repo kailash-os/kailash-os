@@ -18,10 +18,12 @@
 # (kailash-os#210).
 #
 # DATA rows never install (the generator's excluded ledger in
-# generated/manifest-ids.json records them): llm-red-team-col,
-# jailbreak-payloads, libertas-prompts, llm-jailbreak-bench are
-# status:"data" packs — opt-in data-packs, never on default profiles;
-# their land rides ko#104 (KA-13.2's payload/data wave).
+# generated/manifest-ids.json records them): jailbreak-payloads,
+# libertas-prompts, llm-jailbreak-bench are status:"data" packs —
+# opt-in data-packs, never on default profiles; their land rides
+# ko#104 (KA-13.2's payload/data wave). The pre-purge fourth data row
+# llm-red-team-col was phantom-upstream — REMOVED per os#210 (2026-10-14),
+# name in the registry; post-purge the data-pack set is exactly three.
 #
 # Binding table (probed at nixpkgs 8c3ced + packages pin 7374e7a —
 # never assumed id==attr): garak, promptfoo, pyrit resolve through the
