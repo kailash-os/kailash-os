@@ -3,11 +3,10 @@
 # (enable + packages declared by modules/base/layer-tree.nix),
 # `mkIf enable` installs (opt-in by default).
 #
-# POST-PURGE STATE: four of the six A-8 rows (poison-dataset-builder,
-# trojan-lm-toolkit, prompt-backdoor-tool, data-exfil-via-poison) were
-# phantom-upstream — their claimed kailash-os repos never existed; the
-# os#210 audit removed them. One further row (poisoned-skill-pack, a
-# data pack) rides a-03's secondary surface and was removed there. The
+# POST-PURGE STATE: four of the six pre-purge A-8 poisoning-workbench
+# rows were phantom-upstream — their claimed kailash-os repos never
+# existed; the os#210 audit removed them. One further pre-purge row (a
+# data pack) rode a-03's secondary surface and was removed there. The
 # category keeps ONE real row (trojai-toolkit, upstream trojai/trojai)
 # as a derivation-pending bespoke install surface. Aspirational names
 # live in the registry (kailash-os#210) and return via the rebuild

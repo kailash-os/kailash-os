@@ -11,9 +11,8 @@
 #     lane — the manifest row stays module-rowed, present, unwired as a
 #     package list, exactly like mlflow's pre-KA-08.1 posture);
 #   * phoenix, whylogs, evidently, otel-ai (openllmetry),
-#     giskard (os#210 purge: prompt-injection-detector-bert +
-#     canary-token-generator were phantom-upstream, removed;
-#     registry: kailash-os#210) —
+#     giskard (os#210 purge: the pre-purge detector + canary-token rows
+#     were phantom-upstream, removed; registry: kailash-os#210) —
 #     manifest-bespoke, derivations NOT landed at this pin → the bare
 #     guard drops them (named, per-row); each returns with its lane.
 #

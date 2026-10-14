@@ -6,11 +6,11 @@
 # default — nothing on PATH until the category switch is ON).
 #
 # SAFETY (§11.2 posture; os#210 purge update 2026-10-14): three of the
-# row families this module recorded pre-purge were phantom-upstream
-# (mcp-unsafe-deser-probe — exp; poisoned-skill-pack — the data row;
-# langchain-vuln-hunter + llm-agent-fuzzer installable-bespoke): their
-# claimed kailash-os upstream repos were never created, the os#210
-# audit removed them, registry: kailash-os#210. mcpoison keeps its
+# row families this module recorded pre-purge (an exp probe row, a data
+# row, two installable-bespoke scanner/fuzzer rows) were
+# phantom-upstream: their claimed kailash-os upstream repos were never
+# created, the os#210 audit removed them, registry: kailash-os#210.
+# mcpoison keeps its
 # exp-class routing (real upstream pulkitb124/mcpoison; its overlay
 # derivation is pending). The five installable rows post-merge:
 # mcp-scan, mcp-guardian, mcp-remote (lanes landed in kailash-packages

@@ -4,9 +4,8 @@
 # kailash.layers.defence.categories.d-06), the KA-13.1 exemplar shape.
 #
 # Binding table (os#210 purge, 2026-10-14): every pre-purge d-06 row
-# (ai-act-compliance-checker, nist-ai-rmf-toolkit, iso-42001-templates,
-# genai-vendor-review-form) was phantom-origin — no real upstream
-# anywhere; removed by the audit; names in the registry
+# (a governance template pack family) was phantom-origin — no real
+# upstream anywhere; removed by the audit; names in the registry
 # (kailash-os#210). The category is EMPTY post-purge: the install mount
 # stays wired for the rebuild contract (a real governance pack returns
 # with a verified upstream through the manifest gate).

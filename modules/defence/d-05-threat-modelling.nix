@@ -11,11 +11,9 @@
 #     row stays bespoke (overlay-pending); binding the colliding attr
 #     would install the wrong tool — the D-4-side NATIVE_BINDINGS gate
 #     records no entry for it on purpose;
-#   * (os#210 purge, 2026-10-14) atlas-visualiser and the four
-#     template/data rows (genai-threat-modelling-templates,
-#     stride-ai-worksheet, atlas-case-study-explorer,
-#     ai-incident-playbook-packs) were phantom-upstream — their
-#     claimed kailash-os repos never existed: removed; names in the
+#   * (os#210 purge, 2026-10-14) the pre-purge visualiser + four
+#     template/data rows were phantom-upstream — their claimed
+#     kailash-os repos never existed: removed; names in the
 #     registry (kailash-os#210). The category's real surface is maestro
 #     (upstream agentic-threat-modeling/MAESTRO, overlay-pending).
 #

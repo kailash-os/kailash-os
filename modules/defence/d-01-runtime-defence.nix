@@ -5,9 +5,9 @@
 # exemplar shape (modules/attack/a-01-ai-recon.nix).
 #
 # Binding table (os#210 purge update 2026-10-14): three of the seven
-# pre-purge rows (gaskunk, llm-firewall, whisper-gate) claimed
-# kailash-os upstream repos that were never created — the os#210 audit
-# removed them as phantom rows, names in the registry (kailash-os#210).
+# pre-purge guard rows claimed kailash-os upstream repos that were never
+# created — the os#210 audit removed them as phantom rows, names in the
+# registry (kailash-os#210).
 # The four real rows (nemo-guardrails, llm-guard, guardrails-ai,
 # rebuff — upstreams NVIDIA-NeMo/Guardrails, protectai/llm-guard,
 # guardrails-ai/guardrails, protectai/rebuff) keep manifest-bespoke

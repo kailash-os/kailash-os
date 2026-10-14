@@ -12,18 +12,18 @@
 # installable row here is safety.level "requires-target" (garak,
 # promptfoo, pyrit) — target-required ATTACK rows: package-list
 # surfaces, NOT exp-gated (only `safety.level == "exp"` rows ride the
-# lab-mode gate). No a-02 row is exp. The pre-purge fourth row
-# (inj3ct-llm) was phantom-upstream — its claimed kailash-os repo was
-# never created; removed by the os#210 audit, name in the registry
-# (kailash-os#210).
+# lab-mode gate). No a-02 row is exp. The pre-purge fourth
+# injection-harness row was phantom-upstream — its claimed kailash-os
+# repo was never created; removed by the os#210 audit, name in the
+# registry (kailash-os#210).
 #
 # DATA rows never install (the generator's excluded ledger in
 # generated/manifest-ids.json records them): jailbreak-payloads,
 # libertas-prompts, llm-jailbreak-bench are status:"data" packs —
 # opt-in data-packs, never on default profiles; their land rides
 # ko#104 (KA-13.2's payload/data wave). The pre-purge fourth data row
-# llm-red-team-col was phantom-upstream — REMOVED per os#210 (2026-10-14),
-# name in the registry; post-purge the data-pack set is exactly three.
+# was phantom-upstream — REMOVED per os#210 (2026-10-14), name in the
+# registry; post-purge the data-pack set is exactly three.
 #
 # Binding table (probed at nixpkgs 8c3ced + packages pin 7374e7a —
 # never assumed id==attr): garak, promptfoo, pyrit resolve through the
@@ -48,8 +48,8 @@ in
 {
   config = {
     # The manifest-driven install set (exactly garak + promptfoo +
-    # pyrit through the overlay; inj3ct-llm was phantom-upstream,
-    # removed per os#210).
+    # pyrit through the overlay; the pre-purge fourth row was
+    # phantom-upstream, removed per os#210).
     kailash.layers.attack.categories.a-02.packages = installSet;
 
     environment.systemPackages = lib.mkIf cfg.enable cfg.packages;

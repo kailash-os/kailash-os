@@ -46,10 +46,9 @@ shape, per the module's `backends` option
    that targets these stores (A-7) is natively derived in the
    packages repo and
    trains against the reachable stores — the wrapper shape is never
-   used to dodge a derivation for offensive tooling. (The pre-purge
-   A-7 row cited here as the example, `vector-db-ripper`, was a
-   phantom-upstream row removed by the os#210 audit — the native-derivation
-   clause itself stands; the name rides the
+   used to dodge a derivation for offensive tooling. (A pre-purge A-7
+   example row was a phantom-upstream row removed by the os#210 audit —
+   the native-derivation clause itself stands; the name rides the
    [phantom-upstream registry](https://github.com/kailash-os/kailash-os/issues/210).)
 
 4. **Eval-time honesty.** The wrappers are eval-asserted

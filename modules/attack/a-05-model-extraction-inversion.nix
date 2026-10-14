@@ -13,8 +13,8 @@
 #
 # BINDING TABLE (probed at nixpkgs 8c3ced + packages pin a3cf74e — never
 # assumed id==attr): seven real rows post-os#210 (the pre-purge
-# model-extraction-attack row was a phantom — claimed kailash-os repo
-# never created — removed per os#210). At this pin TWO have landed in
+# extraction row was a phantom — claimed kailash-os repo never created —
+# removed per os#210). At this pin TWO have landed in
 # kailash-packages pkgs/ and bind through the composed overlay:
 # art 1.20.1 (pkgs/art, KA-12.1) and counterfit 1.1.0
 # (pkgs/counterfit, KA-12.2). The FIVE derivation-pending rows —

@@ -72,10 +72,11 @@
 #                  GUARD-DROPPED, named here: it stays a package-list
 #                  candidate the moment the overlay composes it
 #                  (resolveBespoke finds it unaided);
-#   * (os#210 purge) gguf-quantiser was a phantom first-party row —
-#                  its claimed kailash-os repo never existed; removed
-#                  (registry: kailash-os#210). Real GGUF quantisation
-#                  rides llama.cpp's own quantize workflows.
+#   * (os#210 purge) the pre-purge GGUF-helper row was a phantom
+#                  first-party row — its claimed kailash-os repo never
+#                  existed; removed (registry: kailash-os#210). Real
+#                  GGUF quantisation rides llama.cpp's own quantize
+#                  workflows.
 #
 # TINY TEST MODEL (ko#112, "documented tiny test model") — the module
 # NEVER auto-pulls: services.ollama.loadModels stays empty (upstream

@@ -10,10 +10,10 @@
 #
 #   * SAFETY — THREE of the four o-07 rows are safety.level "exp"
 #     (hexstrike-ai, mcp-kali-server, kailash-mcp; os#210 purge update
-#     2026-10-14: malicious-mcp-poc, insecure-mcp-lab, kailash-container,
-#     headless-agent were phantom-upstream rows — claimed kailash-os
-#     upstream repos never created — removed by the audit; names in the
-#     registry, kailash-os#210). §11.2: exp rows
+#     2026-10-14: the pre-purge lab-pack + deliverable rows were
+#     phantom-upstream — claimed kailash-os upstream repos never
+#     created — removed by the audit; names in the registry,
+#     kailash-os#210). §11.2: exp rows
 #     NEVER enter an install set — the lab-mode double-key gate owns
 #     exp routing. The landed bespoke exp faces (kailash-mcp,
 #     hexstrike-ai, mcp-kali-server — from the packages overlay at this
@@ -26,8 +26,8 @@
 #   * mcp-inspector is the ONE safe row (dogfood duty — the CI loop
 #     runs the A-3 scanner suite against kailash-mcp): resolves into
 #     the ordinary §4.5 package-list surface (mkIf enable).
-#   * (os#210 purge) malicious-mcp-poc + insecure-mcp-lab were DATA
-#     rows and kailash-container + headless-agent were
+#   * (os#210 purge) the pre-purge lab-pack DATA rows and the two
+#     deliverable rows
 #     manifest-bespoke DELIVERABLE rows — all four phantom-upstream
 #     (never-created kailash-os repos), removed by the audit; the
 #     deliverable-shape decision (ko#173) rides the registry's rebuild

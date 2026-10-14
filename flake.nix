@@ -1262,7 +1262,7 @@ PY
         # data pack … at the packages pin"); GREEN: with the pin bumped
         # to the KA-13.2 packages side, all three derivations read and
         # pin-match. (os#210 purge, 2026-10-14: the pre-purge fourth
-        # data row llm-red-team-col was a phantom-upstream row — its
+        # data row (a pre-purge phantom-upstream row) — its
         # claimed kailash-os repo never existed — REMOVED; the
         # no-derivation tripwire below is kept as the standing
         # no-resurrection guard: a derivation for it may only appear
@@ -2138,9 +2138,9 @@ PY
         # through the SAME eval.
         #
         # os#210 purge re-basis (2026-10-14): the phantom-upstream rows
-        # (claimed kailash-os repos never created — mcp-unsafe-deser-probe,
-        # poisoned-skill-pack, langchain-vuln-hunter, llm-agent-fuzzer,
-        # torch-load-poc, the four supply-chain inspectors, the model-
+        # (claimed kailash-os repos never created — the pre-purge probe,
+        # data, scanner/fuzzer and PoC rows, the four supply-chain
+        # inspectors, the model-
         # extraction row, and every a-06/a-07 bespoke) are REMOVED from
         # the manifest; registry: kailash-os#210.
         #   * a-03 (5 rows, all bespoke, derivations LANDED — pk#55):
@@ -2171,7 +2171,7 @@ PY
             # vacuous touch.
             _evalProofs = [
               (require (a3Ledger.exp == [ "mcpoison" ])
-                "a-03-options: the generator's exp ledger does not record exactly [mcpoison] (os#210 purge basis: mcp-unsafe-deser-probe was removed)")
+                "a-03-options: the generator's exp ledger does not record exactly [mcpoison] (os#210 purge basis: a phantom probe row was removed; names ride the registry)")
               (require (!(lib.elem "mcpoison" a3Ledger.installable))
                 "a-03-options: the exp row mcpoison still rides the a-03 installable ledger (KA-22 GREEN)")
               (require (a3PkgNames == [ "mcp-scan" "mcp-guardian" "mcp-remote" "agentdojo" ])
@@ -2206,7 +2206,7 @@ PY
             require = cond: msg: if cond then true else throw msg;
             _evalProofs = [
               (require ((a4Ledger.exp or [ ]) == [ ])
-                "a-04-options: the generator's exp ledger is non-empty post-os#210 — torch-load-poc was a phantom row (removed; kailash-os#210)")
+                "a-04-options: the generator's exp ledger is non-empty post-os#210 — a phantom PoC row was removed (kailash-os#210)")
               (require (builtins.length a4Ledger.installable == 3)
                 "a-04-options: the a-04 installable ledger is not the three real rows (modelscan, guarddog, picklescan — os#210 purge basis)")
               (require (a4PkgNames != [ ])
@@ -2242,13 +2242,13 @@ PY
               (require (a5Ledger.excluded == [ ])
                 "a-05-options: the a-05 ledger records an excluded row — no data/module rows in this category (KA-23 GREEN)")
               (require (builtins.length a5Ledger.installable == 7)
-                "a-05-options: the a-05 installable ledger is not the seven real rows (os#210 purge: model-extraction-attack was a phantom row, removed)")
+                "a-05-options: the a-05 installable ledger is not the seven real rows (os#210 purge: a phantom extraction row was removed)")
               (require ((lib.elem "art" a5PkgNames) && (lib.elem "counterfit" a5PkgNames))
                 "a-05-options: the landed overlay derivations (art, counterfit) did not bind into the a-05 install set (KA-23 GREEN)")
               (require (!(lib.elem "foolbox" a5PkgNames) && !(lib.elem "cleverhans" a5PkgNames))
                 "a-05-options: a derivation-pending row (foolbox/cleverhans) unexpectedly resolved — revisit the a-05 binding-table record (KA-23)")
               (require (!(lib.elem "model-extraction-attack" (a5Ledger.installable ++ (a5Ledger.exp or [ ]) ++ a5Ledger.excluded)))
-                "a-05-options: the phantom row model-extraction-attack reappeared in the a-05 ledger — rows cannot re-enter without a verified upstream (os#210)")
+                "a-05-options: a phantom row reappeared in the a-05 ledger — rows cannot re-enter without a verified upstream (os#210; the name rides the registry)")
             ];
           in
           pkgs.runCommand "a-05-options"
@@ -2320,7 +2320,7 @@ PY
               (require (a7PkgNames == [ ])
                 "a-07-options: the a-07 install set is NOT empty — the category is empty post-os#210; a resolved row means something reappeared without the rebuild contract")
               (require (!(lib.elem "mlflow-bypass" (a7PkgNames ++ a7Ledger.installable ++ (a7Ledger.exp or [ ]))))
-                "a-07-options: the phantom row mlflow-bypass reappeared in any a-07 ledger surface — rows cannot re-enter without a verified upstream (os#210)")
+                "a-07-options: a phantom row reappeared in an a-07 ledger surface — rows cannot re-enter without a verified upstream (os#210; the name rides the registry)")
               (require (let
                 hostNames = map (p: p.pname or (builtins.parseDrvName p.name).name)
                   a7Host.config.environment.systemPackages;
@@ -2356,11 +2356,11 @@ PY
               (require (a8Ledger.excluded == [ ])
                 "a-08-options: the a-08 ledger records an excluded row post-os#210 — no data rows remain in this category")
               (require (a8Ledger.installable == [ "trojai-toolkit" ])
-                "a-08-options: the a-08 installable ledger is not exactly [trojai-toolkit] (os#210 purge: split-view-replay was a phantom row, removed)")
+                "a-08-options: the a-08 installable ledger is not exactly [trojai-toolkit] (os#210 purge: a phantom replay row was removed)")
               (require (a8PkgNames == [ ])
                 "a-08-options: the a-08 install set is NOT empty — trojai-toolkit's derivation stays overlay-pending at this pin (KA-23)")
               (require (!(lib.elem "split-view-replay" (a8PkgNames ++ a8Ledger.installable ++ (a8Ledger.exp or [ ]))))
-                "a-08-options: the phantom row split-view-replay reappeared in any a-08 ledger surface — rows cannot re-enter without a verified upstream (os#210)")
+                "a-08-options: a phantom row reappeared in an a-08 ledger surface — rows cannot re-enter without a verified upstream (os#210; the name rides the registry)")
             ];
           in
           pkgs.runCommand "a-08-options"
@@ -2836,7 +2836,7 @@ PY
       # o-05-platform-services leg through the SAME eval. NOT a product
       # profile: images for the surface are Wave-6 items (KA-28.0
       # QEMU-primary); the acceptance run exercises THIS toplevel, and
-      # the KA-23 mlflow-bypass integration probe pair rides the booted
+      # the KA-23 MLflow-attack integration probe pair rides the booted
       # surface (tools/vm-integration-mlflow-attack.sh on the VM PATH).
       nixosConfigurations.kailash-platform = nixpkgs.lib.nixosSystem {
         inherit system pkgs;
@@ -3168,7 +3168,7 @@ PY
             { c-01 = null; c-02 = null; c-04 = null; c-06 = null; };
         };
         # The §8.2 integration test (KA-23, kailash-os#23): the platform
-        # profile boots and the mlflow-bypass probe pair executes THE
+        # profile boots and the MLflow-attack probe pair executes THE
         # PAIRING THESIS in-guest (the tracked artefact listing,
         # asserted). Hosted CI evals this leg, never boots it (the
         # no-VMs posture, the KA-06.3 precedent); Linux VM hosts run it
