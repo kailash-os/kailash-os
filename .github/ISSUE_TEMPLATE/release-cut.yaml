@@ -1,0 +1,102 @@
+name: Release cut
+description: "The standing per-cut tracking issue — fill in every box (a box that does not apply gets a one-line reason, never silence). Canon: docs/guide/release-checklist.md; ladder: docs/guide/releases.md."
+labels: ["area:docs", "target:2026.01", "type:feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Release-cut tracking issue** — one per release, opened at gate
+        time. Fill the checklist IN this issue as work completes; the
+        cut's completion receipt closes it. Canonical text:
+        `docs/guide/release-checklist.md`. Tag form: `<train>-alpha.N` /
+        `<train>-rc.N` / bare `YYYY.NN` (GA only) — the ladder lives in
+        `docs/guide/releases.md`.
+
+  - type: input
+    id: tag
+    attributes:
+      label: Tag to cut
+      description: "The staged tag this issue tracks, e.g. 2026.01-rc.1"
+      placeholder: "2026.01-rc.1"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: stage
+    attributes:
+      label: Stage
+      description: "alpha = staged development cut (reduced artefact set allowed with explicit gaps) · rc = GA-readiness gate (FULL checklist, no silent deferrals) · GA = bare tag, full artefact matrix + review posture"
+      options:
+        - alpha
+        - rc
+        - GA
+    validations:
+      required: true
+
+  - type: textarea
+    id: train-scope
+    attributes:
+      label: What rides this cut (train scope)
+      description: "The issues/features shipping; the disposition of anything targeted at this train that is NOT shipping (moved to 2026.02/backlog with a comment) — the rc-stage residue rule."
+      placeholder: |
+        Rides: <issue refs>
+        Deferred: <issue refs + why>
+
+  - type: checkboxes
+    id: gate
+    attributes:
+      label: "Phase 1 — Gate (all green BEFORE tagging; a failed box stops the cut until passed or explicitly re-scoped by the maintainer)"
+      options:
+        - label: "Residue sweep — every train-labelled issue closed or explicitly re-scoped (label + comment)"
+        - label: "`nix flake check --all-systems` green on BOTH repos at the release candidates (hosted run ids recorded)"
+        - label: "Truthfulness — manifest validator output recorded; census snapshot in sync; README generated table regenerated"
+        - label: "VM/acceptance evidence — profiles boot + `kailash list` truthfulness recorded (this train's changed smokes re-recorded)"
+        - label: "Lock-bump release PR (packages) — release-review body (sizes, delta, no silent removals) — merged BEFORE tagging; OS lock references the tagged rev"
+        - label: "sweep_refs dry-run green over the about-to-be-public surface"
+        - label: "Signed staged tag — `git tag -v` verifies; rc increments only on material changes; bare YYYY.NN burned by GA only"
+
+  - type: checkboxes
+    id: publish
+    attributes:
+      label: "Phase 2 — Publish"
+      options:
+        - label: "Release draft — notes = CHANGELOG verbatim + recorded evidence; USER publishes"
+        - label: "Image matrix at the tag — every table target has a build record (release trigger + dispatch for stragglers + arm builder)"
+        - label: "SHA256SUMS covers EVERY artefact — ≤2 GiB attached as assets; over-cap documented (digest + flake-pull ref)"
+        - label: "Attestations — SLSA v1.0 + SPDX from the pipeline on every artefact; `gh attestation verify` PASS recorded per shipped file"
+        - label: "Notes' asset table states every artefact's surface (attached / over-cap + flake pull) with build-run links"
+
+  - type: checkboxes
+    id: post
+    attributes:
+      label: "Phase 3 — Post-release"
+      options:
+        - label: "Verify-after-tag — flake check at the tag green; `nix build .#kailash` pulls from Cachix; validator-at-tag matches the notes"
+        - label: "Completion receipt posted on this issue (what shipped + run ids + verification outputs)"
+        - label: "Board sweep — closed items Status=Done, Target mirrors the train"
+        - label: "CHANGELOG.md committed (`## 2026.NN — <date>`); release notes match it verbatim"
+        - label: "sweep_refs re-run over the new public surface; every NEW link GET-verified for kind"
+        - label: "Residue ledger — every deferred item carries a labelled open issue (owner + train named)"
+
+  - type: checkboxes
+    id: site
+    attributes:
+      label: "Site / docs updates riding this train (empty allowed with a reason)"
+      options:
+        - label: "Site pin-rev bump (kailash-website generated sections follow the pinned README/manifest rev)"
+        - label: "docs/guide/images.md updated if the matrix/budgets/surfaces changed"
+        - label: "docs/guide/releases.md touched only via its own naming/policy PR (if the ladder changed)"
+        - label: "SECURITY.md attestations section + the site include-copy resynced (when the policy text changed)"
+        - label: "Site Build page ('what ships when') matches the shipped artefact set"
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: "The recorded outputs: validator, flake-check runs, VM smokes, attestation verifies, build runs, SHA256SUMS. Receipt-format on close."
+      placeholder: |
+        - validator: <output>
+        - flake-check (os): <run id>
+        - flake-check (pk): <run id>
+        - images: <run id(s)>
+        - attestations: <verify outputs>

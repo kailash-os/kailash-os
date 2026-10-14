@@ -152,7 +152,10 @@ reserved for general availability (**versionScheme: `2026.xx`**, the
 nixpkgs, or tooling on its own; source pins and flake inputs move on
 explicit, documented schedules and `main` is never committed directly.
 The full policy, including the staged-cut → GA → re-cut ladder:
-[`docs/guide/releases.md`](docs/guide/releases.md).
+[`docs/guide/releases.md`](docs/guide/releases.md). Every release —
+alpha, rc, GA — fills in the standing checklist
+([`docs/guide/release-checklist.md`](docs/guide/release-checklist.md),
+tracked per cut from the `release-cut` issue template).
 
 ## FAQ
 

@@ -111,6 +111,18 @@ the year's GA is `2027.01`.
 | GA | `2026.01` | the general-availability release for the train, full artefact matrix + review posture | `2026.01` — kept as the reserved name, **not used until GA** |
 | Material re-cut of a shipped GA | `2026.01.1` | only if a shipped GA artefact actually changes | `2026.01.1` |
 
+**The two pre-GA stages differ by commitment, not by form.** `alpha.N`
+cuts iterate freely — the reduced §8.9 artefact set may ship with
+explicitly-documented gaps, and attestation/build coverage is punctual.
+`rc.1` is the **GA-readiness gate**: the standing release checklist
+([`release-checklist.md`](release-checklist.md), tracked per cut from
+the `release-cut` issue template) is filled in FULL — the train's
+backlog disposition recorded (ride with evidence, or explicit re-scope
+to `2026.02`/backlog), the artefact matrix complete at the tag with
+SHA256SUMS covering every artefact, and every gate box ticked. An rc
+increments only on material changes; GA follows an rc except the bare
+tag itself — a material change in between makes `rc.2` first.
+
 Rules:
 
 - **Reserved bare tag.** A bare `2026.xx` reads as general availability,
