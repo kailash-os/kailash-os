@@ -5,8 +5,9 @@
 # POSTURE (the ko#105 contract, verbatim plan clause "lab-default unauth
 # documented, not defaulted"): an MLflow tracking server on
 # services.mlflow's postgres/sqlite backends has NO authentication layer —
-# an unauthenticated, lab-only surface (the pairing-thesis target the A-7
-# mlflow-bypass probe trains against, spec §5.5). The posture is a
+# an unauthenticated, lab-only surface (the pairing-thesis target an A-7
+# MLflow-exploit probe trains against, spec §5.5 — the aspirational tool
+# name rides the os#210 registry until built). The posture is a
 # DOCUMENTED opt-in, never a default:
 #
 #   * enable defaults FALSE — the service only runs when the operator
@@ -96,7 +97,8 @@ in
         THE DOCUMENTED LAB POSTURE (never defaulted — spec §8 Phase 3:
         "lab-default unauth documented, not defaulted"). The lab-exposed
         configuration an operator copies for the pairing-thesis lab (the
-        A-7 mlflow-bypass surface, spec §5.5):
+        spec §5.5 A-7 MLflow-exploit pairing; the aspirational probe tool
+        rides the os#210 registry until built):
 
             services.kailash.mlflow = {
               enable = true;

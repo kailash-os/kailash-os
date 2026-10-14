@@ -1,12 +1,16 @@
-# VM integration test — mlflow-bypass against the O-1 lab surface
-# (KA-23, kailash-os#23; spec §7.2 — the pairing thesis executed).
+# VM integration test — the A-7 MLflow-exploit pairing against the O-1
+# lab surface (KA-23, kailash-os#23; spec §7.2 — the pairing thesis
+# executed; the aspirational tool name rides the os#210 registry — its
+# pre-purge manifest row was phantom-upstream, removed — so the probe
+# pair runs the REAL protocol transparently).
 #
 # The booted-VM acceptance leg: the PLATFORM profile boots
 # (services.kailash.mlflow on :5000 — the unauth lab surface, §11.2
 # posture), the §8.2 probe pair (tools/vm-integration-mlflow-attack.sh)
 # runs IN-GUEST with --seed and the record captures the VERBATIM
 # artefact listing the unauthenticated API returned — O-1 paired with
-# the A-7 mlflow-bypass probe, asserted.
+# the A-7 MLflow-exploit probe pair (transparent, real protocol),
+# asserted.
 #
 # Executed on a Linux VM host:  nix build -L
 #   .#vmTests.x86_64-linux.integration-mlflow-attack
@@ -31,7 +35,7 @@ pkgs.testers.nixosTest {
       # (kailash-platform-acceptance — the o-05-platform-acceptance leg
       # pins it): ollama 0.0.0.0 + the tiny model (the qemu user-net VM
       # is an isolated lab segment), MLflow labReachable (0.0.0.0 — the
-      # unauthenticated lab surface the mlflow-bypass pair probes).
+      # unauthenticated lab surface the probe pair exercises).
       services.ollama.host = "0.0.0.0";
       services.ollama.loadModels = [ "qwen2.5:0.5b" ];
       services.kailash.mlflow.labReachable = true;

@@ -111,66 +111,66 @@ ghidra, radare2, rizin, cutter, iaito, gdb + gef/pwndbg/peda, capstone, cstool, 
 **Kept deliberately narrow, by design:** the SDR toolset that supports AI/ML signal research (GNURadio-driven DSP feeding ML training corpora; audio/signal-based ML work; the audio-voice-clone-injector research in A-6 needs software DSP, not RF hardware). Shipped: gnuradio, gqrx, hackrf-tools, sox, librosa, pysox-as-data — **opt-in via `kailash-data.sdr-tools` toggle, never on an ISO default profile.** Everything else RF (rfcat, spooftooph, ubertooth stack, chirp, fang, and friend) **does not ship**. Revisit only if a specific engagement proves otherwise.
 
 ### C-8. Exploitation & Post-Exploitation — software-only (~9)
-metasploit-framework (pinned; web/API module selection documented), msfvenom, beef-xss, weevely, laudanum, webshell-analysis-pack (data), peass-ng (linpeas/winpeas), unix-privesc-check, pspy. **Nothing network-infrastructure: no impacket suite, no mimikatz/rubeus/bloodhound/sharphound/responder/netexec/smbmap/enum4linux/evil-winrm/kerberoast/krbrelayx/pypykatz/certipy/mitm6/pywsus/dsniff/fragrouter/sniffjoke/evilgrade/veil/shellter/backdoor-factory/armitage** — dropped wholesale vs Kali (the AD/lateral-movement arsenal is out by §1.2). **Profile: Medium.**
+metasploit-framework (pinned; web/API module selection documented), msfvenom, beef-xss, weevely, laudanum, peass-ng (linpeas/winpeas), unix-privesc-check, pspy. **Nothing network-infrastructure: no impacket suite, no mimikatz/rubeus/bloodhound/sharphound/responder/netexec/smbmap/enum4linux/evil-winrm/kerberoast/krbrelayx/pypykatz/certipy/mitm6/pywsus/dsniff/fragrouter/sniffjoke/evilgrade/veil/shellter/backdoor-factory/armitage** — dropped wholesale vs Kali (the AD/lateral-movement arsenal is out by §1.2). **Profile: Medium.**
 
 ### C-9. Forensics, IR & Reporting (~21)
 autopsy, sleuthkit, volatility3, hashdeep, chkrootkit, rkhunter, dc3dd, ewfacquire, guymager, regripper, testdisk, photorec, bulk_extractor, chainsaw, hayabusa, sigma-cli, plaso/log2timeline, timesketch (module), faraday (module), pwndoc-ng, sysmon-modular rules (data). libimobiledevice dropped (mobile-device forensics = hardware-adjacent scope creep; revisit on demand). **Profile: Medium-High.**
 
-### C-10. Runtime AppSec for AI Systems (~7)
-mitmproxy, ais, oauth-mcp-prober, sdl3-stream-fuzzer, llm-fuzzer, vulnerable-llm-apps, asvs-verification-toolkit (the ASVS toolkit data derivs live here and D-7 shares them) — zaproxy rides as C-3-primary with a C-10 secondary. **Profile: Medium.**
+### C-10. Runtime AppSec for AI Systems (~1)
+mitmproxy — zaproxy rides as C-3-primary with a C-10 secondary. The pre-purge AI-scanner/toolkit rows (ais, oauth-mcp-prober, sdl3-stream-fuzzer, llm-fuzzer, vulnerable-llm-apps, asvs-verification-toolkit) were phantom-upstream and are removed; their aspirational names live in [the phantom-upstream registry (os#210)](https://github.com/kailash-os/kailash-os/issues/210) until built for real. **Profile: Medium.**
 
-**Layer CLASSIC summary: 10 categories, ~141 tool slots (plus the opt-in C-7 pack, ~6 more).**
+**Layer CLASSIC summary: 10 categories, ~134 tool slots (plus the opt-in C-7 pack, ~6 more; os#210 purge basis — the pre-purge ~141 counted phantom rows).**
 
 ## 2.3 Layer ATTACK — offensive-AI (8 categories)
 
 The AI-native offensive categories Kali doesn't map at all — mapped from MITRE ATLAS tactics and OWASP LLM Top 10 risks, not invented ad hoc.
 
-### A-1. AI Reconnaissance & Target Discovery (~5)
-The "which AI surfaces does this target expose?" step. recon-ai, llm-recon, trufflehog (leaked AI-provider keys; primary A-1, secondary C-8), huggingface-org-scan, colab-crawler. **Profile: Very Low — all bespoke.**
+### A-1. AI Reconnaissance & Target Discovery (~1)
+The "which AI surfaces does this target expose?" step. trufflehog (leaked AI-provider keys; primary A-1, secondary C-8). The four bespoke recon rows (recon-ai, llm-recon, huggingface-org-scan, colab-crawler) were phantom-upstream and are removed — aspirational names in [the phantom-upstream registry (os#210)](https://github.com/kailash-os/kailash-os/issues/210). **Profile: Very Low.**
 
 ### A-2. LLM Prompt Injection & Jailbreaking (~8)
-garak (flagship), pyrit, promptfoo, inj3ct-llm, plus the payload/data packs: llm-red-team-col, jailbreak-payloads, libertas-prompts (L1B3RT-4S), llm-jailbreak-bench. **Profile: Low-Medium.** (ais primary home is C-10, secondary here.)
+garak (flagship), pyrit, promptfoo, plus the payload/data packs: jailbreak-payloads, libertas-prompts (L1B3RT-4S), llm-jailbreak-bench. The inj3ct-llm row was phantom-upstream (removed [the phantom-upstream registry (os#210)](https://github.com/kailash-os/kailash-os/issues/210)); llm-red-team-col's pack rides this category's registry record until built. **Profile: Low-Medium.**
 
 ### A-3. Agentic, MCP & Tool-Use Attacks (~9)
-mcp-scan, mcp-guardian, mcp-remote/proxy, mcp-unsafe-deser-probe, langchain-vuln-hunter, llm-agent-fuzzer, mcpoison, agent-dojo, poisoned-skill-pack (data, exp-gated) — mcp-inspector rides as O-7-primary with A-3 secondary. **Profile: Very Low — the most novel packaging surface in the spec.**
+mcp-scan, mcp-guardian, mcp-remote/proxy, mcpoison, agent-dojo — mcp-inspector rides as O-7-primary with A-3 secondary. The phantom rows (mcp-unsafe-deser-probe, langchain-vuln-hunter, llm-agent-fuzzer, poisoned-skill-pack) are removed; aspirational names in [the phantom-upstream registry (os#210)](https://github.com/kailash-os/kailash-os/issues/210). **Profile: Very Low — the most novel packaging surface in the spec.**
 
 ### A-4. Model Supply Chain & Artefact Poisoning (~8)
-guarddog, picklescan, modelscan, gguf-template-inspector, safetensors-checker, hf-repo-inspector, namespace-reuse-check, torch-load-poc (exp). **Profile: Very Low.**
+guarddog, picklescan, modelscan. The supply-chain inspector rows (gguf-template-inspector, safetensors-checker, hf-repo-inspector, namespace-reuse-check, torch-load-poc) were phantom-upstream and are removed — aspirational names in [the phantom-upstream registry (os#210)](https://github.com/kailash-os/kailash-os/issues/210). **Profile: Very Low.**
 
 ### A-5. Model Extraction, Inversion & MIA (~8)
-counterfit (pinned, archived, reference), model-extraction-attack, knockoffnets, adversarial-robustness-toolbox, foolbox, cleverhans, tf-privacy, privacy-meter. **Profile: Medium** (heavy python; one-per-tool envs, §4.3).
+counterfit (pinned, archived, reference), knockoffnets, — the model-extraction-attack row was phantom-upstream (removed), adversarial-robustness-toolbox, foolbox, cleverhans, tf-privacy, privacy-meter. **Profile: Medium** (heavy python; one-per-tool envs, §4.3).
 
-### A-6. Multi-modal & Physical-AI Attacks (~5)
-vlm-image-injector, adversarial-patches-collection (data), adversarial-clothing, **audio-voice-clone-injector** (the AI-audio hacking surface: voice-clone injection into voice pipelines, audio-LM prompt injection — pairs with C-7's software DSP carve-out for research inputs), camera-adversarial-toolkit. **Profile: Very Low.** No RF transmission tooling: this category is about ML/semantic attacks on AI systems, not radio hardware.
+### A-6. Multi-modal & Physical-AI Attacks (aspirational-only, 0 built)
+The category is EMPTY at this revision: every A-6 row (vlm-image-injector, adversarial-patches-collection, adversarial-clothing, audio-voice-clone-injector, camera-adversarial-toolkit) claimed a kailash-os upstream repo that was never created — removed by the os#210 audit. The aspirational names live in [the phantom-upstream registry (os#210)](https://github.com/kailash-os/kailash-os/issues/210) (the voice-clone/audio-LM research pairing with C-7 software DSP stays valid as a concept). No RF transmission tooling ever: this category is about ML/semantic attacks on AI systems, not radio hardware. **Profile: n/a until rebuilt.**
 
-### A-7. AI System Exploitation (~9)
-mlflow-bypass, triton-pwn, torchserve-pwn, ollama-pwn, vllm-pwn, kserve-exploit, shadow-ray, vector-db-ripper, ai-gateway-bypass. **Profile: Very Low** — all bespoke; every tool pairs with its OPS-layer target (§5.5).
+### A-7. AI System Exploitation (aspirational-only, 0 built)
+The platform-exploit pairing target: every A-7 row (mlflow-bypass, triton-pwn, torchserve-pwn, ollama-pwn, vllm-pwn, kserve-exploit, shadow-ray, vector-db-ripper, ai-gateway-bypass) claimed a kailash-os upstream repo that was never created — removed by the os#210 audit; all nine names live in [the phantom-upstream registry (os#210)](https://github.com/kailash-os/kailash-os/issues/210). The §5.5 attack/defence pairing thesis is real and stays the rebuild trigger: each name returns only WITH a real, verified upstream. The §7.2 acceptance lab (MLflow unauth posture) is REAL and runs the protocol transparently. **Profile: n/a until rebuilt.**
 
 ### A-8. Data Poisoning & Dataset Attacks (~6)
-poison-dataset-builder, trojai-toolkit, trojan-lm-toolkit, prompt-backdoor-tool, data-exfil-via-poison, split-view-replay. **Profile: Very Low.**
+trojai-toolkit (upstream trojai/trojai). The five poisoning-workbench rows (poison-dataset-builder, trojan-lm-toolkit, prompt-backdoor-tool, data-exfil-via-poison, split-view-replay) were phantom-upstream and are removed — aspirational names in [the phantom-upstream registry (os#210)](https://github.com/kailash-os/kailash-os/issues/210). **Profile: Very Low.**
 
 ## 2.4 Layer DEFENCE — defensive-AI & assurance (7 categories)
 
 ### D-1. AI Runtime Defence & Guardrails (~7)
-nemo-guardrails, llm-guard, guardrails-ai, rebuff, gaskunk, llm-firewall, whisper-gate. **Profile: Low.**
+nemo-guardrails, llm-guard, guardrails-ai, rebuff. The first-party guard rows (gaskunk, llm-firewall, whisper-gate) were phantom-upstream and are removed — aspirational names in [the phantom-upstream registry (os#210)](https://github.com/kailash-os/kailash-os/issues/210). **Profile: Low.**
 
 ### D-2. AI Detection, Monitoring, Observability & IR (~8)
-langfuse (module), phoenix, whylogs, evidently, otel-ai, prompt-injection-detector-bert, canary-token-generator, giskard. **Profile: Low** (langfuse is the heavy one).
+langfuse (module), phoenix, whylogs, evidently, otel-ai, giskard. The prompt-injection-detector-bert + canary-token-generator rows were phantom-upstream and are removed — aspirational names in [the phantom-upstream registry (os#210)](https://github.com/kailash-os/kailash-os/issues/210). **Profile: Low** (langfuse is the heavy one).
 
 ### D-3. AI Assurance, Evals & Benchmarks (~6)
 lm-eval-harness, deepeval, robustbench, huggingface-evaluate, fairlearn, aif360. promptfoo cross-tagged primary A-2/secondary D-3. **Profile: Medium.**
 
 ### D-4. Model Provenance, Signing & Trust (~10)
-cosign, syft, grype, trivy, cyclonedx-cli, cdxgen, sigstore-tools, modelsign, hf-repo-auditor, model-card-toolkit. **Profile: Medium-High.**
+cosign, syft, grype, trivy, cyclonedx-cli, cdxgen, modelsign, model-card-toolkit. The sigstore-tools + hf-repo-auditor rows were phantom-upstream and are removed (the real sigstore client is cosign itself); aspirational names in [the phantom-upstream registry (os#210)](https://github.com/kailash-os/kailash-os/issues/210). **Profile: Medium-High.**
 
 ### D-5. AI Threat Modelling (~6)
-genai-threat-modelling-templates, atlas-visualiser, stride-ai-worksheet, maestro, atlas-case-study-explorer, ai-incident-playbook-packs. **Profile: Very Low** (data + small CLIs).
+maestro (upstream agentic-threat-modeling/MAESTRO). The five template/visualiser rows (genai-threat-modelling-templates, atlas-visualiser, stride-ai-worksheet, atlas-case-study-explorer, ai-incident-playbook-packs) were phantom-upstream and are removed — aspirational names in [the phantom-upstream registry (os#210)](https://github.com/kailash-os/kailash-os/issues/210). **Profile: Very Low** (data + small CLIs).
 
-### D-6. AI Governance & Regulation Mapping (~4)
-ai-act-compliance-checker, nist-ai-rmf-toolkit, iso-42001-templates, genai-vendor-review-form. **Profile: n/a — pure content.**
+### D-6. AI Governance & Regulation Mapping (aspirational-only, 0 built)
+Every D-6 row (ai-act-compliance-checker, nist-ai-rmf-toolkit, iso-42001-templates, genai-vendor-review-form) was a phantom-origin template pack — no real upstream anywhere; removed by the os#210 audit; all four names live in [the phantom-upstream registry (os#210)](https://github.com/kailash-os/kailash-os/issues/210). **Profile: n/a until rebuilt.**
 
-### D-7. Standards Verification Toolkit (~4)
-asvs-verification-toolkit (primary C-10, D-7 secondary), aisvs-1.0-toolkit, mlsvs-toolkit, llm-top10-toolkit, kailash-verifier (the CLI). **Profile: n/a — data + 2 small CLIs.**
+### D-7. Standards Verification Toolkit (aspirational-only, 0 built)
+The standards-verification surface (asvs-verification-toolkit, aisvs-1.0-toolkit, mlsvs-toolkit, llm-top10-toolkit, kailash-verifier) is aspirational-only: the OWASP/NIST STANDARDS are real (AISVS 1.0 exists at OWASP/AISVS; the LLM Top 10 is published), but none of the claimed toolkit repos/CLI were ever created — removed by the os#210 audit; names in [the phantom-upstream registry (os#210)](https://github.com/kailash-os/kailash-os/issues/210). The verifier CLI returns via the rebuild contract once built. **Profile: n/a until rebuilt.**
 
 ## 2.5 Layer OPS — platform (7 categories)
 
@@ -184,7 +184,7 @@ vllm, tgi, torchserve, triton-inference-server (docker-wrapper), kserve, ray (mo
 chromadb, qdrant, weaviate, milvus (docker-wrapper), pgvector, elasticsearch (module), faiss, txtai, jina-embeddings-cli. **Profile: Medium.**
 
 ### O-4. Local LLM & Inference Labs (~5)
-ollama (primary home + documented tiny test model), llama.cpp, text-generation-webui, open-webui, gguf-quantiser. **Profile: Medium-High.**
+ollama (primary home + documented tiny test model), llama.cpp, text-generation-webui, open-webui. The gguf-quantiser helper was a phantom first-party row (removed; the real GGUF quantisation tooling is llama.cpp's own) — name in the registry. **Profile: Medium-High.**
 
 ### O-5. AI Engineering SDKs & Dev Environment (~26)
 langchain, langgraph, llama-index, openai-python, anthropic-python, google-genai, autogen, crewai, pytorch (cpu/cuda variants), torchvision, torchaudio, tensorflow, jax, onnxruntime, transformers, datasets, peft, trl, vscode/code-server, neovim, python-lsp-server, uv, ruff, mypy, python313 + a curated extras set. **Profile: Very High** — nixvital/ml-pkgs' torch-family/jax-family overlays are the upstream currency Kailash depends on rather than re-battling upstream.
@@ -207,33 +207,33 @@ hexstrike-ai (third-party deliverable, exp), mcp-kali-server (deliverable, exp),
 | CLASSIC | C-5 | Password & Offline-Credential Attacks | 16 | High | wordlist/pw packs ride as data rows; online brute-forcing out |
 | CLASSIC | C-6 | Reverse Engineering (software) | 26 | Very High | no hardware/RF RE |
 | CLASSIC | C-7 | Signal & SDR (opt-in carve-out) | 6 | Medium | `kailash-data.sdr-tools` toggle; never on default ISOs |
-| CLASSIC | C-8 | Exploitation & Post-Exploitation (software) | 9 | Medium | no AD/lateral-movement arsenal |
+| CLASSIC | C-8 | Exploitation & Post-Exploitation (software) | 8 | Medium | no AD/lateral-movement arsenal |
 | CLASSIC | C-9 | Forensics, IR & Reporting | 21 | Medium-High | faraday/timesketch as modules |
-| CLASSIC | C-10 | Runtime AppSec for AI Systems | 7 | Medium | ASVS toolkit data deriv shared with D-7 |
-| ATTACK | A-1 | AI Reconnaissance & Target Discovery | 5 | Very Low | all bespoke |
-| ATTACK | A-2 | LLM Prompt Injection & Jailbreaking | 8 | Low-Medium | garak/PyRIT/promptfoo core |
-| ATTACK | A-3 | Agentic, MCP & Tool-Use Attacks | 9 | Very Low | most novel; ATLAS 2026.07 |
-| ATTACK | A-4 | Model Supply Chain & Artefact Poisoning | 8 | Very Low | guarddog/picklescan/modelscan core |
-| ATTACK | A-5 | Model Extraction, Inversion & MIA | 8 | Medium | counterfit/ART research stack |
-| ATTACK | A-6 | Multi-modal & Physical-AI Attacks | 5 | Very Low | voice-clone + adversarial visuals; no RF |
-| ATTACK | A-7 | AI System Exploitation | 9 | Very Low | pairs with O-1/O-2/O-3 |
-| ATTACK | A-8 | Data Poisoning & Dataset Attacks | 6 | Very Low | upstream-of-model attacks |
-| DEFENCE | D-1 | AI Runtime Defence & Guardrails | 7 | Low | NeMo/LLM Guard/Guardrails AI |
-| DEFENCE | D-2 | AI Detection, Monitoring, Observability, IR | 8 | Low | langfuse module heavy |
+| CLASSIC | C-10 | Runtime AppSec for AI Systems | 1 | Medium | ASVS toolkit data deriv shared with D-7 |
+| ATTACK | A-1 | AI Reconnaissance & Target Discovery | 1 | Very Low | all bespoke |
+| ATTACK | A-2 | LLM Prompt Injection & Jailbreaking | 6 | Low-Medium | garak/PyRIT/promptfoo core |
+| ATTACK | A-3 | Agentic, MCP & Tool-Use Attacks | 5 | Very Low | most novel; ATLAS 2026.07 |
+| ATTACK | A-4 | Model Supply Chain & Artefact Poisoning | 3 | Very Low | guarddog/picklescan/modelscan core |
+| ATTACK | A-5 | Model Extraction, Inversion & MIA | 7 | Medium | counterfit/ART research stack |
+| ATTACK | A-6 | Multi-modal & Physical-AI Attacks | 0 | Very Low | aspirational-only — every row was phantom-upstream; names live in the registry ([os#210](https://github.com/kailash-os/kailash-os/issues/210)) until rebuilt for real |
+| ATTACK | A-7 | AI System Exploitation | 0 | Very Low | aspirational-only — every row was phantom-upstream; names live in the registry ([os#210](https://github.com/kailash-os/kailash-os/issues/210)) until rebuilt for real |
+| ATTACK | A-8 | Data Poisoning & Dataset Attacks | 1 | Very Low | upstream-of-model attacks |
+| DEFENCE | D-1 | AI Runtime Defence & Guardrails | 4 | Low | NeMo/LLM Guard/Guardrails AI |
+| DEFENCE | D-2 | AI Detection, Monitoring, Observability, IR | 6 | Low | langfuse module heavy |
 | DEFENCE | D-3 | AI Assurance, Evals & Benchmarks | 6 | Medium | lm-eval-harness core |
-| DEFENCE | D-4 | Model Provenance, Signing & Trust | 10 | Medium-High | sigstore/cosign/modelsign |
-| DEFENCE | D-5 | AI Threat Modelling | 6 | Very Low | templates + small tooling |
-| DEFENCE | D-6 | AI Governance & Regulation Mapping | 4 | n/a | pure content |
-| DEFENCE | D-7 | Standards Verification Toolkit | 4 | n/a | ASVS/AISVS/MLSVS + verifier CLI; toolkit deriv primary C-10 |
+| DEFENCE | D-4 | Model Provenance, Signing & Trust | 8 | Medium-High | sigstore/cosign/modelsign |
+| DEFENCE | D-5 | AI Threat Modelling | 1 | Very Low | templates + small tooling |
+| DEFENCE | D-6 | AI Governance & Regulation Mapping | 0 | n/a | aspirational-only — template packs were phantom-origin; names live in the registry ([os#210](https://github.com/kailash-os/kailash-os/issues/210)) |
+| DEFENCE | D-7 | Standards Verification Toolkit | 0 | n/a | aspirational-only — toolkit packs + verifier CLI not built; names live in the registry ([os#210](https://github.com/kailash-os/kailash-os/issues/210)) |
 | OPS | O-1 | MLOps & ML Engineering Suite | 18 | High | MLflow module (pairing target) |
 | OPS | O-2 | Compute & Serving Infrastructure | 11 | Medium | k3s/podman/vLLM; ollama + llama.cpp primary O-4 |
 | OPS | O-3 | Vector Stores & Retrieval | 9 | Medium | chromadb/qdrant/pgvector |
-| OPS | O-4 | Local LLM & Inference Labs | 5 | Medium-High | ollama documented here |
+| OPS | O-4 | Local LLM & Inference Labs | 4 | Medium-High | ollama documented here |
 | OPS | O-5 | AI Engineering SDKs & Dev Environment | 26 | Very High | the dev layer |
 | OPS | O-6 | Documentation, Reporting & Authoring | 10 | High | quarto/pandoc/typst; texlive opt-in; pwndoc-ng/faraday primary C-9 |
-| OPS | O-7 | Agent & MCP Operability | 8 | mixed | grants + kailash-mcp + rig deliverables |
+| OPS | O-7 | Agent & MCP Operability | 4 | mixed | grants + kailash-mcp + rig deliverables |
 
-**Totals: 31 tool categories across four tool layers — 10 + 8 + 7 + 7 — and 337 primary tool slots** (CLASSIC 141 · ATTACK 58 · DEFENCE 45 · OPS 87, plus data categories excluded from the counts; the opt-in C-7 SDR pack is the one data-pack census category, excluded by the same rule) — sitting on CORE, the substrate layer, which hosts no tool categories. Counts are per-primary-category, each distinct tool counted once, matching the manifest validator's census.
+**Totals: 31 tool categories across four tool layers — 10 + 8 + 7 + 7 — and 270 primary tool slots** (declared basis CLASSIC 134 · ATTACK 23 · DEFENCE 25 · OPS 82, plus data categories excluded from the counts; the opt-in C-7 SDR pack is the one data-pack census category, excluded by the same rule) — sitting on CORE, the substrate layer, which hosts no tool categories. Counts are per-primary-category, each distinct tool counted once, matching the manifest validator's census. **os#210 correction (2026-10-14):** the previous 337-slot sheet counted 66 phantoms — rows whose claimed upstream GitHub repositories were never created; the manifest now carries verified-upstream rows only (the `kailash-packages` validator's upstream-realism gate refuses phantom rows), and the aspirational names live in the [#210 registry](https://github.com/kailash-os/kailash-os/issues/210) until built for real.
 
 ## 2.7 Deliberate exclusions
 
@@ -591,7 +591,7 @@ All via nixos-generators + disko; each target a flake output (the landed matrix 
 
 ## 7.2 The VM test harness
 
-Per-category VM tests (one per category: booted VM + `--help` smoke across the tool list, from the manifest); three integration tests: `integration-full.nix` (full profile boots, menu landed, CLI healthy, sampled tools exec), `integration-mlflow-attack.nix` (O-1 MLflow unauth lab-default + A-7 `mlflow-bypass` → asserted listing — the pairing thesis executed), `integration-garak-local.nix` (O-4 tiny local model + A-2 garak, one probe class; nightly flag, not per-push).
+Per-category VM tests (one per category: booted VM + `--help` smoke across the tool list, from the manifest); three integration tests: `integration-full.nix` (full profile boots, menu landed, CLI healthy, sampled tools exec), `integration-mlflow-attack.nix` (O-1 MLflow unauth lab-default + the A-7 MLflow-exploit probe pair → asserted listing — the pairing thesis executed; the aspirational tool name rides the os#210 registry), `integration-garak-local.nix` (O-4 tiny local model + A-2 garak, one probe class; nightly flag, not per-push).
 
 ## 7.3 The CI pipeline (build.yml)
 
@@ -720,7 +720,7 @@ The flagship five: garak, PyRIT, promptfoo, ART, counterfit — pinned revs, smo
 
 A-3 (mcp-inspector + mcp-scan real derivs; novel probes as documented starter set), A-4 (guarddog/picklescan/modelscan + gguf/safetensors inspectors), A-5/A-6/A-7/A-8 modules; `integration-mlflow-attack.nix` activates; redteam-ai + blue-team-ai profiles land, OVAs build.
 
-**Verify:** redteam-ai OVA boots; mlflow-bypass integration test passes; `kailash list --layer ATTACK` complete.
+**Verify:** redteam-ai OVA boots; the MLflow-exploit integration test passes (real protocol, os#210 note); `kailash list --layer ATTACK` complete.
 
 ## Phase 6 — Layer DEFENCE
 
@@ -738,7 +738,7 @@ D-1 guardrails; D-2 langfuse/phoenix modules activated; D-3 evals (lm-eval-harne
 
 `nix flake check` as the single gate; release workflow per §7.10 (artefact matrix + signed changelog + site deploy); responsible-use review across the manifest; golden-image diff vs previous release (documented delta, no silent removals); the two-machine reproducibility test; tag per the §7.6 scheme; publish.
 
-**Verify (the actual GA acceptance):** `nix flake check` green locally and in CI; ISO-full VM fresh boot: menu navigable, `kailash list` consistent with menu, garak + promptfoo `--help`-able; mlflow-bypass test passes on the released image; the live website TOC links resolve; two machines from the same lock agree bit-for-bit.
+**Verify (the actual GA acceptance):** `nix flake check` green locally and in CI; ISO-full VM fresh boot: menu navigable, `kailash list` consistent with menu, garak + promptfoo `--help`-able; the MLflow-exploit pairing test passes on the released image; the live website TOC links resolve; two machines from the same lock agree bit-for-bit.
 
 
 
@@ -795,61 +795,61 @@ Legend: **status** = native (nixpkgs, lockfile pin) / stale (native + override) 
 | C-7 | gnuradio, gqrx, hackrf-tools, sox, librosa, pysox | data/opt-in |
 | C-7 (deliberately absent) | ALL wifi/bt/rf attack tooling | **not shipped** |
 | C-6 | ghidra, radare2, rizin, cutter, iaito, gdb, gef, pwndbg, peda, capstone, cstool, checksec, jadx, bytecode-viewer, apktool, dex2jar, javasnoop, jd-gui, smali, unicorn, angr, edb-debugger, binwalk, unipacker, qiling, pyinstaller-extractor | native |
-| C-8 | metasploit-framework, msfvenom, beef-xss, weevely, laudanum, webshell-analysis-pack, peass-ng, unix-privesc-check, pspy | native/pinned; webshell-pack data |
+| C-8 | metasploit-framework, msfvenom, beef-xss, weevely, laudanum, peass-ng, unix-privesc-check, pspy | native/pinned (webshell-analysis-pack removed: phantom-origin, os#210) |
 | C-9 | autopsy, sleuthkit, volatility3, hashdeep, chkrootkit, rkhunter, dc3dd, ewfacquire, guymager, regripper, testdisk, photorec, bulk_extractor | native |
 | C-9 | chainsaw, hayabusa, sigma-cli, sysmon-modular | native/data |
 | C-9 | plaso | native |
 | C-9 | timesketch, faraday, pwndoc-ng | module |
-| C-10 | mitmproxy, oauth-mcp-prober, sdl3-stream-fuzzer, llm-fuzzer, vulnerable-llm-apps (zaproxy primary C-3, C-10 secondary) | native + bespoke |
-| C-10 | asvs-verification-toolkit | data |
+| C-10 | mitmproxy (zaproxy primary C-3, C-10 secondary) | native (the four bespoke scanner rows were phantom-upstream, removed per os#210) |
+| C-10 | — (the ASVS toolkit data row was phantom-upstream, removed; aspirational names ride the os#210 registry) | — |
 
 **Layer ATTACK rows** (the bespoke core):
 
 | Cat | Tool(s) | Status | Licence | Safety | Map |
 |---|---|---|---|---|---|
-| A-1 | recon-ai, llm-recon, huggingface-org-scan, colab-crawler | bespoke | new | target | AML.TA0002 |
+| A-1 | — (the four bespoke recon rows were phantom-upstream; removed, names ride the os#210 registry) | — | — | — | AML.TA0002 |
 | A-1 | trufflehog | native | GPL | free | AML.TA0002 |
 | A-2 | garak | bespoke | Apache-2.0 | target | AML.T0051, T0054; LLM01 |
 | A-2 | pyrit | bespoke (pip) | MIT | target | AML.T0051; LLM01 |
 | A-2 | promptfoo | bespoke | MIT | target | LLM01 |
-| A-2 | inj3ct-llm | bespoke | new | target | LLM01 |
+| A-2 | — (inj3ct-llm was phantom-upstream; removed, name rides the os#210 registry) | — | — | — | LLM01 |
 | A-2 | llm-red-team-col, jailbreak-payloads, libertas-prompts, llm-jailbreak-bench | data | varies | n/a | LLM01 |
 | A-3 | mcp-inspector (primary O-7, A-3 secondary/dogfood) | native/overlay | Apache-2.0 | free | AML agentic set |
 | A-3 | mcp-scan | bespoke | new | free | AML.T0051 |
 | A-3 | mcp-guardian, mcp-remote/proxy | bespoke | new | free | AML agentic |
-| A-3 | mcp-unsafe-deser-probe | bespoke | new | exp | AML agentic |
-| A-3 | langchain-vuln-hunter, llm-agent-fuzzer | bespoke | new | target | AML agentic |
+| A-3 | — (mcp-unsafe-deser-probe was phantom-upstream; removed per os#210) | — | — | — | AML agentic |
+| A-3 | — (langchain-vuln-hunter + llm-agent-fuzzer were phantom-upstream; removed, os#210) | — | — | — | AML agentic |
 | A-3 | mcpoison | bespoke | new | exp | AML agentic |
 | A-3 | agent-dojo | bespoke | new | free | AML agentic |
-| A-3 | poisoned-skill-pack | data | n/a | exp | AML agentic |
+| A-3 | — (poisoned-skill-pack was phantom-upstream; removed, os#210) | — | — | — | AML agentic |
 | A-4 | guarddog, picklescan, modelscan | bespoke | MIT etc | free | LLM03; AML.T0010 |
-| A-4 | gguf-template-inspector, safetensors-checker, hf-repo-inspector, namespace-reuse-check | bespoke | new | free | AML.T0010 |
-| A-4 | torch-load-poc | bespoke | new | exp | AML.T0010 |
+| A-4 | — (the four inspector rows were phantom-upstream; removed, os#210) | — | — | — | AML.T0010 |
+| A-4 | — (torch-load-poc was phantom-upstream; removed, os#210) | — | — | — | AML.T0010 |
 | A-5 | counterfit | pinned | MIT | target | AML.T0024 |
-| A-5 | model-extraction-attack, knockoffnets | bespoke | new | target | AML.T0024 |
+| A-5 | knockoffnets | bespoke | new | target | AML.T0024 (model-extraction-attack removed: phantom-upstream, os#210) |
 | A-5 | adversarial-robustness-toolbox | bespoke (pip) | AGPL-class | target | AML toolkit |
 | A-5 | foolbox, cleverhans, tf-privacy | bespoke (pip) | MIT/Apache | target | AML toolkit |
 | A-5 | privacy-meter | bespoke | new | target | AML.TA0000 |
-| A-6 | vlm-image-injector, adversarial-clothing, camera-adversarial-toolkit | bespoke | new/research | target/exp | AML physical |
-| A-6 | adversarial-patches-collection | data | varies | n/a | AML physical |
-| A-6 | audio-voice-clone-injector | bespoke | new | exp | AML multi-modal |
-| A-7 | mlflow-bypass, triton-pwn, torchserve-pwn, ollama-pwn, vllm-pwn, kserve-exploit, vector-db-ripper, ai-gateway-bypass | bespoke | new | exp | AML.T0010 |
-| A-7 | shadow-ray | bespoke | new | exp | AML case study |
-| A-8 | poison-dataset-builder, trojan-lm-toolkit, prompt-backdoor-tool, data-exfil-via-poison | bespoke | new | exp | AML.T0020 |
-| A-8 | trojai-toolkit, split-view-replay | bespoke | MIT/research | free | AML.T0020 |
+| A-6 | — (all three were phantom-upstream; removed, os#210) | — | — | — | AML physical |
+| A-6 | — (phantom-origin data row; removed, os#210) | — | — | — | AML physical |
+| A-6 | — (phantom-upstream; removed, os#210) | — | — | — | AML multi-modal |
+| A-7 | — (all eight were phantom-upstream; removed — names ride the os#210 registry until rebuilt) | — | — | — | AML.T0010 |
+| A-7 | — (shadow-ray was phantom-upstream; removed, os#210) | — | — | — | AML case study |
+| A-8 | — (all four were phantom-upstream; removed, os#210) | — | — | — | AML.T0020 |
+| A-8 | trojai-toolkit | bespoke | MIT/research | free | AML.T0020 (split-view-replay removed: phantom-upstream, os#210) |
 
 **Layer DEFENCE rows:**
 
 | Cat | Tool(s) | Status | Licence | Safety |
 |---|---|---|---|---|
-| D-1 | nemo-guardrails, llm-guard, guardrails-ai, rebuff, gaskunk, llm-firewall, whisper-gate | bespoke (mostly pip) | Apache/MIT | free |
-| D-2 | langfuse (module), phoenix, whylogs, evidently, otel-ai, prompt-injection-detector-bert, canary-token-generator, giskard | bespoke/module | Apache etc | free |
+| D-1 | nemo-guardrails, llm-guard, guardrails-ai, rebuff | bespoke (mostly pip) | Apache/MIT | free (gaskunk/llm-firewall/whisper-gate removed: phantom-upstream, os#210) |
+| D-2 | langfuse (module), phoenix, whylogs, evidently, otel-ai, giskard | bespoke/module | Apache etc | free (detector-bert + canary rows removed: phantom-upstream, os#210) |
 | D-3 | lm-eval-harness, deepeval, robustbench, huggingface-evaluate, fairlearn, aif360 | bespoke/native mix | Apache/MIT | free |
 | D-4 | cosign, syft, grype, trivy, cyclonedx-cli | native (pinned) | Apache etc | free |
-| D-4 | sigstore-tools, modelsign, cdxgen, hf-repo-auditor, model-card-toolkit | bespoke | new | free |
-| D-5 | genai-threat-modelling-templates, atlas-visualiser, stride-ai-worksheet, maestro, atlas-case-study-explorer, ai-incident-playbook-packs | bespoke/data | new | free |
-| D-6 | ai-act-compliance-checker, nist-ai-rmf-toolkit, iso-42001-templates, genai-vendor-review-form | data + CLI | new | free |
-| D-7 | asvs-verification-toolkit (primary C-10, D-7 secondary), aisvs-1.0-toolkit, mlsvs-toolkit, llm-top10-toolkit, kailash-verifier | data + CLI | new | free |
+| D-4 | modelsign, cdxgen, model-card-toolkit | bespoke | new | free (sigstore-tools + hf-repo-auditor removed: phantom-upstream, os#210) |
+| D-5 | maestro | bespoke/data | CC-BY-SA | free (the five template/visualiser rows removed: phantom-upstream, os#210) |
+| D-6 | — (all four were phantom-origin template packs; removed, names ride the os#210 registry) | — | — | — |
+| D-7 | — (all five aspirational-only; removed, os#210) | — | — | — |
 
 **Layer OPS rows:**
 
@@ -865,7 +865,7 @@ Legend: **status** = native (nixpkgs, lockfile pin) / stale (native + override) 
 | O-3 | chromadb, qdrant, faiss, txtai, jina-embeddings-cli | native/overlay | Apache etc | free |
 | O-3 | weaviate, pgvector, elasticsearch | module | etc | free |
 | O-3 | milvus | docker module | etc | free |
-| O-4 | ollama (primary, + llama.cpp secondary O-2), text-generation-webui, open-webui, gguf-quantiser | native/overlay | MIT etc | free |
+| O-4 | ollama (primary, + llama.cpp secondary O-2), text-generation-webui, open-webui | native/overlay | MIT etc | free (gguf-quantiser removed: phantom first-party row, os#210) |
 | O-5 | langchain, langgraph, llama-index, openai-python, anthropic-python, google-genai, autogen, crewai | native (pinned) | etc | free |
 | O-5 | pytorch (cpu default, cuda variant), torchvision, torchaudio, tensorflow, jax, onnxruntime | native/variant/overlay | etc | free |
 | O-5 | transformers, datasets, peft, trl | native (pinned) | etc | free |
@@ -877,7 +877,7 @@ Legend: **status** = native (nixpkgs, lockfile pin) / stale (native + override) 
 | O-7 | malicious-mcp-poc, insecure-mcp-lab | bespoke/data | varies | exp |
 | O-7 | kailash-mcp, kailash-container, headless-agent(own), mcp-inspector(dogfood) | first-party | MIT | exp/mixed |
 
-**Post-purge total: ~337 primary slots** — bespoke ~68, module ~13, data ~21, the rest native/stale (census at §2.6).
+**Post-purge total: 270 primary slots** — bespoke-declared rows name their overlay derivations, the rest native/pinned (corrected census at §2.6; the os#210 phantom purge re-based it).
 
 
 # Appendix B — Glossary

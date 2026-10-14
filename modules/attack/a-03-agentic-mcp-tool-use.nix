@@ -5,25 +5,22 @@
 # modules/base/layer-tree.nix), `mkIf enable` installs (opt-in by
 # default — nothing on PATH until the category switch is ON).
 #
-# SAFETY (§11.2 posture, read from the generator's ledger — the manifest
-# is the single home of the facts; KA-22 extended gen-categories.py to
-# carry the exp ledger):
-#   * the two exp rows (mcp-unsafe-deser-probe, mcpoison) ride the
-#     ledger's `exp` key — NEVER `installable`, never a package-list
-#     surface (the §11.2 double-key gate owns exp routing);
-#   * poisoned-skill-pack is the status:data row (ledger `excluded`,
-#     D7 — opt-in data-pack, never installed by category modules);
-#   * the six installable rows are package-list surfaces.
+# SAFETY (§11.2 posture; os#210 purge update 2026-10-14): three of the
+# row families this module recorded pre-purge were phantom-upstream
+# (mcp-unsafe-deser-probe — exp; poisoned-skill-pack — the data row;
+# langchain-vuln-hunter + llm-agent-fuzzer installable-bespoke): their
+# claimed kailash-os upstream repos were never created, the os#210
+# audit removed them, registry: kailash-os#210. mcpoison keeps its
+# exp-class routing (real upstream pulkitb124/mcpoison; its overlay
+# derivation is pending). The five installable rows post-merge:
+# mcp-scan, mcp-guardian, mcp-remote (lanes landed in kailash-packages
+# pkgs/), agent-dojo (lane landed), plus nothing else —
+# package-list surfaces.
 #
-# BINDING TABLE (probed at nixpkgs 8c3ced + packages pin ef70ec4 — never
-# assumed id==attr): every one of the six installable rows is a
-# manifest-BESPOKE row whose kailash-packages derivation has NOT landed
-# at this pin (no pkgs/mcp-scan, mcp-guardian, mcp-remote, agent-dojo,
-# langchain-vuln-hunter, llm-agent-fuzzer dirs at ef70ec4) — they fall
-# to the bare guard, resolve null and DROP (named above) without
-# breaking eval; the empty install set is CORRECT at this pin (the
-# KA-24 d-01 all-pending posture) and each row returns when its
-# derivation lane lands in kailash-packages pkgs/. mcp-inspector — the
+# BINDING TABLE (probed at nixpkgs 8c3ced + packages pin): mcp-scan,
+# mcp-guardian, mcp-remote, agent-dojo bind their landed
+# kailash-packages derivations (the pkgs/ dirs exist post-KA-22);
+# their install rides the bare auto-call surface. mcp-inspector — the
 # §3.1 attack-chain primary the census names for this category — is an
 # o-07 manifest row (o-07-agent-mcp-operability; this category carries
 # it as a SECONDARY): it composes through the OPS surface, never here
@@ -36,17 +33,17 @@ let
   ledger = (builtins.fromJSON (builtins.readFile ../../generated/manifest-ids.json))
     .categories.a-03-agentic-mcp-tool-use;
 
-  # No non-bare bindings at this pin: all six installable rows keep the
-  # bare guard (the overlay attrs are the ids per §5.5 auto-call — the
-  # named drops resolve null here and return with their lanes).
+  # Post-merge the four landed derivations bind (their overlay attrs
+  # are the ids per §5.5 auto-call); no bare-guard drops remain.
   attrFor = id: pkgs."${id}" or null;
 
   installSet = lib.filter (p: p != null) (map attrFor ledger.installable);
 in
 {
   config = {
-    # The manifest-driven install set (0 of the 6 rows bind at this pin —
-    # all bespoke-overlay-pending, named above).
+    # The manifest-driven install set (the five real rows bind through
+    # the landed overlay derivations post-KA-22; phantom rows removed
+    # per os#210).
     kailash.layers.attack.categories.a-03.packages = installSet;
 
     environment.systemPackages = lib.mkIf cfg.enable cfg.packages;

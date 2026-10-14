@@ -136,8 +136,9 @@ in
 
     # qdrant: the Rust vector-search server (module probed at the pin:
     # services.qdrant.enable + pkgs.qdrant). Loopback binding by default —
-    # the A-7 rip surface (vector-db-ripper, manifest a-07) trains against
-    # local stores; a remote-facing move is an explicit operator decision.
+    # local stores are the pairing-thesis lab target (a would-be A-7
+    # extraction surface lives in the os#210 registry until built); a
+    # remote-facing move is an explicit operator decision.
     services.qdrant.enable = true;
     services.qdrant.settings.service.host = lib.mkDefault "127.0.0.1";
 

@@ -10,8 +10,9 @@
 #   cyclonedx-cli 0.32.0, cdxgen 13.0.1 (all bare), modelsign via
 #   python3Packages.model-signing (1.1.1, unbroken — NATIVE with the
 #   KA-24 probe-receipt flip landed, kailash-packages#54);
-# the three pending bespoke rows (sigstore-tools — upstream 404 at
-# this date, the ko-record rule; hf-repo-auditor + model-card-toolkit
+# the pending bespoke rows (model-card-toolkit — the sigstore-tools
+# and hf-repo-auditor pre-purge rows were phantom-upstream, removed
+# per os#210; model-card-toolkit's derivation is pending)
 # — derivations pending) drop via the bare guard and return with
 # their lanes.
 #
@@ -36,8 +37,8 @@ in
   config = {
     # The manifest-driven install set (7 of the 10 rows bind at this
     # pin: the six bare natives + modelsign via python3Packages;
-    # sigstore-tools, hf-repo-auditor, model-card-toolkit are
-    # overlay-pending drops, named above).
+    # model-card-toolkit is (sigstore-tools + hf-repo-auditor removed
+    # per os#210 phantom purge)     # overlay-pending drops, named above).
     kailash.layers.defence.categories.d-04.packages = installSet;
 
     environment.systemPackages = lib.mkIf cfg.enable cfg.packages;

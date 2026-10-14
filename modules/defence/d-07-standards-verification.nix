@@ -5,15 +5,15 @@
 # packages at kailash.layers.defence.categories.d-07), the KA-13.1
 # exemplar shape.
 #
-# Binding table (probed at nixpkgs e7439b6b + packages pin ef70ec4 —
-# never assumed id==attr): kailash-verifier is bespoke with a
-# derivation that has NOT landed at this pin (its kailash-os
-# kailash-verifier upstream is 404 at this date — the ko-record rule)
-# → the bare guard drops it; it returns when its derivation lane
-# lands. The three data rows (aisvs-1.0-toolkit, mlsvs-toolkit,
-# llm-top10-toolkit) are EXCLUDED by the generator (the opt-in
-# data-pack rule). The asvs-verification-toolkit DATA pack rides the
-# c-10 primary row's surface (kailash-data; never an install set).
+# Binding table (os#210 purge, 2026-10-14): every pre-purge d-07 row
+# (kailash-verifier, aisvs-1.0-toolkit, mlsvs-toolkit,
+# llm-top10-toolkit, asvs-verification-toolkit) was phantom-upstream —
+# the claimed kailash-os toolkit/CLI repos never existed (the OWASP
+# standards THEMSELVES are real; the Kailash verification data-packs
+# and CLI were not) — removed; names in the registry
+# (kailash-os#210). The category is EMPTY post-purge: the rebuild
+# contract returns the verifier CLI (real build, verified upstream)
+# and the standards packs through the manifest gate.
 #
 # SAFETY: every d-07 row is safety.level "safe" at this revision.
 { config, lib, pkgs, ... }:
@@ -30,9 +30,8 @@ let
 in
 {
   config = {
-    # The manifest-driven install set (0 of the 1 installable row binds
-    # at this pin — the kailash-verifier derivation is overlay-pending,
-    # named above).
+    # The manifest-driven install set (EMPTY post-os#210: every d-07
+    # row was phantom-upstream, removed).
     kailash.layers.defence.categories.d-07.packages = installSet;
 
     environment.systemPackages = lib.mkIf cfg.enable cfg.packages;

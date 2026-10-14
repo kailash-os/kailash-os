@@ -8,27 +8,17 @@
 # mount, `mkIf enable` installs (opt-in by default — nothing on PATH
 # until the category switch is ON).
 #
-# SAFETY (§11.2 posture, recorded per row from the manifest at the
-# packages pin 7374e7a — the header is the module-level record; the
-# manifest is the single home of the facts):
-#   recon-ai, llm-recon, colab-crawler → safety.level "requires-target"
-#     (target-required ATTACK rows: package-list surfaces, NOT exp-gated
-#     — only `safety.level == "exp"` rows ride the lab-mode gate; these
-#     target a scope the operator names at run time);
-#   huggingface-org-scan → "safe" (public org-surface enumeration);
-#   trufflehog → "safe" (the secret scanner; its SECONDARY is
-#     c-08-exploitation-post-exploitation — the a-01 primary owns this
-#     one install, §4.5 no-duplicate-install rule).
-#
-# Binding table (probed at nixpkgs 8c3ced + packages pin 7374e7a — never
-# assumed id==attr): trufflehog binds top-level nixpkgs (a NATIVE
-# manifest row, trufflehog 3.99.0); recon-ai, llm-recon,
-# huggingface-org-scan, colab-crawler are manifest-BESPOKE rows whose
-# kailash-packages derivations have NOT landed at this pin — they fall
-# to the bare guard, resolve null and DROP (named, per-row, in the
-# install-set comment below) without breaking eval. Each row returns
-# when its derivation lane lands in kailash-packages pkgs/ — the
-# exemplar's overlay-pending rule, unchanged shape.
+# SAFETY (§11.2 posture; os#210 purge update 2026-10-14): four of the
+# five A-1 rows (recon-ai, llm-recon, huggingface-org-scan,
+# colab-crawler) claimed kailash-os upstream repos that were never
+# created — the os#210 audit removed them as phantom rows; the
+# aspirational names live in the registry (kailash-os#210) and return
+# via the rebuild contract (real upstream, manifest gate, ledger).
+# The category keeps ONE real row:
+#   trufflehog → "safe" (the secret scanner; NATIVE, binds the top-level
+#     nixpkgs attr; its SECONDARY is c-08-exploitation-post-exploitation
+#     — the a-01 primary owns this install, §4.5 no-duplicate-install
+#     rule).
 #
 # The garak VM proof (`garak --list-probes` in the VM) is KA-13.2's
 # wave (ko#104) — this item stays eval-surface (the VM smoke is not
@@ -41,20 +31,17 @@ let
   ids = (builtins.fromJSON (builtins.readFile ../../generated/manifest-ids.json))
     .categories.a-01-ai-recon.installable;
 
-  # No non-bare bindings at this pin: trufflehog binds bare (the top-level
-  # nixpkgs attr IS the id); the four bespoke rows keep the bare guard
-  # (their overlay derivations are pending — the named drops resolve null
-  # here and return when the lanes land).
+  # Bare guard uniformity: trufflehog binds bare (the top-level nixpkgs
+  # attr IS the id); post-purge the ledger's installable holds only
+  # trufflehog.
   attrFor = id: pkgs."${id}" or null;
 
   installSet = lib.filter (p: p != null) (map attrFor ids);
 in
 {
   config = {
-    # The manifest-driven install set (1 of the 5 rows at this pin:
-    # trufflehog native; recon-ai, llm-recon, huggingface-org-scan,
-    # colab-crawler are overlay-pending bespoke drops — named per the
-    # binding table above).
+    # The manifest-driven install set (exactly trufflehog at this pin:
+    # the other four rows were phantom-upstream, removed per os#210).
     kailash.layers.attack.categories.a-01.packages = installSet;
 
     environment.systemPackages = lib.mkIf cfg.enable cfg.packages;

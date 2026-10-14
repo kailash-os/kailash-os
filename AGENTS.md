@@ -66,9 +66,11 @@ The taxonomy lives in `kailash-packages/manifest/`: `categories.yaml` (the
 census categories — 31 shippable + 1 data-pack) and `tools.yaml` (the tool
 inventory). The layer model is [the spec's §2.6 post-purge
 census](https://github.com/kailash-os/kailash-os/blob/master/docs/spec.md#26-the-full-category-table-post-purge-census)
-— CLASSIC 141, ATTACK 58, DEFENCE 45, OPS 87 primary tool slots — with the
-C-7 SDR pack recorded as the data-pack census category, excluded from
-default profiles and images.
+— CLASSIC 134, ATTACK 23, DEFENCE 25, OPS 82 primary tool slots (os#210
+phantom-upstream purge basis, 2026-10-14; was 337 under rows whose
+claimed upstreams did not exist) — with the C-7 SDR pack recorded as
+the data-pack census category, excluded from default profiles and
+images.
 
 **A fact has exactly one home.** Layer/category/tool facts are written in the
 manifest, never duplicated into modules, READMEs or site copy; generated

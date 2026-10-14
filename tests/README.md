@@ -23,7 +23,7 @@ a maintainer's box or CI with KVM.
 | `c-04` | database-assessment PATH rows (psql, redis-cli ride the server packages) |
 | `c-06` | reverse-engineering PATH rows + flagship by name (ghidra) |
 | `full-profile-boot` | the whole CLASSIC floor boots with all four categories enabled |
-| `integration-mlflow-attack` | the platform profile boots and the mlflow-bypass probe pair runs IN-GUEST with `--seed`; the in-VM record is pulled out and asserted (`status: real`, both probes ok, the artefact listing names `ka23-listing.txt`) |
+| `integration-mlflow-attack` | the platform profile boots and the A-7 MLflow-exploit probe pair runs IN-GUEST with `--seed`; the in-VM record is pulled out and asserted (`status: real`, both probes ok, the artefact listing names `ka23-listing.txt`) |
 
 ## Running a leg
 

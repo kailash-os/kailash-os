@@ -39,35 +39,37 @@ chain, ATTACK).
 | 4 | Database Assessment | CLASSIC | 7 |
 | 5 | Password & Offline-Credential Attacks | CLASSIC | 16 |
 | 6 | Reverse Engineering (software artefacts) | CLASSIC | 26 |
-| 7 | Exploitation & Post-Exploitation (software) | CLASSIC | 9 |
+| 7 | Exploitation & Post-Exploitation (software) | CLASSIC | 8 |
 | 8 | Forensics, IR & Reporting | CLASSIC | 21 |
-| 9 | Runtime AppSec for AI Systems | CLASSIC | 8 |
-| 10 | AI Reconnaissance & Target Discovery | ATTACK | 5 |
-| 11 | LLM Prompt Injection & Jailbreaking | ATTACK | 8 |
-| 12 | Agentic, MCP & Tool-Use Attacks | ATTACK | 9 |
-| 13 | Model Supply Chain & Artefact Poisoning | ATTACK | 8 |
-| 14 | Model Extraction, Inversion & MIA | ATTACK | 8 |
-| 15 | Multi-modal & Physical-AI Attacks | ATTACK | 5 |
-| 16 | AI System Exploitation | ATTACK | 9 |
-| 17 | Data Poisoning & Dataset Attacks | ATTACK | 6 |
+| 9 | Runtime AppSec for AI Systems | CLASSIC | 1 |
+| 10 | AI Reconnaissance & Target Discovery | ATTACK | 1 |
+| 11 | LLM Prompt Injection & Jailbreaking | ATTACK | 6 |
+| 12 | Agentic, MCP & Tool-Use Attacks | ATTACK | 5 |
+| 13 | Model Supply Chain & Artefact Poisoning | ATTACK | 3 |
+| 14 | Model Extraction, Inversion & MIA | ATTACK | 7 |
+| 15 | Multi-modal & Physical-AI Attacks | ATTACK | 0 |
+| 16 | AI System Exploitation | ATTACK | 0 |
+| 17 | Data Poisoning & Dataset Attacks | ATTACK | 1 |
 | 18 | MLOps & ML Engineering Suite | OPS | 18 |
-| 19 | Compute & Serving Infrastructure | OPS | 13 |
+| 19 | Compute & Serving Infrastructure | OPS | 11 |
 | 20 | Vector Stores & Retrieval | OPS | 9 |
-| 21 | Local LLM & Inference Labs | OPS | 5 |
+| 21 | Local LLM & Inference Labs | OPS | 4 |
 | 22 | AI Engineering SDKs & Dev Environment | OPS | 26 |
-| 23 | Documentation, Reporting & Authoring | OPS | 12 |
-| 24 | Agent & MCP Operability | OPS | 8 |
-| 25 | AI Runtime Defence & Guardrails | DEFENCE | 7 |
-| 26 | AI Detection, Monitoring, Observability & IR | DEFENCE | 8 |
+| 23 | Documentation, Reporting & Authoring | OPS | 10 |
+| 24 | Agent & MCP Operability | OPS | 4 |
+| 25 | AI Runtime Defence & Guardrails | DEFENCE | 4 |
+| 26 | AI Detection, Monitoring, Observability & IR | DEFENCE | 6 |
 | 27 | AI Assurance, Evals & Benchmarks | DEFENCE | 6 |
-| 28 | Model Provenance, Signing & Trust | DEFENCE | 10 |
-| 29 | AI Threat Modelling | DEFENCE | 6 |
-| 30 | AI Governance & Regulation Mapping | DEFENCE | 4 |
-| 31 | Standards Verification Toolkit | DEFENCE | 5 |
-| — | **Total** | 31 categories | **337** |
+| 28 | Model Provenance, Signing & Trust | DEFENCE | 8 |
+| 29 | AI Threat Modelling | DEFENCE | 1 |
+| 30 | AI Governance & Regulation Mapping | DEFENCE | 0 |
+| 31 | Standards Verification Toolkit | DEFENCE | 0 |
+| — | **Total** | 31 categories | **264** |
 
-Per-layer primary tool slots: CLASSIC 142 · ATTACK 58 · DEFENCE 46 · OPS 91 — 31 categories, 337 tool slots across the four layers (data-packs excluded from counts, [spec §2.6](https://github.com/kailash-os/kailash-os/blob/master/docs/spec.md#26-the-full-category-table-post-purge-census)), generated from [`categories.yaml`](https://github.com/kailash-os/kailash-packages/blob/main/manifest/categories.yaml) — the taxonomy's single home — on the `kailash-packages` main HEAD.
+Per-layer primary tool slots: CLASSIC 134 · ATTACK 23 · DEFENCE 25 · OPS 82 — 31 categories, 264 tool slots across the four layers (data-packs excluded from counts, [spec §2.6](https://github.com/kailash-os/kailash-os/blob/master/docs/spec.md#26-the-full-category-table-post-purge-census)), generated from [`categories.yaml`](https://github.com/kailash-os/kailash-packages/blob/main/manifest/categories.yaml) — the taxonomy's single home — on the `kailash-packages` main HEAD.
 <!-- END GENERATED CATEGORY TABLE -->
+
+
 
 The table is **generated** from the Kailash packages manifest — never
 hand-maintained (the no-hand-sync rule). Regenerate or verify it with:
@@ -102,7 +104,7 @@ CLI carries the same validator locally:
 
 ```console
 $ nix run github:kailash-os/kailash-packages#kailash -- manifest validate
-manifest-wellformed: OK (32 category entries, 336 tools; primary slots: ATTACK 58, CLASSIC 141, DEFENCE 46, OPS 91; data-packs excluded from counts)
+manifest-wellformed: OK (32 category entries, 270 tools; primary slots: ATTACK 23, CLASSIC 134, DEFENCE 25, OPS 82; data-packs excluded from counts)
 ```
 
 ### Images and ISOs (KA-28.0 shape decision)

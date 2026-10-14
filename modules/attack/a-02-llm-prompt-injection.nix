@@ -8,12 +8,14 @@
 # modules/base/layer-tree.nix), config-only install-set mount,
 # `mkIf enable` installs (opt-in by default).
 #
-# SAFETY (§11.2 posture, recorded per row from the manifest at the
-# packages pin 7374e7a): every installable row here is
-# safety.level "requires-target" (garak, promptfoo, pyrit, inj3ct-llm)
-# — target-required ATTACK rows: package-list surfaces, NOT exp-gated
-# (only `safety.level == "exp"` rows ride the lab-mode gate). No a-02
-# row is exp at this pin.
+# SAFETY (§11.2 posture; os#210 purge update 2026-10-14): every
+# installable row here is safety.level "requires-target" (garak,
+# promptfoo, pyrit) — target-required ATTACK rows: package-list
+# surfaces, NOT exp-gated (only `safety.level == "exp"` rows ride the
+# lab-mode gate). No a-02 row is exp. The pre-purge fourth row
+# (inj3ct-llm) was phantom-upstream — its claimed kailash-os repo was
+# never created; removed by the os#210 audit, name in the registry
+# (kailash-os#210).
 #
 # DATA rows never install (the generator's excluded ledger in
 # generated/manifest-ids.json records them): llm-red-team-col,
@@ -25,9 +27,8 @@
 # never assumed id==attr): garak, promptfoo, pyrit resolve through the
 # kailash-packages OVERLAY at this pin (the three flagship derivations
 # pkgs/garak, pkgs/promptfoo, pkgs/pyrit — probed: real pnames, not
-# broken, e.g. garak 0.17.1.pre1-unstable-2026-10-09); inj3ct-llm is a
-# manifest-BESPOKE row whose derivation has NOT landed at this pin —
-# bare-guard drop (named above), returns when its lane lands.
+# broken, e.g. garak 0.17.1.pre1-unstable-2026-10-09). Post-os#210 there
+# is no pending bespoke row in this category.
 { config, lib, pkgs, ... }:
 
 let
@@ -36,18 +37,17 @@ let
   ids = (builtins.fromJSON (builtins.readFile ../../generated/manifest-ids.json))
     .categories.a-02-prompt-injection-jailbreaks.installable;
 
-  # No non-bare bindings at this pin: the three overlay flagships and the
-  # pending inj3ct-llm all bind the bare guard (the overlay's attrs ARE
-  # the ids — callPackage auto-call, §5.5).
+  # Bare guard: the three overlay flagships bind (the overlay's attrs
+  # ARE the ids — callPackage auto-call, §5.5).
   attrFor = id: pkgs."${id}" or null;
 
   installSet = lib.filter (p: p != null) (map attrFor ids);
 in
 {
   config = {
-    # The manifest-driven install set (3 of the 4 rows at this pin:
-    # garak + promptfoo + pyrit through the overlay; inj3ct-llm is the
-    # overlay-pending bespoke drop).
+    # The manifest-driven install set (exactly garak + promptfoo +
+    # pyrit through the overlay; inj3ct-llm was phantom-upstream,
+    # removed per os#210).
     kailash.layers.attack.categories.a-02.packages = installSet;
 
     environment.systemPackages = lib.mkIf cfg.enable cfg.packages;

@@ -4,15 +4,15 @@
 # packages at kailash.layers.defence.categories.d-01), the KA-13.1
 # exemplar shape (modules/attack/a-01-ai-recon.nix).
 #
-# Binding table (probed at nixpkgs e7439b6b + packages pin ef70ec4 —
-# never assumed id==attr): NO d-01 row binds at this pin. All seven
-# rows are manifest-bespoke (nemo-guardrails, llm-guard, guardrails-ai,
-# rebuff, gaskunk, llm-firewall, whisper-gate) whose kailash-packages
-# derivations have NOT landed (the upstreams' first-party set partly
-# 404s; the rows' packages-overlay derivations are pending) — they fall
-# to the bare guard, resolve null and DROP without breaking eval. Each
-# row returns when its derivation lane lands in kailash-packages pkgs/
-# (the exemplar's overlay-pending rule, unchanged shape).
+# Binding table (os#210 purge update 2026-10-14): three of the seven
+# pre-purge rows (gaskunk, llm-firewall, whisper-gate) claimed
+# kailash-os upstream repos that were never created — the os#210 audit
+# removed them as phantom rows, names in the registry (kailash-os#210).
+# The four real rows (nemo-guardrails, llm-guard, guardrails-ai,
+# rebuff — upstreams NVIDIA-NeMo/Guardrails, protectai/llm-guard,
+# guardrails-ai/guardrails, protectai/rebuff) keep manifest-bespoke
+# rows whose kailash-packages derivations have NOT landed — bare-guard
+# drops until their lanes land.
 #
 # SAFETY (§11.2; recorded per row from the manifest — the manifest is
 # the single home of the facts): every d-01 row is safety.level "safe"
@@ -26,18 +26,18 @@ let
   ids = (builtins.fromJSON (builtins.readFile ../../generated/manifest-ids.json))
     .categories.d-01-runtime-defence.installable;
 
-  # No non-bare bindings at this pin: every bespoke row keeps the bare
-  # guard (the named drops resolve null here and return with their
-  # derivations).
+  # Bare guard: every bespoke row (the four real, upstream-verified
+  # rows) keeps the bare guard (the named drops resolve null here and
+  # return with their derivations).
   attrFor = id: pkgs."${id}" or null;
 
   installSet = lib.filter (p: p != null) (map attrFor ids);
 in
 {
   config = {
-    # The manifest-driven install set (0 of the 7 rows bind at this pin —
-    # all bespoke-overlay-pending, named above; the module and its
-    # manifest surface stay wired and present either way).
+    # The manifest-driven install set (0 of the 4 rows bind at this pin —
+    # all bespoke-overlay-pending; the three phantom rows were removed
+    # per os#210. The module stays wired and present either way).
     kailash.layers.defence.categories.d-01.packages = installSet;
 
     environment.systemPackages = lib.mkIf cfg.enable cfg.packages;

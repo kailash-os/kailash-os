@@ -3,13 +3,13 @@
 # on the typed spine (enable + packages at
 # kailash.layers.defence.categories.d-06), the KA-13.1 exemplar shape.
 #
-# Binding table (probed at nixpkgs e7439b6b + packages pin ef70ec4 —
-# never assumed id==attr): ai-act-compliance-checker is bespoke with a
-# derivation that has NOT landed at this pin (its kailash-os upstream
-# is 404 at this date — the ko-record rule) → the bare guard drops it;
-# it returns when its derivation lane lands. The three data rows
-# (nist-ai-rmf-toolkit, iso-42001-templates, genai-vendor-review-form)
-# are EXCLUDED by the generator (the opt-in data-pack rule).
+# Binding table (os#210 purge, 2026-10-14): every pre-purge d-06 row
+# (ai-act-compliance-checker, nist-ai-rmf-toolkit, iso-42001-templates,
+# genai-vendor-review-form) was phantom-origin — no real upstream
+# anywhere; removed by the audit; names in the registry
+# (kailash-os#210). The category is EMPTY post-purge: the install mount
+# stays wired for the rebuild contract (a real governance pack returns
+# with a verified upstream through the manifest gate).
 #
 # SAFETY: every d-06 row is safety.level "safe" at this revision.
 { config, lib, pkgs, ... }:
@@ -26,9 +26,8 @@ let
 in
 {
   config = {
-    # The manifest-driven install set (0 of the 1 installable row binds
-    # at this pin — the ai-act-compliance-checker derivation is
-    # overlay-pending, named above).
+    # The manifest-driven install set (EMPTY post-os#210: every d-06
+    # row was phantom-origin, removed).
     kailash.layers.defence.categories.d-06.packages = installSet;
 
     environment.systemPackages = lib.mkIf cfg.enable cfg.packages;
