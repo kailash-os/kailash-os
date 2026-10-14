@@ -4,10 +4,9 @@
 # The fifth §4.5 category module off the KA-06.1 exemplar (same shape —
 # spine-owned typed surface, config-only install mount, mkIf enable).
 # os#210 purge re-basis (2026-10-14): the pre-purge scanner/toolkit
-# rows (ais, oauth-mcp-prober, sdl3-stream-fuzzer, llm-fuzzer,
-# vulnerable-llm-apps, asvs-verification-toolkit) were phantom-upstream
-# (claimed kailash-os or invented org upstreams that never existed) —
-# removed; names live in the registry (kailash-os#210). The category's
+# rows were phantom-upstream (claimed kailash-os or invented org
+# upstreams that never existed) — removed; names live in the registry
+# (kailash-os#210). The category's
 # real surface is mitmproxy (native) + zaproxy riding as secondary.
 #
 # Binding table:

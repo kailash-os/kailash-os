@@ -5,12 +5,11 @@
 # modules/base/layer-tree.nix), `mkIf enable` installs (opt-in by
 # default — nothing on PATH until the category switch is ON).
 #
-# SAFETY (§11.2 posture; os#210 purge update 2026-10-14): the exp row
-# (torch-load-poc) and the four supply-chain inspector rows
-# (gguf-template-inspector, safetensors-checker, hf-repo-inspector,
-# namespace-reuse-check) were phantom-upstream — claimed kailash-os
-# repos never created, removed by the os#210 audit; the aspirational
-# names live in the registry (kailash-os#210). The three real rows:
+# SAFETY (§11.2 posture; os#210 purge update 2026-10-14): the pre-purge
+# exp row and the four supply-chain inspector rows were phantom-upstream
+# — claimed kailash-os repos never created, removed by the os#210 audit;
+# the aspirational names live in the registry (kailash-os#210). The
+# three real rows:
 #   * guarddog, picklescan — bespoke, derivations LANDED in
 #     kailash-packages pkgs/ (the KA-22 lanes);
 #   * modelscan — NATIVE (upstream protectai/modelscan; binds the bare
@@ -36,7 +35,7 @@ in
   config = {
     # The manifest-driven install set (all three real rows bind after
     # the KA-22 derivation lanes: guarddog + picklescan overlay,
-    # modelscan native; the four inspector rows + torch-load-poc were
+    # modelscan native; the four pre-purge inspector rows + the exp-row
     # phantom-upstream, removed per os#210).
     kailash.layers.attack.categories.a-04.packages = installSet;
 

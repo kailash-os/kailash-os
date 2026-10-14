@@ -9,9 +9,8 @@
 # until the category switch is ON).
 #
 # SAFETY (§11.2 posture; os#210 purge update 2026-10-14): four of the
-# five A-1 rows (recon-ai, llm-recon, huggingface-org-scan,
-# colab-crawler) claimed kailash-os upstream repos that were never
-# created — the os#210 audit removed them as phantom rows; the
+# five pre-purge A-1 rows claimed kailash-os upstream repos that were
+# never created — the os#210 audit removed them as phantom rows; the
 # aspirational names live in the registry (kailash-os#210) and return
 # via the rebuild contract (real upstream, manifest gate, ledger).
 # The category keeps ONE real row:

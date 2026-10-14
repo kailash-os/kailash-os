@@ -5,9 +5,7 @@
 # modules/base/layer-tree.nix), `mkIf enable` installs (opt-in by
 # default).
 #
-# POST-PURGE STATE: every A-6 manifest row (adversarial-clothing,
-# adversarial-patches-collection, audio-voice-clone-injector,
-# camera-adversarial-toolkit, vlm-image-injector) claimed a kailash-os
+# POST-PURGE STATE: every pre-purge A-6 manifest row claimed a kailash-os
 # upstream repo that was NEVER created — the os#210 audit removed all
 # five as phantom rows, so the category is EMPTY (0 primary rows). The
 # aspirational names live in the registry

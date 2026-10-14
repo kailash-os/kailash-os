@@ -6,9 +6,8 @@
 # exemplar shape.
 #
 # Binding table (os#210 purge, 2026-10-14): every pre-purge d-07 row
-# (kailash-verifier, aisvs-1.0-toolkit, mlsvs-toolkit,
-# llm-top10-toolkit, asvs-verification-toolkit) was phantom-upstream —
-# the claimed kailash-os toolkit/CLI repos never existed (the OWASP
+# (the standards toolkit/CLI family) was phantom-upstream — the claimed
+# kailash-os toolkit/CLI repos never existed (the OWASP
 # standards THEMSELVES are real; the Kailash verification data-packs
 # and CLI were not) — removed; names in the registry
 # (kailash-os#210). The category is EMPTY post-purge: the rebuild

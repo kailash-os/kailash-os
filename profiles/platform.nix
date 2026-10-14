@@ -37,9 +37,9 @@
 # OFF here (an engines-only platform host — the open-webui↔ollama
 # pairing stays with redteam-ai, which carries ko#112).
 #
-# KA-23 (kailash-os#23): the mlflow-bypass integration joins this
+# KA-23 (kailash-os#23): the MLflow-attack acceptance pair joins this
 # profile — the §8.2 pairing-thesis acceptance (boot-wait + the two
-# mlflow-bypass probe pair: the unauth experiments/search + the unauth
+# probe pair: the unauth experiments/search + the unauth
 # artefact listing) rides TOOLS/vM-INTEGRATION (the same pending-vm
 # record discipline as its parent acceptance).
 {
@@ -82,7 +82,7 @@
   # redteam-ai — ko#112's reachability item).
   kailash.layers.ops.categories.o-04.webui.enable = lib.mkDefault false;
 
-  # ---- the §8.2 mlflow-bypass acceptance harness (KA-23) ----------------
+  # ---- the §8.2 MLflow-attack acceptance harness (KA-23) ----------------
   # On the VM's PATH for the in-guest canonical run: the probe pair
   # rides the booted tracking surface (the same §11.2-postured,
   # unauthenticated MLflow API this host exposes — the acceptance
