@@ -75,7 +75,7 @@ def main() -> None:
     try:
         rec_obj = json.load(open(args.record, encoding="utf-8"))
     except Exception as exc:  # noqa: BLE001 - verbatim failure text below
-        _fail(f"record does not parse as JSON: {exc}")
+        _fail(f"the record is not valid JSON: {exc}")
 
     rec: dict = rec_obj  # narrow after the guarded load; _fail never returns
 
@@ -98,7 +98,7 @@ def main() -> None:
             if "FAIL" in text:
                 # An embedded FAIL marker inside a section the record
                 # still calls "ok" is inconsistent by construction.
-                _fail(f"endpoint {name!r} marked ok but its verbatim section carries FAIL")
+                _fail(f"endpoint {name!r} says ok but its verbatim section carries FAIL")
         sections = _require_nonempty_list(rec, "verbatim_sections")
         cmds = _require_nonempty_list(rec, "commands")
         for c in cmds:
@@ -108,7 +108,7 @@ def main() -> None:
             "vm-acceptance-verify: OK (kind=real: "
             f"{len(endpoints)} endpoint checks ok, "
             f"{len(sections)} verbatim sections, "
-            f"{len(cmds)} recorded commands)"
+            f"{len(cmds)} commands)"
         )
     elif status == "pending-vm":
         for key in REQUIRED_PENDING_STR:
@@ -135,16 +135,16 @@ def main() -> None:
                 or not att.get("command", "").strip()
                 or not att.get("output", "").strip()
             ):
-                _fail("each attempts[] entry needs non-empty command AND verbatim output")
+                _fail("each attempts[] entry carries a command and verbatim output; one is empty")
         print(
             "vm-acceptance-verify: OK (kind=pending-vm: "
-            f"{len(attempts)} attempted commands recorded with verbatim output; "
-            "the interactive step is documented)"
+            f"{len(attempts)} command attempts carry verbatim output; "
+            "the record holds the interactive step)"
         )
     else:
         _fail(
             "record status must be 'real' or 'pending-vm' — got "
-            f"{status!r}; no fabricated acceptance state is loadable"
+            f"{status!r}; the verifier reads no other status"
         )
 
 

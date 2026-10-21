@@ -90,17 +90,17 @@ def verify_wrapped_entries(report: dict) -> list[str]:
         program = entry.get("program")
         package = entry.get("package")
         if not program or not package:
-            failures.append(f"entry {wid}: missing program/package fields")
+            failures.append(f"entry {wid}: the program and package fields are missing")
             continue
         gate = os.path.join(package, "bin", program)
         if not os.path.exists(gate):
-            failures.append(f"entry {wid}: gate script missing: {gate}")
+            failures.append(f"entry {wid}: the gate script is missing: {gate}")
             continue
         with open(gate, "rb") as fh:
             body = fh.read()
         for needle in GATE_STRINGS:
             if needle.encode() not in body:
-                failures.append(f"entry {wid}: gate script does not name {needle}: {gate}")
+                failures.append(f"entry {wid}: the gate script does not carry {needle}: {gate}")
     return failures
 
 
@@ -113,22 +113,22 @@ def check(manifest_file: str, wrapped_file: str) -> int:
     with open(manifest_file, "rb") as fh:
         need = exp_ids_from_yaml(fh.read())
     if not os.path.exists(wrapped_file):
-        print(f"safety-exp-wrap: FAIL: wrap report missing: {wrapped_file}")
-        print("safety-exp-wrap: covered 0 of", len(need), "manifest exp ids")
+        print(f"safety-exp-wrap: FAIL: the wrap report is missing: {wrapped_file}")
+        print("safety-exp-wrap: the report covers 0 of", len(need), "manifest exp ids")
         return 1
     report = load_wrapped_report(wrapped_file)
     wrapped = [e.get("id") for e in report.get("wrapped", [])]
     missing = coverage(need, wrapped)
     for tid in missing:
-        print(f"safety-exp-wrap: FAIL: manifest exp id not wrapped: {tid}")
+        print(f"safety-exp-wrap: FAIL: the manifest exp id is not wrapped: {tid}")
     failures = verify_wrapped_entries(report)
     for line in failures:
         print(f"safety-exp-wrap: FAIL: {line}")
     if missing or failures:
         return 1
     print(
-        f"safety-exp-wrap: OK — {len(need)} manifest exp ids covered by "
-        f"{len(wrapped)} verified gate wrappers"
+        f"safety-exp-wrap: OK — {len(wrapped)} verified gate wrappers carry "
+        f"{len(need)} manifest exp ids"
     )
     return 0
 

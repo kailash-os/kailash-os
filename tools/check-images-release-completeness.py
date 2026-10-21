@@ -104,7 +104,7 @@ def enforce(table, workflow, builder_profiles, builder_refs):
     hosted = sorted(r for r, s in table.items() if s is None)
     local = sorted(r for r, s in table.items() if s is not None)
     lines.append(f"table: {len(hosted)} hosted (x86_64) + {len(local)} local (aarch64) targets")
-    lines.append(f"workflow declares {len(workflow)} legs; builder default expands {len(builder_refs)} refs")
+    lines.append(f"workflow legs in the matrix: {len(workflow)}; builder default refs: {len(builder_refs)}")
 
     for ref in hosted:
         if ref not in workflow:
@@ -118,18 +118,18 @@ def enforce(table, workflow, builder_profiles, builder_refs):
 
     if hosted_missing:
         ok = False
-        lines.append(f"MISSING (never built — no declared hosted matrix leg): {', '.join(hosted_missing)}")
+        lines.append(f"MISSING (no hosted matrix leg carries the row): {', '.join(hosted_missing)}")
     if local_missing:
         ok = False
-        lines.append(f"MISSING (no local-builder expansion): {', '.join(local_missing)}")
+        lines.append(f"MISSING (the local builder does not carry the row): {', '.join(local_missing)}")
     if extra:
         ok = False
-        lines.append(f"EXTRA (builder default expands refs OUTSIDE the matrix table): {', '.join(extra)}")
+        lines.append(f"EXTRA (builder default refs outside the table): {', '.join(extra)}")
 
     if ok:
         lines.append(
-            f"OK — gap-free: all {len(hosted)} hosted targets declared in the release workflow, "
-            f"all {len(local)} local targets producible by build-arm-images.sh, no out-of-table rows")
+            f"OK — gap-free: the release workflow carries all {len(hosted)} hosted targets, "
+            f"build-arm-images.sh carries all {len(local)} local targets, no out-of-table rows")
     return ok, lines
 
 
@@ -168,9 +168,9 @@ def self_test():
             for l in lines:
                 print(f"  {l}")
     if not ok:
-        print("self-test FAILED")
+        print("self-test: FAIL")
         return 1
-    print("self-test: OK (gap-free + builder-proven)")
+    print("self-test: OK (gap-free row set; the builder carries every local row)")
     return 0
 
 
