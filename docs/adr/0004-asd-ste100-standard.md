@@ -10,6 +10,8 @@ Written prose fills many surfaces in this org: the README and the docs pages, th
 
 The operator's directive (2026-10-20) sets the standard. Every written text in the org follows ASD-STE100 Simplified Technical English. No substantive technical discussion recorded. The record cites the wave issues it drives.
 
+The ADR topology follow-up (the operator, 2026-10-21) keeps one canonical record per org, in the tree where the decision's authority sits. This tree carries kailash's canonical record.
+
 The rule set:
 
 1. One thought per sentence. A sentence carries one fact or one instruction.
@@ -33,7 +35,7 @@ The scope:
 
 Enforcement:
 
-- Each repo records this adoption in its own ADR tree: this repo (0004), the kailash-website (0001), the kailash-book (0002), the kailash-packages (0001).
+- This repo carries kailash's canonical record. The kailash-website, the kailash-book, and the kailash-packages carry no ADR scaffolding. Each carries a one-paragraph adoption note in its README that links this record.
 - Each repo carries one conversion issue. The repo's surfaces convert lane by lane. A lane's acceptance: the text passes the rule set, and the repo's hosted gates stay green.
 - The generated surfaces keep their generators. A table or a page whose words come from a manifest converts at the generator, not by hand.
 
