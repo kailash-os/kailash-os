@@ -6,26 +6,27 @@
 
 [![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/kailash-os/kailash-os?label=OpenSSF%20Scorecard&style=flat)](https://scorecard.dev/viewer/?uri=github.com/kailash-os/kailash-os) [![OpenSSF Best Practices](https://img.shields.io/badge/cii%20best%20practices-in%20progress-orange)](https://www.bestpractices.dev/projects/15182) [![flake-check](https://github.com/kailash-os/kailash-os/actions/workflows/flake-check.yml/badge.svg)](https://github.com/kailash-os/kailash-os/actions/workflows/flake-check.yml) [![Dependency Review](https://github.com/kailash-os/kailash-os/actions/workflows/dependency-review.yml/badge.svg)](https://github.com/kailash-os/kailash-os/actions/workflows/dependency-review.yml)
 
-Kailash OS is a NixOS-based Linux distribution for AI security: offensive
-tooling (ATTACK), defensive tooling (DEFENCE), classic security tooling
-(CLASSIC) and the AI-security platform stack (OPS) in one declaratively
-built environment. The distribution contract that made Kali Linux the
-default environment for security work — curated tooling, category
-navigation, live images — pointed at a surface Kali has never mapped:
-the AI systems stack.
+Kailash OS is a NixOS-based Linux distribution for AI security. One declaratively
+built environment carries four tool layers: ATTACK, DEFENCE, CLASSIC, and OPS.
+Curated tooling, category navigation, and live images made Kali Linux the default
+security environment. The AI systems stack is the surface Kali Linux never mapped.
+Kailash OS applies the same contract to this stack.
 
-Four pillars, each shipping twice: **AppSec** (classic application
-security assessment, CLASSIC), **APISec** (web, API and AI-endpoint
-runtime assessment, DEFENCE + OPS), **MLSec** (adversarial ML: evasion,
-poisoning, extraction — predictive AI, ATTACK) and **AISec** (LLM,
-agentic and MCP security — prompt injection, tool-use attacks, supply
-chain, ATTACK).
+The distribution targets four pillars. Each pillar pairs the offensive side with
+the build-side or defensive side:
+
+- **AppSec** — classic application security assessment (the CLASSIC layer).
+- **APISec** — web, API, and AI-endpoint runtime assessment (the DEFENCE and OPS layers).
+- **MLSec** — adversarial ML: evasion, poisoning, extraction; predictive AI (the ATTACK layer).
+- **AISec** — LLM, agentic, and MCP security: prompt injection, tool-use attacks,
+  supply chain (the ATTACK layer).
 
 - **4 layers** over the CORE substrate — CLASSIC · ATTACK · DEFENCE · OPS
-- **31 categories** in the generated table below
-- **336 primary tool slots** across the four layers (data-packs excluded
-  from counts; every number in this README is generated from the
-  taxonomy's single home, never hand-maintained)
+- **31 categories** — the generated table below
+- **264 primary tool slots** across the four layers — data-packs excluded from counts
+
+Every number in this README is generated from the taxonomy's single home. No
+number is hand-maintained.
 
 ## Category table
 
@@ -71,8 +72,8 @@ Per-layer primary tool slots: CLASSIC 134 · ATTACK 23 · DEFENCE 25 · OPS 82 �
 
 
 
-The table is **generated** from the Kailash packages manifest — never
-hand-maintained (the no-hand-sync rule). Regenerate or verify it with:
+The table is **generated** from the Kailash packages manifest. Hand edits never
+touch the table (the no-hand-sync rule). Regenerate or verify it with:
 
 ```console
 $ python3 tools/generate-readme-table.py --check          # gate: nonzero on drift
@@ -82,25 +83,25 @@ $ python3 tools/generate-readme-table.py --pin --emit     # snapshot: the flake.
 
 ## Install (from the flake, x86_64-linux / aarch64-linux)
 
-Try the manifest CLI without installing the OS — the packages overlay is
-a standalone flake:
+Try the manifest CLI without installing the OS. The packages overlay is a
+standalone flake:
 
 ```console
 $ nix run github:kailash-os/kailash-packages#kailash -- list
 $ nix run github:kailash-os/kailash-packages#kailash -- manifest validate
 ```
 
-Evaluate a host configuration from the OS flake (the minimal profile —
-the CORE substrate with zero categories enabled):
+Evaluate a host configuration from the OS flake. The minimal profile carries
+the CORE substrate with zero categories enabled:
 
 ```console
 $ nix flake show github:kailash-os/kailash-os          # surface: nixosConfigurations.kailash-minimal, nixosModules.kailash
 $ nix build github:kailash-os/kailash-os#nixosConfigurations.kailash-minimal.config.system.build.toplevel
 ```
 
-The manifest gate runs before any package builds in CI
-(`tests/validate_manifest.py`, mirrored in the packages repo), and the
-CLI carries the same validator locally:
+The manifest gate runs in CI before any package builds. The gate is
+`tests/validate_manifest.py`, mirrored in the packages repo. The CLI carries
+the same validator locally:
 
 ```console
 $ nix run github:kailash-os/kailash-packages#kailash -- manifest validate
@@ -109,64 +110,63 @@ manifest-wellformed: OK (32 category entries, 270 tools; primary slots: ATTACK 2
 
 ### Images and ISOs (KA-28.0 shape decision)
 
-Pre-built artifacts ship with the `2026.01` train; until release assets
-exist, the flake above is the install surface. The images matrix —
-every target, budget, download surface and the verify commands — is
-documented in [`docs/guide/images.md`](docs/guide/images.md). The deliverable shapes,
-in shipping priority
+Pre-built artefacts ship with the `2026.01` train. Until release assets exist,
+the flake above is the install surface.
+[`docs/guide/images.md`](docs/guide/images.md) documents the images matrix:
+every target, budget, download surface, and the verify commands. The
+deliverable shapes, in shipping priority
 ([kailash-os#132](https://github.com/kailash-os/kailash-os/issues/132)):
 
-1. **QEMU/VM disk image — primary, Wave-6-first.** One
-   `nixos-generators` output per profile (`minimal` first); the artifact
-   the verification gates exercise ([KA-32](https://github.com/kailash-os/kailash-os/issues/32)
+1. **QEMU/VM disk image — the primary shape.** One
+   `nixos-generators` output per profile (`minimal` first). The verification
+   gates exercise this artefact ([KA-32](https://github.com/kailash-os/kailash-os/issues/32)
    golden-image reproducibility, [KA-43](https://github.com/kailash-os/kailash-os/issues/43)
    headless-agent boot polish).
-2. **Bootable ISO — secondary.** Installable targets and bare-metal
-   evaluation of the CLASSIC/ATTACK tooling; size budgets enforced per
-   format.
-3. **Container surfaces — tertiary.** Per-category nixos-container /
-   podman provisioning for the OPS service stack
+2. **Bootable ISO — the secondary shape.** It carries the installable targets
+   and the bare-metal evaluation of the CLASSIC and ATTACK tooling. The size
+   budgets hold per format.
+3. **Container surfaces — the tertiary shape.** Per-category nixos-container /
+   podman provisioning serves the OPS service stack
    ([KA-42](https://github.com/kailash-os/kailash-os/issues/42)).
-4. **The flake — always.** `github:kailash-os/kailash-os` as the
-   importable surface for composed profiles; never discontinued as
-   image artifacts ship.
+4. **The flake — always.** `github:kailash-os/kailash-os` is the importable
+   surface for composed profiles. It stays as image artefacts ship.
 
-QEMU images and ISOs emit from the same profile eval (one source, two
-formats). The arch strategy is x86 hosted, arm local
+QEMU images and ISOs emit from the same profile eval. One source gives two
+formats. The arch strategy is x86 hosted, arm local
 ([kailash-os#198](https://github.com/kailash-os/kailash-os/issues/198)):
-aarch64 minimal + headless-agent rows build via
+the aarch64 `minimal` and `headless-agent` rows build via
 [`tools/build-arm-images.sh`](tools/build-arm-images.sh); the aarch64
-`redteam-ai` rows remain the [KA-36](https://github.com/kailash-os/kailash-os/issues/36)
-residual. Out of scope for the initial trains: cloud-image formats
-(AMI/export), PXE/netboot and live-patch surfaces.
+`redteam-ai` rows stay the [KA-36](https://github.com/kailash-os/kailash-os/issues/36)
+residual. The initial trains exclude: cloud-image formats
+(AMI/export), PXE/netboot, and live-patch surfaces.
 
 ## Project Status:
 
-Contact [shain.singh@owasp.org](mailto:shain.singh@owasp.org) for more information.
+Send questions about this project to [shain.singh@owasp.org](mailto:shain.singh@owasp.org).
 
 ## Cadence and version scheme
 
-Releases run every **6 weeks**. The lockfile is the version: a release
-carries the `flake.lock` commit and a calendar tag — the first staged
-cut of the first train is `2026.01-alpha.1`, the bare tag `2026.01` is
-reserved for general availability (**versionScheme: `2026.xx`**, the
-`YYYY.NN` release-index scheme). A Kailash install never updates nix,
-nixpkgs, or tooling on its own; source pins and flake inputs move on
-explicit, documented schedules and `main` is never committed directly.
-The full policy, including the staged-cut → GA → re-cut ladder:
-[`docs/guide/releases.md`](docs/guide/releases.md). Every release —
-alpha, rc, GA — fills in the standing checklist
+Releases run every **6 weeks**. The lockfile is the version. A release carries
+the `flake.lock` commit and a calendar tag. The first staged cut of the first
+train is `2026.01-alpha.1`. The bare tag `2026.01` stays reserved for general
+availability (**versionScheme: `2026.xx`**, the `YYYY.NN` release-index scheme).
+A Kailash install never updates nix, nixpkgs, or tooling on its own. Source
+pins and flake inputs move on explicit, documented schedules. `main` never
+takes a direct commit. The full policy, including the
+staged-cut → GA → re-cut ladder, sits in
+[`docs/guide/releases.md`](docs/guide/releases.md). Every release — alpha, rc,
+GA — fills in the standing checklist
 ([`docs/guide/release-checklist.md`](docs/guide/release-checklist.md),
 tracked per cut from the `release-cut` issue template).
 
 ## FAQ
 
 Q. Why the name 'Kailash'?<br>
-A. The authors have been long-time users and fans of WHAX/SLAX, BackTrack/Knoppix and Kali Linux. The name "Kailash" is an acknowledgement to credit Kali Linux as the main source of inspiration.
-Kailash is also the residence of Lord Shiva in Hindu scriptures.
+A. The authors used WHAX/SLAX, BackTrack/Knoppix, and Kali Linux over many years. The name "Kailash" credits Kali Linux as the main source of inspiration.
+Kailash is also the residence of Lord Shiva in the Hindu scriptures.
 
 Q. Why is Kailash based on NixOS and not {Debian|Arch}? <br>
-A. The authors have only recently started learning Nix and NixOS and this project provided an opportunity to do a deep-dive.
+A. The authors started recently with Nix and NixOS. The project is the deep-dive surface.
 
 ## Acknowledgements
 

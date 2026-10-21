@@ -1,8 +1,8 @@
 # Images: the build matrix, download surfaces and verification
 
-The shipping images of Kailash OS — the ratified matrix, per-target size
-budgets, where each artefact is downloadable for a release, and how to
-verify what you download. Policy companions: the release/versioning
+This page states the shipping images of Kailash OS: the ratified matrix, the
+per-target size budgets, the download surface of each artefact per release,
+and the verify steps for each download. Policy companions: the release/versioning
 record ([`releases.md`](releases.md)) and the shape decision
 ([kailash-os#132](https://github.com/kailash-os/kailash-os/issues/132)).
 
@@ -14,9 +14,10 @@ QEMU disk image (the PRIMARY deliverable shape) and the bootable ISO
 [`images/kailash-images-table.nix`](../../images/kailash-images-table.nix)
 is the single declaration; every flake attr, budget, CI leg and release
 asset name derives from it. The budgets are enforced by construction:
-the heavy rows (texlive, gnuradio, SDR/wordlist packs) never enter a
-default image — they ride opt-in `kailash-data.*` derivations, asserted
-per target by the census/budget check legs.
+the rows with the largest closures (texlive, gnuradio, SDR/wordlist packs)
+never enter a default image. They ship only through opt-in
+`kailash-data.*` derivations, asserted per target by the census/budget
+check legs.
 
 | Ref (`nix build .#<ref>`) | Profile | Format | System | Budget | Built by |
 | --- | --- | --- | --- | --- | --- |
@@ -45,8 +46,8 @@ on Apple Silicon (the arch strategy: x86 hosted, arm local —
 The aarch64 `redteam-ai` rows land with the KA-36 slice-2 sweep
 ([kailash-os#36](https://github.com/kailash-os/kailash-os/issues/36)).
 
-The gate that keeps the table honest:
-`images-release-completeness` (a check leg in the root flake) fails CI
+The table carries a checker:
+`images-release-completeness` (a check leg in the root flake). It fails CI
 whenever a table row lacks a declared build surface in the workflow, or
 the arm builder's default expansion drifts off-table. Run the same
 checker locally:
@@ -65,12 +66,12 @@ Release artefacts attach to the tagged GitHub release
 is the first). Three surfaces, per artefact:
 
 - **Release asset** (`kailash-<tag>-<ref>.iso|.qcow2`) — artefacts under
-  the 2 147 483 648-byte legacy per-asset cap.
-- **Chunked release assets** — every artefact ABOVE the cap goes up
-  anyway: byte-exact split parts (`<…>.part-000`, each ≤1900 MiB) plus a
-  per-part sheet (`SHA256SUMS-parts-<name>`), all attached to the same
-  release. The split is lossless packaging: reassemble with `cat` and
-  the file is BIT-IDENTICAL to the attested subject.
+  the legacy per-asset cap of 2 147 483 648 B.
+- **Chunked release assets** — every artefact above the cap still uploads.
+  The upload carries byte-exact split parts (`<…>.part-000`, each ≤1900 MiB)
+  plus a per-part sheet (`SHA256SUMS-parts-<name>`), all attached to the same
+  release. The split is lossless packaging: reassemble with `cat`, and the
+  file is byte-identical to the attested subject.
 - **Flake pull** — any artefact, any tag, from the Cachix-held closure:
 
   ```console
@@ -80,11 +81,11 @@ is the first). Three surfaces, per artefact:
 The release notes' artefact table states each artefact's surface for
 that release. The checksum sheet `SHA256SUMS` on the release covers
 every artefact (attached or chunked or flake-pulled) at WHOLE-file
-digest level — THE authority on artefact identity; the per-part sheets
-(`SHA256SUMS-parts-<name>`) authenticate each chunk in transit and ride
-beside, never replacing it. The arm builder writes its own suffixed
-sheet `SHA256SUMS-aarch64-local` that concatenates into the release
-sheet at attach time.
+digest level; the sheet is the artefact-identity authority. The per-part
+sheets (`SHA256SUMS-parts-<name>`) authenticate each chunk in transit and
+sit beside the whole-file sheet, never replace it. The arm builder writes
+its own suffixed sheet `SHA256SUMS-aarch64-local` that concatenates into
+the release sheet at attach time.
 
 ## Reassemble a chunked artefact
 
@@ -100,7 +101,7 @@ whole chain; the attestation check passes against the ORIGINAL build's
 records — the attested subject is the whole file, and `cat` reproduces
 its exact bytes.)
 
-## Verify before you run
+## Verify the artefact
 
 ```console
 $ sha256sum -c SHA256SUMS                      # digests
@@ -119,10 +120,10 @@ SPDX SBOM, Sigstore-signed over the repo's OIDC identity
 $ git checkout <tag>
 $ tools/build-arm-images.sh <tag>              # all table-scoped profiles, both formats
 $ tools/build-arm-images.sh <tag> minimal qemu # one target
-$ tools/build-arm-images.sh <tag> all all upload   # + gh release upload (your PAT)
+$ tools/build-arm-images.sh <tag> all all upload   # + gh release upload (needs the uploader's PAT)
 ```
 
 Output lands in `./release-arm/` with `SHA256SUMS-aarch64-local`.
-Requires a Nix distribution able to run `aarch64-linux` derivations
+The Nix distribution must run `aarch64-linux` derivations
 (Apple Silicon runs them natively; see
 [`TROUBLESHOOTING.md`](../../TROUBLESHOOTING.md) for environment notes).

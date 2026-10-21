@@ -3,16 +3,16 @@
 Kailash OS ships offensive AI-security tooling alongside defensive and
 platform tooling. The distribution is built for **authorised security work
 only**: red-team engagements with written authorisation, academic research,
-and defender-validation exercises against systems the operator is authorised
-to test.
+and defender-validation exercises against systems the operator is
+authorised to test.
 
 ## The operator's responsibility
 
 Possession of a tool is not authorisation to use it. The operator is
-responsible for knowing the law in their jurisdiction and for holding
-authorisation before testing any system they do not own. Unauthorised access
-to, or impairment of, computer systems is a criminal offence in most
-jurisdictions; the provisions most relevant to a Kailash operator are named
+responsible for two duties: know the law in their own jurisdiction, and
+hold authorisation before testing any system they do not own. Unauthorised
+access to, or impairment of, computer systems is a criminal offence in most
+jurisdictions. The provisions most relevant to a Kailash operator are named
 below.
 
 ## Australia
@@ -29,9 +29,9 @@ below.
   (D-6).
 
 Other jurisdictions carry their own equivalents (the US Computer Fraud and
-Abuse Act, the UK Computer Misuse Act, and others). This statement names the
-Australian provisions because the project's authorship is Australian; it is
-not exhaustive and is not legal advice.
+Abuse Act, the UK Computer Misuse Act, and others). This statement names
+the Australian provisions because the project's authorship is Australian.
+The statement is not exhaustive and is not legal advice.
 
 ## How the distribution enforces it
 
@@ -39,23 +39,26 @@ The responsible-use statement is paired with technical gates, not prose
 alone:
 
 - **Double-key lab gate** — every tool the packages manifest tags
-  `safety: exp` installs only through a gate wrapper that refuses to run
-  unless BOTH the host option `kailash.labMode` is enabled AND the
+  `safety: exp` installs only through a gate wrapper. The wrapper refuses
+  to run unless BOTH the host option `kailash.labMode` is enabled AND the
   individual invocation sets `KAILASH_LAB_MODE=1`
   ([spec §9.2](https://github.com/kailash-os/kailash-os/blob/master/docs/spec.md#92-safety-defaults-module-basesafety-defaultsnix); `modules/base/safety-defaults.nix`; the refusal text cites
   this file).
 - **No auto-start** — no service in the flake auto-starts an exp-class
-  tool, and no service module self-enables; every service is
-  `mkEnableOption`-off by default ([spec §9.2](https://github.com/kailash-os/kailash-os/blob/master/docs/spec.md#92-safety-defaults-module-basesafety-defaultsnix)).
+  tool, and no service module self-enables. Every service is
+  `mkEnableOption`-off by default
+  ([spec §9.2](https://github.com/kailash-os/kailash-os/blob/master/docs/spec.md#92-safety-defaults-module-basesafety-defaultsnix)).
 - **Secrets hygiene** — keys (including model API keys) live outside the
-  Nix store, whose paths are world-readable; sops-nix is the declarative
+  Nix store, whose paths are world-readable. sops-nix is the declarative
   mechanism, and model API keys are read at runtime from
-  `~/.config/kailash/keys/` ([spec §9.2](https://github.com/kailash-os/kailash-os/blob/master/docs/spec.md#92-safety-defaults-module-basesafety-defaultsnix)).
+  `~/.config/kailash/keys/`
+  ([spec §9.2](https://github.com/kailash-os/kailash-os/blob/master/docs/spec.md#92-safety-defaults-module-basesafety-defaultsnix)).
 
 ## Scope of the statement
 
-This file is the data source the desktop MOTD, the `kailash doctor` output
-and the site's Layer-ATTACK pages render from — the statement ships with the
-distribution so the reminder travels wherever the tooling does. The
-authoritative safety doctrine is [the specification's Chapter 9](https://github.com/kailash-os/kailash-os/blob/master/docs/spec.md#chapter-9-safety-governance-licensing); the tool manifest's
+This file is the data source behind three render surfaces: the desktop
+MOTD, the `kailash doctor` output, and the site's Layer-ATTACK pages. The
+statement ships with the distribution, so the reminder travels with the
+tooling. The authoritative safety doctrine is
+[the specification's Chapter 9](https://github.com/kailash-os/kailash-os/blob/master/docs/spec.md#chapter-9-safety-governance-licensing); the tool manifest's
 `safety` field is the enforcement data.
