@@ -176,8 +176,8 @@ def _emit_list(category, rows):
                      if (t.get("safety") or {}).get("level") == "exp")
     if exp_ids:
         print(
-            "gen-category-packages: %s carries safety:exp rows (%s) — exp rows "
-            "NEVER enter package lists (spec §9.2); refusing to emit"
+            "gen-category-packages: %s carries safety:exp rows (%s). Exp rows "
+            "stay out of package lists. The generator stops with exit 1"
             % (category, ", ".join(exp_ids)),
             file=sys.stderr,
         )
@@ -331,7 +331,7 @@ def main(argv):
         out = generate_category(tools, category)
         if not out:
             print(
-                "gen-category-packages: no emit for %s (generator not wired?)"
+                "gen-category-packages: no rows for %s in the manifest"
                 % category,
                 file=sys.stderr,
             )
