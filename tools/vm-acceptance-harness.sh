@@ -88,7 +88,7 @@ echo
 # slower of the pair) until it answers or the window closes. A closed
 # window is an ATTEMPTED-not-REACHABLE verdict — exit 1, exit code that
 # CI can hang a boot-wait retry on.
-echo "--- boot-wait: polling $OLLAMA_URL/api/tags (window: ${WAIT_SECONDS}s)"
+echo "--- boot-wait: poll target $OLLAMA_URL/api/tags (window: ${WAIT_SECONDS}s)"
 deadline=$(( $(date +%s) + WAIT_SECONDS ))
 reachable=""
 while [ "$(date +%s)" -lt "$deadline" ]; do
@@ -102,7 +102,7 @@ while [ "$(date +%s)" -lt "$deadline" ]; do
   sleep 3
 done
 if [ -z "$reachable" ]; then
-  echo "boot-wait: ATTEMPTED, not REACHABLE within ${WAIT_SECONDS}s — the VM is not up (boot hung? window too short?)"
+  echo "boot-wait: ATTEMPTED, not REACHABLE within ${WAIT_SECONDS}s — the VM did not start. Check the boot log. Check the --wait-seconds value."
   exit 1
 fi
 
@@ -123,7 +123,7 @@ if out="$(curl -fsS -m 300 -H 'Content-Type: application/json' -d "$payload" "$O
     printf '%s\n' "$response_text"
     verbatim_ollama="$(printf '%s\n' "$out" | head -c 8000)"
   else
-    echo "ollama-11434-prompt: FAIL — 200 but .response empty (model not pulled? try: ollama pull $OLLAMA_MODEL in the VM)"
+    echo "ollama-11434-prompt: FAIL — the HTTP response is 200 but .response is empty. Run 'ollama pull $OLLAMA_MODEL' in the VM."
     fail=1
     verbatim_ollama="$(printf '%s\n' "$out" | head -c 8000)"
   fi
@@ -177,11 +177,11 @@ if [ -n "$RECORD" ] && [ "$fail" -eq 0 ]; then
       verbatim_sections: ["ollama-11434-prompt", "mlflow-5000-health"],
       commands: ["POST /api/generate (ollama)", "GET /health (mlflow)"]}' \
     > "$RECORD"
-  echo "record written: $RECORD"
+  echo "the record is in $RECORD"
 fi
 
 if [ "$fail" -ne 0 ]; then
-  echo "kailash-vm-acceptance: FAIL (one or both endpoints did not clear)"
+  echo "kailash-vm-acceptance: FAIL (an endpoint check did not pass)"
   exit 1
 fi
 echo "kailash-vm-acceptance: BOTH endpoint checks ok"

@@ -51,7 +51,7 @@ need sha256sum || need shasum
 for prof in "${PROFILES[@]}"; do
   for fmt in "${FORMATS[@]}"; do
     ref="kailash-images-${fmt}-aarch64-${prof}"
-    echo "== building $ref at $TAG =="
+    echo "== build: $ref at $TAG =="
     nix build "github:kailash-os/kailash-os/${TAG}#${ref}" -L --no-link --print-out-paths | tail -1 > "$OUTDIR/${ref}.path"
     OUT="$(cat "$OUTDIR/${ref}.path")"
     ART="$(find "$OUT" \( -name '*.iso' -o -name '*.qcow2' -o -name 'nixos-*' \) -type f | head -1)"
@@ -63,7 +63,7 @@ for prof in "${PROFILES[@]}"; do
     echo "   -> $DEST"
     if [ "$UPLOAD" = "upload" ]; then
       gh release upload "$TAG" "$DEST" --clobber
-      echo "   uploaded to the release"
+      echo "   the artefact is on the release"
     fi
   done
 done
@@ -80,7 +80,7 @@ for f in ./*.iso ./*.qcow2; do
   if [ -f "$f" ]; then ARTS+=("$f"); fi
 done
 if [ "${#ARTS[@]}" -eq 0 ]; then
-  echo "no image artefacts in $OUTDIR — nothing to checksum" >&2
+  echo "no image artefacts in $OUTDIR — the checksum step has no input" >&2
   exit 1
 fi
 if command -v sha256sum >/dev/null 2>&1; then
@@ -89,4 +89,4 @@ else
   shasum -a 256 "${ARTS[@]}" > SHA256SUMS-aarch64-local
 fi
 cat SHA256SUMS-aarch64-local
-echo "done — artefacts + SHA256SUMS-aarch64-local in $OUTDIR/ (re-run with 'upload' to push them to the release)"
+echo "done — the artefacts and SHA256SUMS-aarch64-local are in $OUTDIR/; rerun with 'upload' to send them to the release"
