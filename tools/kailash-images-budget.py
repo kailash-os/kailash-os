@@ -92,20 +92,20 @@ def self_test():
     # the pack rule; qemu-minimal stays under (99 <= 100).
     ok2, _ = enforce(base)
     if ok2:
-        print("self-test: FAIL — the pack-leak target did not trip the leg")
+        print("self-test: FAIL — the leg did not find the pack-leak case")
         return 1
     # A mass breach case: shrink the budget
     base["table"]["qemu-minimal"]["budgetMB"] = 50
     ok3, _ = enforce(base)
     if ok3:
-        print("self-test: FAIL — the mass-breach case did not trip the leg")
+        print("self-test: FAIL — the leg did not find the mass-breach case")
         return 1
     # The clean case: restore, drop the pack token
     base["table"]["qemu-minimal"]["budgetMB"] = 100
     base["targets"]["iso-headless"]["closures"][0]["packTokens"] = []
     ok4, _ = enforce(base)
     if not ok4:
-        print("self-test: FAIL — the clean case tripped the leg")
+        print("self-test: FAIL — the leg failed the clean case")
         return 1
     print("kailash-images-budget --self-test: OK (breach + exclusion + clean all proven)")
     return 0
@@ -127,7 +127,7 @@ def main(argv=None):
     if not ok:
         print("images-budget: FAIL — see the BREACH/PACK-LEAK rows above")
         return 1
-    print("images-budget: OK — every target inside its §8.1 budget, no pack leaks")
+    print("images-budget: OK — every target is inside its budget; no pack leaks")
     return 0
 
 

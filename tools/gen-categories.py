@@ -342,12 +342,13 @@ def main() -> int:
 
     ap = argparse.ArgumentParser(
         prog="gen-categories",
-        description="Emit the §4.5 per-category id sets from manifest/tools.yaml (KA-06.1).",
+        description="Write the per-category id sets from manifest/tools.yaml.",
     )
     ap.add_argument("--manifest-file", default=DEFAULT_MANIFEST,
-                    help="tools.yaml path (flake legs pass the pinned packages manifest)")
+                    help="the tools.yaml path; the flake legs pass the pinned packages manifest")
     ap.add_argument("--out", default=None,
-                    help="write the emit here (default stdout); a committed path is regenerated via `make gen-categories`")
+                    help="write the output here (default stdout); the `make gen-categories` "
+                         "command regenerates a committed path")
     ap.add_argument("--self-test", action="store_true",
                     help="assert-based core self-check; no nix, no network")
     args = ap.parse_args()
@@ -359,7 +360,7 @@ def main() -> int:
         os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
         with open(args.out, "w", encoding="utf-8") as fh:
             fh.write(payload)
-        print(f"manifest-ids generated -> {args.out}", file=sys.stderr)
+        print(f"the generator writes manifest-ids to {args.out}", file=sys.stderr)
         return 0
     sys.stdout.write(payload)
     return 0

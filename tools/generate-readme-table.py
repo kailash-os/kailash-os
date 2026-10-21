@@ -357,7 +357,7 @@ def readme_seam_failure(path):
     b = text.index(BEGIN_MARK)
     e = text.index(END_MARK)
     if e < b:
-        return "END marker precedes BEGIN marker"
+        return "END marker is before BEGIN marker"
     return None
 
 
@@ -370,7 +370,7 @@ def replace_span(text, new):
     b = text.index(BEGIN_MARK)
     e = text.index(END_MARK)
     if e < b:
-        raise GenerateError("END marker precedes BEGIN marker")
+        raise GenerateError("END marker is before BEGIN marker")
     return text[:b] + new + text[e + len(END_MARK) :]
 
 
@@ -413,13 +413,13 @@ def check(readme_path, table=None, fixture_path=None, manifest_path=None,
     text = open(readme_path, encoding="utf-8").read()
     problem = readme_seam_failure(readme_path)
     if problem:
-        print("readme-table: FAIL: README seam is defective: %s" % problem)
+        print("readme-table: FAIL: the README table block fails the marker rule: %s" % problem)
         return 1
     b = text.index(BEGIN_MARK)
     e = text.index(END_MARK)
     span = text[b : e + len(END_MARK)]
     if span == table:
-        print("readme-table: OK: README table matches categories.yaml exactly")
+        print("readme-table: OK: the README table is identical to categories.yaml")
         return 0
     import difflib
 
@@ -429,7 +429,7 @@ def check(readme_path, table=None, fixture_path=None, manifest_path=None,
         tofile="categories.yaml (generated)",
         lineterm="",
     )
-    print("readme-table: FAIL: README category table has drifted from categories.yaml:")
+    print("readme-table: FAIL: the README category table shows drift against categories.yaml:")
     for line in list(diff)[:40]:
         print(line)
     return 1
