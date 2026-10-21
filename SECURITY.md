@@ -3,76 +3,80 @@
 ## Reporting a vulnerability
 
 Report security bugs and vulnerabilities to
-**[shain.singh@owasp.org](mailto:shain.singh@owasp.org)** — or use GitHub's private
-vulnerability reporting: [Report a vulnerability](https://github.com/kailash-os/kailash-os/security/advisories/new).
+**[shain.singh@owasp.org](mailto:shain.singh@owasp.org)**. GitHub's private
+vulnerability reporting also works: [Report a vulnerability](https://github.com/kailash-os/kailash-os/security/advisories/new).
 Do not open a public issue for an unreported vulnerability.
 
-Email reports may be encrypted to the OpenPGP key below. Include a description of
-the issue, steps to reproduce, and the affected version or commit. Reports are
-triaged within a few days; accepted issues receive a fix and a release. Honour
-responsible disclosure until an advisory is published.
+Email reports may arrive encrypted to the OpenPGP key below. Include a description
+of the issue, steps to reproduce, and the affected version or commit. The
+project triages reports within a few days. An accepted issue receives a fix
+and a release. Honour responsible disclosure until the project publishes an
+advisory.
 
 ## Scope and authorised use
 
 Kailash **ships offensive AI-security tooling for authorised security work
-only** — red-team engagements with written authorisation, academic research,
-and defender validation of one's own systems. Tooling misuse is not a
-vulnerability in Kailash; build/safety defects that let tooling escape its
-gates *are*.
+only**. The authorised work: red-team engagements with written authorisation,
+academic research, and defender validation of one's own systems. Tooling
+misuse is not a vulnerability in Kailash. Build and safety defects that let
+tooling escape its gates *are* vulnerabilities.
 
 High-value vulnerability classes here:
 
 - **Safety-gate bypass** — anything that lets an active-exploit tool run
-  without the double gate (explicit host opt-in + explicit shell opt-in), or
-  that flips `KAILASH_LAB_MODE` on implicitly. `KAILASH_LAB_MODE` defaults
-  off and no service auto-starts; a build that changes either property is a
-  security bug, not a packaging choice.
-- **Manifest/packaging compromise** — a tool entry that resolves to
-  something other than what its manifest record pins, or a
+  without the double gate. The double gate needs explicit host opt-in +
+  explicit shell opt-in. The same class covers anything that flips
+  `KAILASH_LAB_MODE` on implicitly.
+  `KAILASH_LAB_MODE` defaults off. No service auto-starts. A build that
+  changes either property is a security bug. It is not a packaging choice.
+- **Manifest/packaging compromise** — a tool entry that resolves to something
+  other than what its manifest record pins. The same class covers a
   menu/category entry that diverges from the manifest that generates it.
-- **Supply-chain integrity** — any drift between what the flake lockfile
-  pins and what the built environment actually executes.
+- **Supply-chain integrity** — any drift between what the flake lockfile pins
+  and what the built environment executes.
 
 ## Deployment boundary
 
-Deploy and exercise the tooling only against systems you own or are
-authorised to test. Australian users: the Cyber Security Act 2024 (Cth) and
-Criminal Code Act 1995 (Cth) Div 474 apply; other jurisdictions have their
-own equivalents.
+Deploy and exercise the tooling only against authorised targets. An
+authorised target is a system that the operator owns or authorises for
+testing. Australian users: the Cyber Security Act 2024 (Cth) and Criminal
+Code Act 1995 (Cth) Div 474 apply. Other jurisdictions have their own
+equivalents.
 
 ## Secret hygiene
 
 - Secret scanning and push protection stay enabled in repo settings.
 - `detect-private-key` runs on every change via the pre-commit hook set.
-- Environment secrets (sops-nix) are read at runtime — never committed;
-  never paste decrypted secrets in issues or PRs.
+- The system reads environment secrets (sops-nix) at runtime. They never land
+  in a commit. Never paste decrypted secrets in issues or PRs.
 
 ## How this repository maintains security hygiene
 
 **Supply-chain and dependency integrity**
 
-- Dependency Review — every PR is checked for license and vulnerability
+- Dependency Review — the gate checks every PR for license and vulnerability
   differences versus its base
   ([.github/workflows/dependency-review.yml](.github/workflows/dependency-review.yml)).
-- OpenSSF Scorecard — run on every change; results publish as a badge and
-  SARIF code-scanning upload.
-- Flake lockfile (`flake.lock` once KA-01 lands) pins the full tool closure;
-  menu and module trees are generated from the manifest, so the packaging
-  surface is reviewed as data, not hand-kept code.
+- OpenSSF Scorecard — the check runs on every change. Results publish as a
+  badge and as a SARIF code-scanning upload.
+- Flake lockfile (`flake.lock` once KA-01 lands) pins the full tool closure.
+  The manifest generates the menu and module trees. The project reviews the
+  packaging surface as data, not hand-kept code.
 
 **Reproducibility controls**
 
-- All commits are GPG/SSH-signed; unsigned commits are not merged.
+- All commits carry GPG/SSH signatures. The repo does not merge unsigned
+  commits.
 - pre-commit hooks run the CI set locally before every commit/push.
 
 **Known boundaries, stated plainly**
 
-- The distribution is pre-release: CI gates prove build health and layout
-  integrity, not production readiness. Scope exclusions (what Kailash
-  deliberately does not ship) are documented in the project paper and PRD.
+- The distribution is pre-release. CI gates prove build health and layout
+  integrity. They do not prove production readiness. The project paper and
+  PRD document the scope exclusions: what Kailash deliberately does not ship.
 
-Open a [general issue](https://github.com/kailash-os/kailash-os/issues/new) for
-non-sensitive questions; security reports follow the channels above.
+Open a [general issue](https://github.com/kailash-os/kailash-os/issues/new)
+for non-sensitive questions. Security reports follow the channels above.
 
 ## OpenPGP key
 

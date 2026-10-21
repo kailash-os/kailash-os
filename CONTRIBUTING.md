@@ -1,60 +1,60 @@
 # Contributing
 
-Contributions are welcome. This document defines the working agreement: how
-changes are proposed, reviewed, and merged, and what the continuous-integration
-gates enforce.
+Contributions are welcome. This document is the working agreement. It states
+how changes move: proposal, review, merge. It also states what the
+continuous-integration gates enforce.
 
 ## Ground rules
 
-1. **Never commit to `master`.** All work happens on a branch, one change per
-   branch, merged via pull request. Branch names follow
+1. **Never commit to `master`.** All work happens on a branch. One branch
+   carries one change. A pull request merges the branch. Branch names follow
    `<type>/<short-description>` with kebab-case — e.g. `feat/taxonomy-layer`,
    `fix/flake-eval`, `docs/module-page`.
 2. **Conventional Commits.** Every commit subject follows
-   the [specification](https://www.conventionalcommits.org/en/v1.0.0):
-   `type(scope): subject`.
+   the [specification](https://www.conventionalcommits.org/en/v1.0.0). The
+   form: `type(scope): subject`.
    - Types: `feat`, `fix`, `docs`, `refactor`, `test`, `build`, `ci`, `chore`,
      `perf`, `revert`.
-   - `scope` is a component: `nix` (flake/module), `taxonomy` (the four-layer
-     category tree), `manifest` (tool entries, packaging), `cli` (kailash
-     command surface), `menu` (menu definitions), `safety` (lab-mode and
-     gating), `docs`, `ci`.
-   - Subject: imperative, lowercase, no trailing period. Body (optional):
-     what changed and why; wrap at 72 columns.
-   - PR titles follow the same form; roadmap-slice PRs carry the id in the
+   - `scope` is a component. The components:
+     - `nix` (flake/module), `taxonomy` (the four-layer category tree),
+       `manifest` (tool entries, packaging), `cli` (kailash command surface).
+     - `menu` (menu definitions), `safety` (lab-mode and gating), `docs`, `ci`.
+   - Subject: imperative, lowercase, no trailing period. The body (optional)
+     records the change and the reason. Wrap the body at 72 columns.
+   - PR titles follow the same form. Roadmap-slice PRs carry the id in the
      subject — `type(scope): KA-XX — subject`. Squash merges use the PR title
-     as the commit subject (`squash_merge_commit_title: COMMIT_OR_PR_TITLE`),
-     so the PR title is the commit record. A CI gate checks the form on every
-     PR; bot/dependency PRs (renovate, pre-commit.ci autoupdate) keep their
-     canonical titles.
-3. **Sign everything.** Commits must be GPG- or SSH-signed
-   (`git config --global commit.gpgsign true`); releases are
-   signed tags — unsigned commits and unsigned tags are
-   not merged/published. Verify with `git log --show-signature` / `git tag -v`.
+     as the commit subject (`squash_merge_commit_title: COMMIT_OR_PR_TITLE`).
+     The PR title is then the commit record. A CI gate checks the form on
+     every PR. Bot and dependency PRs keep their canonical titles: renovate,
+     pre-commit.ci autoupdate.
+3. **Sign everything.** Commits must be GPG- or SSH-signed. The global
+   setting: `git config --global commit.gpgsign true`. Releases carry signed
+   tags. The project does not merge unsigned commits. It does not publish
+   unsigned tags. Check signatures with `git log --show-signature` /
+   `git tag -v`.
 4. **One logical change per PR.** Small, reviewable diffs merge faster.
-5. **Pre-commit runs locally.** Install the hooks once per clone —
-   `pre-commit install && pre-commit install --hook-type pre-push` —
-   then every `git commit` and `git push` runs the same hook set CI runs
-   (bypass with `--no-verify` for the rare legitimate exception).
+5. **Pre-commit runs locally.** Install the hooks once per clone:
+   `pre-commit install && pre-commit install --hook-type pre-push`. Every
+   `git commit` and `git push` then runs the hook set that CI runs. Bypass
+   with `--no-verify` only for the rare legitimate exception.
 
 ## Security-sensitive changes
 
-Anything touching the tool manifest, the safety gating, or the packaging
-harness warrants extra care (see [SECURITY.md](SECURITY.md) for the full
-posture):
+Changes that touch the tool manifest, the safety gating, or the packaging
+harness need extra care. [SECURITY.md](SECURITY.md) holds the full posture:
 
-- **Vulnerabilities are not issues.** Follow [SECURITY.md](SECURITY.md) — never
+- **Vulnerabilities are not issues.** Follow [SECURITY.md](SECURITY.md). Never
   open a public issue for an unreported vulnerability.
 - **Offensive tooling entries** (`area:layer-attack`) must carry their safety
-  level in the manifest entry: tools whose safety level is active-exploit are
-  double-gated behind explicit host and shell opt-in (`KAILASH_LAB_MODE`
-  defaults off). A manifest change that new-tools an active-exploit entry
-  without the gate declared is rejected in review.
-- **Taxonomy integrity:** categories and their ATLAS/OWASP mappings are part
-  of the distribution's contract — re-orderings or removals state their
+  level in the manifest entry. An active-exploit tool sits behind a double
+  gate: explicit host opt-in + explicit shell opt-in (`KAILASH_LAB_MODE`
+  defaults off). Review rejects a manifest change that adds an active-exploit
+  entry without the declared gate.
+- **Taxonomy integrity:** the categories and their ATLAS/OWASP mappings are
+  part of the distribution's contract. A re-ordering or a removal states its
   impact in the PR body.
-- **Nix-side entrypoints:** keep module code evalu-reproducible — every
-  runtime dependency belongs in the flake, pinned by the lockfile.
+- **Nix-side entrypoints:** keep the module code reproducible under eval.
+  Every runtime dependency belongs in the flake. The lockfile pins it.
 
 ## The acceptance suite
 
@@ -63,11 +63,11 @@ nix flake check --all-systems --no-build   # (KA-15) everything evaluates
 nix develop -c pre-commit run --all-files  # the hook set CI runs
 ```
 
-`nix flake check --all-systems --no-build` evaluates everything (both
-declared systems); the `build` workflow runs the manifest→matrix build legs
-(after KA-15 the per-package matrix is live and the Cachix cache fronts the
-builds). The hook set (trailing whitespace, YAML/JSON validity, large-file
-guards, `detect-private-key`, shellcheck on shell scripts) runs on every PR.
+`nix flake check --all-systems --no-build` evaluates everything. The check
+covers both declared systems. The `build` workflow runs the manifest→matrix build
+legs. Since KA-15 the per-package matrix is live. The Cachix cache fronts the
+builds. The hook set runs on every PR: trailing whitespace, YAML/JSON validity,
+large-file guards, `detect-private-key`, shellcheck on shell scripts.
 
 ## CI on every pull request
 
@@ -81,65 +81,89 @@ guards, `detect-private-key`, shellcheck on shell scripts) runs on every PR.
 
 ## Commits and pull requests
 
-- Push your branch and open a PR against `master`; describe the what and the why.
-- Link the `KA-XX` issue the change implements; the project board
-  is [kailash Roadmap](https://github.com/orgs/kailash-os/projects/1).
-- Releases are signed tags (`git tag -s 2026.01-alpha.1`); the release-naming
-  ladder — `YYYY.NN` release index, alpha/rc staging, bare `2026.01` reserved
-  for GA — lives on
-  [`docs/guide/releases.md`](docs/guide/releases.md). Unsigned tags are not
-  published; the v-series (`v0.1.0`) is retired (os#142).
+- Cut the branch from current `master`. Push it. Open a PR against `master`.
+  The PR description states the change and the reason.
+- Link the `KA-XX` issue that the change implements. The project board is
+  [kailash Roadmap](https://github.com/orgs/kailash-os/projects/1).
+- Releases carry signed tags (example: `git tag -s 2026.01-alpha.1`). The
+  release-naming ladder lives on
+  [`docs/guide/releases.md`](docs/guide/releases.md): the `YYYY.NN` release
+  index, alpha/rc staging, and the bare `2026.01` tag reserved for GA. The
+  project does not publish unsigned tags. The v-series (`v0.1.0`) is retired
+  ([kailash-os#142](https://github.com/kailash-os/kailash-os/issues/142)).
 
 ## Reporting bugs
 
-Open a [GitHub issue](https://github.com/kailash-os/kailash-os/issues/new) with
-the flake revision (or the release tag once releases start), the category/manifest
-surface you hit, host OS, and the relevant error excerpt. Security issues never
-go here — [SECURITY.md](SECURITY.md) instead.
+Open a [GitHub issue](https://github.com/kailash-os/kailash-os/issues/new).
+The issue reports the flake revision (or the release tag, once releases
+start). It also names the category/manifest surface, the host OS, and the
+relevant error excerpt. Security issues never go here. Use
+[SECURITY.md](SECURITY.md) instead.
 
 ## Licence
 
-The project is licensed under **BSD-3-Clause** — see [LICENSE](LICENSE).
-Contributions are made under **BSD-3-Clause**: by submitting a pull request you
-agree your work is licensed under the project's BSD-3-Clause terms.
+The project carries the **BSD-3-Clause** licence — see [LICENSE](LICENSE).
+By opening a pull request, the contributor accepts the project's
+**BSD-3-Clause** terms for the contributed work.
 
 ## Engineering standard: hypothesis-first TDD
 
-Every feature, fix and refactor follows **hypothesis → failing test → minimal implementation → refactor** (see #119 for the scope clauses and #51 for the standing spec):
+Every feature, fix, and refactor follows **hypothesis → failing test →
+minimal implementation → refactor**. The scope clauses:
+[kailash-os#119](https://github.com/kailash-os/kailash-os/issues/119). The
+standing spec:
+[kailash-os#51](https://github.com/kailash-os/kailash-os/issues/51).
 
-1. State the hypothesis in the issue: expected behaviour, assumed mechanism, falsifying observation.
-2. **Commit the failing test first** on the feature branch; run it and paste the RED run's failure line into the PR.
-3. Implement the minimum that passes; then the suite; then refactor with tests green.
-4. Edge/error paths (overflow, malformed input, failure modes) are covered before close.
+1. State the hypothesis in the issue: expected behaviour, assumed mechanism,
+   falsifying observation.
+2. **Commit the failing test first** on the feature branch. Run it. Paste the
+   RED run's failure line into the PR.
+3. Implement the minimum that passes the test. Then pass the full suite. Then
+   refactor with the tests green.
+4. The suite covers the edge and error paths before close: overflow, malformed
+   input, failure modes.
 
-Where unit tests cannot reach — kernel-attached code, live-cluster behaviour — the issue's acceptance criterion **is** the test: record the EXPECTED-FAIL run before building, re-run green after. Same discipline, different harness.
+Unit tests cannot reach some surfaces: kernel-attached code, live-cluster
+behaviour. On those surfaces the issue's acceptance criterion **is** the test.
+Record the EXPECTED-FAIL run before the build. Re-run it green after. The
+discipline is the same. The harness differs.
 
-**Harness before capability.** The check that gates a behaviour ships in the same PR as the behaviour; nothing merges ahead of the check that would catch its regression. Where a new gate surface is introduced, the negative case (the gate fails on defective input) is proven in CI, not asserted in prose. In roadmap terms: spec → test (RED) → feature (GREEN) → build (CI proves it on the runner).
+**Harness before capability.** The check gates the behaviour and ships in the
+same PR. Nothing merges ahead of the check that catches its regression. A new
+gate surface proves the negative case in CI: the gate fails on defective
+input. The proof never sits in prose alone. In roadmap terms: spec → test
+(RED) → feature (GREEN) → build (CI proves it on the runner).
 
-**GitHub Actions is the authoritative check and build surface.** The acceptance suite executes on hosted ubuntu runners (`nix flake check --all-systems`, derivation checks, VM tests); contributor machines run the same suite for development only and never as merge evidence. Self-hosted runners enter only for the disk-bound image builds (the KA-15 arrangement). Where a check can run in both places, Actions is the default.
+**GitHub Actions is the authoritative check and build surface.** The
+acceptance suite runs on hosted ubuntu runners: `nix flake check
+--all-systems`, derivation checks, VM tests. Contributor machines run the same
+suite for development only. They never carry merge evidence. Self-hosted
+runners enter only for the disk-bound image builds (the KA-15 arrangement).
+A check that runs in both places defaults to Actions.
 
-Exceptions require the user's explicit go-ahead in the issue before work starts.
+Exceptions need the user's explicit go-ahead in the issue. The work starts
+only after the go-ahead.
 
 ## Packaging gates (stub — filled by KA-01.1 follow-ons)
 
-Work that lands in `pkgs/` of the packages overlay or references bespoke
-derivations is expected to satisfy the gates below; the manifest
-(`manifest/tools.yaml`, kailash-packages) is the only hand-maintained
-registry, and anything packaged must be manifest-listed.
+Work that lands in `pkgs/` of the packages overlay must satisfy the gates
+below. The same rule covers work that references bespoke derivations. The
+manifest (`manifest/tools.yaml`, kailash-packages) is the only hand-maintained
+registry. The manifest lists every packaged item.
 
-- Packaging follows the three populations (nixpkgs-native pin /
-  stale-override / bespoke derivation) with the population recorded in the
-  manifest entry.
-- Bespoke derivations build clean under `nix build`, with import/smoke
-  checks appropriate to the package; test gates live beside the code.
-- `nvfetcher/_sources/` is committed; pinned sources never silently move.
+- Packaging follows the three populations: nixpkgs-native pin, stale-override,
+  bespoke derivation. The manifest entry records the population.
+- Bespoke derivations build clean under `nix build`. The package carries the
+  import and smoke checks that fit it. Test gates live beside the code.
+- `nvfetcher/_sources/` stays committed. Pinned sources never move silently.
 
 ## Safety policy (stub — expanded by KA-18)
 
-Offensive tooling exists for authorised security work only: engagements
-with written authorisation, academic research, and defender validation of
-one's own systems (AU framing: Cyber Security Act 2024 (Cth); Criminal
-Code Act 1995 (Cth) Div 474). Tools tagged `exp` in the manifest are
-lab-gated — they refuse to run unless lab mode is explicitly enabled at
-both the host (profile) and shell (environment) level. No D-layer service
-auto-starts; enabling a lab-posture service is a deliberate act.
+Offensive tooling exists for authorised security work only. The authorised
+work: engagements with written authorisation, academic research, and defender
+validation of one's own systems. The AU framing is law: Cyber Security Act
+2024 (Cth); Criminal Code Act 1995 (Cth) Div 474. Tools tagged `exp` in the
+manifest are lab-gated. They refuse to run without lab mode. Lab mode needs
+explicit opt-in at both levels: the host (profile) and the shell
+(environment). No D-layer service auto-starts. Enabling a lab-posture service
+is a deliberate act.
