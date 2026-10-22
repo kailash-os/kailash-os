@@ -160,7 +160,7 @@ def self_test() -> int:
         {"id": "d"},
     ]
     got = emit_inputs(mixed)
-    assert got["exp_ids"] == ["a"], f"non-exp rows leaked: {got['exp_ids']!r}"
+    assert got["exp_ids"] == ["a"], f"exp_ids carries a non-exp row: {got['exp_ids']!r}"
     # id shapes: every exp id is a manifest slug; wrappers stay aligned
     for w in got["wrappers"]:
         tid = w["id"]
@@ -168,7 +168,7 @@ def self_test() -> int:
     # determinism: re-emitting the same rows in a different order emits
     # the identical blob
     shuffled = [mixed[1], mixed[3], mixed[0], mixed[2]]
-    assert emit_inputs(shuffled) == got, "emit is not order-deterministic"
+    assert emit_inputs(shuffled) == got, "the output is not order-deterministic"
     # 3.9-era compat guard: no PEP 604 union syntax anywhere in this file
     # (needle is built split so this line cannot contain the pattern)
     union = "|" + " None"

@@ -367,8 +367,8 @@ def self_test() -> None:
             fh.write("\n")
         got = _pkgs_fallback_names(td)
         assert got == ["dnsrecon", "subfinder"], (
-            f"pkgs/ fallback must list the auto-call dirs, got {got!r} — "
-            f"a manifest-only source would emit an empty matrix"
+            f"pkgs/ fallback must carry the auto-call dirs, got {got!r}. "
+            f"A manifest-only source writes an empty matrix"
         )
     # 6. end-to-end fallback: header-only manifest + real pkgs dirs -> the
     # 2-package matrix (the GREEN output quoted in the GREEN commit body)
@@ -417,7 +417,7 @@ def self_test() -> None:
     except ValueError:
         pass
     else:  # pragma: no cover - guard
-        raise AssertionError("blank rev must be refused (no floating heads)")
+        raise AssertionError("a blank rev stops the generator (no floating heads)")
     # 10. tarball extraction: fixture bytes via a real in-memory tar
     import io
     import tarfile as tarfile_mod
@@ -451,7 +451,9 @@ def self_test() -> None:
     except ValueError:
         pass
     else:  # pragma: no cover - guard
-        raise AssertionError("structured list entries must fail loudly in the fallback")
+        raise AssertionError(
+            "structured list entries stop the fallback with a ValueError"
+        )
     # 13. dict-row contract (§5.2 rows are dicts, KA-05.x): matrix entries
     # derive from bespoke rows' packaging.derivation — native rows are
     # nixpkgs-provided, not overlay buildables. RED probe of the dict
@@ -466,7 +468,7 @@ def self_test() -> None:
             {"package": "subfinder", "system": "x86_64-linux"},
             {"package": "subfinder", "system": "aarch64-linux"},
         ]
-    }, "dict rows must map bespoke derivations to matrix entries, got %r" % (
+    }, "dict rows must give matrix entries from the bespoke derivations, got %r" % (
         manifest_dict_to_matrix({"tools": _rows}, None),)
     # 14. string rows (fixture-era shape) keep working — the pure core is
     # row-shape agnostic at the call sites that pass plain names.
@@ -516,7 +518,7 @@ def main(argv):
         try:
             manifest_dir = args[idx + 1]
         except IndexError:
-            raise SystemExit("--manifest-dir requires a directory argument")
+            raise SystemExit("set a directory argument after --manifest-dir")
     if manifest_dir:
         emit(lock_path=None, manifest_dir=manifest_dir)
     else:
