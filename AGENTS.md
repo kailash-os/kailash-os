@@ -75,10 +75,10 @@ The taxonomy lives in `kailash-packages/manifest/`. `categories.yaml` carries
 the census categories: 31 shippable + 1 data-pack. `tools.yaml` carries the
 tool inventory. The layer model is [the spec's §2.6 post-purge
 census](https://github.com/kailash-os/kailash-os/blob/master/docs/spec.md#26-the-full-category-table-post-purge-census).
-The census records CLASSIC 134, ATTACK 23, DEFENCE 25, OPS 82 primary tool
-slots. The same census was 337 before the purge (os#210
-phantom-upstream purge basis, 2026-10-14). The purged rows claimed
-upstreams that did not exist. The C-7 SDR pack is the data-pack census
+The census figures live in that spec table. Read the figures there; never
+restate them. The purge basis:
+[kailash-os#210](https://github.com/kailash-os/kailash-os/issues/210), 2026-10-14. The purged rows
+claimed upstreams that did not exist. The C-7 SDR pack is the data-pack census
 category. Default profiles and images exclude it.
 
 **A fact has exactly one home.** Layer, category and tool facts live in the
