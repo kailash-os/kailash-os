@@ -65,7 +65,7 @@ split_mode() {
   need_split
   mkdir -p "$outdir"
   local base; base="$(basename "$artefact")"
-  echo "splitting $base ($(($(stat -f%z "$artefact" 2>/dev/null || stat -c%s "$artefact") / 1024 / 1024)) MiB) into ${PART_MIB} MiB parts -> $outdir"
+  echo "split: $base ($(($(stat -f%z "$artefact" 2>/dev/null || stat -c%s "$artefact") / 1024 / 1024)) MiB) into ${PART_MIB} MiB parts -> $outdir"
   rm -f "$outdir/$base".part-* "$outdir/SHA256SUMS-parts-$base"
   # GNU split carries --additional-suffix; BSD (macOS) does not — use it
   # when present, plain numeric suffixes otherwise (the sheet + join work
@@ -82,7 +82,7 @@ split_mode() {
     [ -f "$p" ] || continue
     parts+=("$p")
   done
-  [ "${#parts[@]}" -gt 0 ] || { echo "no parts produced" >&2; exit 1; }
+  [ "${#parts[@]}" -gt 0 ] || { echo "no parts in $outdir" >&2; exit 1; }
   ( cd "$outdir" && { for p in "${parts[@]}"; do printf '%s  %s\n' "$(digest "$p")" "$(basename "$p")"; done; } > "SHA256SUMS-parts-$base" )
   echo "parts: ${#parts[@]}  sheet: $outdir/SHA256SUMS-parts-$base"
   cat "$outdir/SHA256SUMS-parts-$base"
@@ -99,12 +99,12 @@ join_mode() {
   local base; base="$(basename "$sheet")"; base="${base#SHA256SUMS-parts-}"
   local stem="$dir/$base"; stem="${stem%%.part-*}"
   local nparts; nparts="$(find "$stem".part-* -maxdepth 0 -type f | wc -l | tr -d ' ')"
-  echo "joining ${nparts} parts -> $stem"
+  echo "join: ${nparts} parts -> $stem"
   cat "$stem".part-* > "$stem"
   sha_check "$dir" "$(basename "$sheet")"
-  echo "reassembled: $stem"
+  echo "the join is complete: $stem"
   echo "whole-file digest: $(digest "$stem")  $(basename "$stem")"
-  echo "now verify against the release SHA256SUMS whole-file line, then: gh attestation verify"
+  echo "verify the whole-file line against the release SHA256SUMS; then run: gh attestation verify"
 }
 
 verify_mode() {
@@ -127,7 +127,7 @@ verify_mode() {
     echo "WHOLE-FILE DIGEST MATCHES THE RELEASE SHEET — run: gh attestation verify $base -R kailash-os/kailash-os"
     return 0
   fi
-  echo "whole digest NOT found in $dir/SHA256SUMS — re-download/re-split before trusting" >&2
+  echo "whole digest NOT found in $dir/SHA256SUMS — re-download the artefact; do not use this copy" >&2
   return 1
 }
 
@@ -150,7 +150,7 @@ PY
   split_mode "$tmp/blob.bin" "$d1" >/dev/null
   unset SPLIT_PART_MIB
   local nparts; nparts="$(find "$d1" -maxdepth 1 -name '*.part-*' -type f | wc -l | tr -d ' ')"
-  [ "$nparts" -ge 3 ] || { echo "self-test FAILED: expected >=3 parts at the 6 MiB test size, got $nparts" >&2; exit 1; }
+  [ "$nparts" -ge 3 ] || { echo "self-test: FAIL: $nparts parts at the 6 MiB test size; the proof requires 3 parts or more" >&2; exit 1; }
   mkdir -p "$d2"; cp "$d1"/*.part-* "$d1"/SHA256SUMS-parts-* "$d2/"
   printf '%s  blob.bin\n' "$(digest "$tmp/blob.bin")" > "$d2/SHA256SUMS"
   join_mode "$d2" >/dev/null
@@ -160,10 +160,10 @@ PY
   local bad_part; bad_part="$(find "$d3" -maxdepth 1 -name '*.part-*' -type f | sort | head -1)"
   printf 'x' | dd of="$bad_part" bs=1 seek=100 conv=notrunc status=none
   if verify_mode "$d2/blob.bin" "$d3" >/dev/null 2>&1; then
-    echo "self-test FAILED: corrupted parts were not detected" >&2
+    echo "self-test: FAIL: the verify step did not find the bad part" >&2
     exit 1
   fi
-  echo "self-test: OK ($nparts-part round-trip, order-proven, digest-matched, corrupted part detected)"
+  echo "self-test: OK ($nparts parts; the join keeps the order; the digest check holds; the verify step finds the bad part)"
   trap - EXIT
   rm -rf "$tmp"
 }

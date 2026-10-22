@@ -42,5 +42,5 @@ out, counts = sys.argv[1], json.loads(sys.argv[2])
 doc = json.load(open(out))
 doc["targets"] = counts
 json.dump(doc, open(out, "w"), indent=2, sort_keys=True)
-print("wrote", out, "targets:", len(doc["targets"]), "counts:", counts)
+print("census:", out, "targets:", len(doc["targets"]), "counts:", counts)
 PY

@@ -103,7 +103,7 @@ echo "artifacts: $ARTIFACTS_URL (seed: $SEED)"
 echo
 
 # ---- stage 1: boot-wait ------------------------------------------------
-echo "--- boot-wait: polling $MLFLOW_URL/health (window: ${WAIT_SECONDS}s)"
+echo "--- boot-wait: poll target $MLFLOW_URL/health (window: ${WAIT_SECONDS}s)"
 deadline=$(( $(date +%s) + WAIT_SECONDS ))
 reachable=""
 while [ "$(date +%s)" -lt "$deadline" ]; do
@@ -131,10 +131,10 @@ if [ "$track_rc" -ne 0 ]; then track_out="FAIL: $track_out"; fi
 printf '%s\n' "$track_out" | head -c 3000
 echo
 if [ "$track_rc" -eq 0 ] && [ "$(printf '%s' "$track_out" | jq -r '.experiments // empty | length' 2>/dev/null)" -ge 0 ]; then
-  echo "track: ok — experiments/search answered unauthenticated (ML_METHOD_FLAG surface UP)"
+  echo "track: ok — experiments/search answers without credentials (ML_METHOD_FLAG surface UP)"
   track_verbatim="$track_out"
 else
-  echo "track: FAIL — the unauth experiments/search probe failed (auth gate up? route moved?)"
+  echo "track: FAIL — the unauth experiments/search probe failed (check the auth gate; check the route)"
   fail=1
 fi
 
@@ -158,13 +158,13 @@ if [ "$SEED" = "1" ]; then
   printf '%s\n' "$create_out" | head -c 1200
   echo
   if [ "$create_rc" -ne 0 ]; then
-    echo "bypass(seed): FAIL — the unauth run-create probe failed (auth gate up? backend moved?)"
+    echo "bypass(seed): FAIL — the unauth run-create probe failed (check the auth gate; check the backend)"
     fail=1
   else
     run_id="$(printf '%s' "$create_out" | jq -r '.run.info.run_id // empty' 2>/dev/null)"
   fi
   if [ -z "$run_id" ]; then
-    echo "bypass(seed): FAIL — no run_id parsed from the create response"
+    echo "bypass(seed): FAIL — the create response carries no run_id"
     fail=1
   else
     seed_verbatim="$create_out"
@@ -194,7 +194,7 @@ if [ -n "$run_id" ]; then
   list_url="$MLFLOW_URL/ajax-api/2.0/mlflow/artifacts/list?run_id=$run_id&path="
   echo "command: curl -fsS \"$list_url\""
 else
-  echo "(no --seed and no seeded run_id on this lab — the listing needs an existing seeded run)"
+  echo "(no --seed and no seeded run_id — the listing reads an existing seeded run)"
   list_url=""
   run_id="<SEEDED-LAB-RUN-ID-REQUIRED>"
 fi
@@ -205,10 +205,10 @@ if [ -n "$list_url" ]; then
   printf '%s\n' "$list_out" | head -c 3000
   echo
   if [ "$list_rc" -eq 0 ] && [ "$(printf '%s' "$list_out" | jq -r '.files // empty | type' 2>/dev/null)" = "array" ]; then
-    echo "bypass: ok — the artefact listing answered unauthenticated"
+    echo "bypass: ok — the artefact listing answers without credentials"
     list_verbatim="$list_out"
   else
-    echo "bypass: FAIL — the artefact-list probe failed (route moved? no seeded artefact?)"
+    echo "bypass: FAIL — the artefact-list probe failed (check the route; check the seeded artefact)"
     fail=1
   fi
 fi
@@ -227,11 +227,11 @@ if [ -n "$RECORD" ] && [ "$fail" -eq 0 ]; then
   record_doc="$record_doc, \"endpoint_checks\": {\"mlflow-5000-health\": {\"verdict\": \"ok\", \"command\": \"GET /health against $MLFLOW_URL\", \"verbatim\": $(jq -Rs . <<<"$body")}}"
   record_doc="$record_doc, \"verbatim_sections\": [\"track\", \"bypass\"], \"commands\": [\"MLFLOW_BYPASS_LIST tracking+artifacts pair\"]}"
   printf '%s\n' "$record_doc" > "$RECORD"
-  echo "record written: $RECORD"
+  echo "the record is in $RECORD"
 fi
 
 if [ "$fail" -ne 0 ]; then
-  echo "kailash-integration-mlflow-attack: FAIL (one or more probes did not clear)"
+  echo "kailash-integration-mlflow-attack: FAIL (a probe did not pass)"
   exit 1
 fi
 echo "kailash-integration-mlflow-attack: BOTH probes ok (track + bypass listing)"
