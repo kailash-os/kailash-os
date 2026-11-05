@@ -1,7 +1,30 @@
----
-title: "Kailash OS — Specification"
-lang: en
----
+%%%
+title = "Kailash OS — Specification"
+abbrev = "kailash-spec"
+area = "Internet"
+workgroup = "kailash-os project"
+keyword = ["Kailash OS", "NixOS", "AI security"]
+date = 2026-10-11
+ipr = "none"
+submissionType = "independent"
+language = "en"
+
+[seriesInfo]
+name = "Internet-Draft"
+value = "kailash-spec-00"
+status = "informational"
+stream = "independent"
+
+[[author]]
+initials = "S."
+surname = "Singh"
+fullname = "Shain Singh"
+organization = "kailash-os project"
+  [author.address]
+  email = "shain.singh@owasp.org"
+%%%
+
+{mainmatter}
 
 # Kailash OS — Specification
 
@@ -11,16 +34,16 @@ This document is the public implementation blueprint for Kailash OS. The
 project planning master is the revision source. Repo docs, guides, and issues
 cite the §-numbering here. Normative *prose* lives here. Normative *data*
 lives in the
-[`kailash-packages` manifest](https://github.com/kailash-os/kailash-packages/tree/main/manifest).
+[kailash-packages manifest](https://github.com/kailash-os/kailash-packages/tree/main/manifest).
 Each fact has one home. Tool facts and category facts live in the manifest.
 
 Companion documents:
 
-- [`docs/guide/releases.md`](https://github.com/kailash-os/kailash-os/blob/master/docs/guide/releases.md)
+- [docs/guide/releases.md](https://github.com/kailash-os/kailash-os/blob/master/docs/guide/releases.md)
   gives the release story in user form.
 - The [paper](https://kailash.site/#paper) carries the narrative framing
   (Revision 1.3).
-- [`docs/responsible-use.md`](https://github.com/kailash-os/kailash-os/blob/master/docs/responsible-use.md)
+- [docs/responsible-use.md](https://github.com/kailash-os/kailash-os/blob/master/docs/responsible-use.md)
   renders the safety doctrine.
 - [The canon map, kailash-os#61](https://github.com/kailash-os/kailash-os/issues/61)
   records the dependency graph. It maps the sections of this spec to the
@@ -67,10 +90,10 @@ Kailash OS is a **NixOS-based Linux distribution** for security professionals an
 
 ## 1.4 What we build
 
-- [`kailash-os`](https://github.com/kailash-os/kailash-os) — root flake, the module tree (categories), CLI, images, tests, CI, and a minimal `pkgs/` only for things the OS itself needs.
-- [`kailash-packages`](https://github.com/kailash-os/kailash-packages) — every bespoke tool derivation, the manifest, the auto-call harness, and its own CI. Users consume it independently. `kailash-os` pins it via a flake input.
-- [`kailash-website`](https://github.com/kailash-os/kailash-website) — the Quarto-based public docs & governance site. The build deploys to GitHub Pages.
-- [`kailash-references`](https://github.com/kailash-os/kailash-references) — the 2023 submodules (RedNix, nix-security-box, kalinix). They stay frozen as historical reference.
+- [kailash-os](https://github.com/kailash-os/kailash-os) — root flake, the module tree (categories), CLI, images, tests, CI, and a minimal `pkgs/` only for things the OS itself needs.
+- [kailash-packages](https://github.com/kailash-os/kailash-packages) — every bespoke tool derivation, the manifest, the auto-call harness, and its own CI. Users consume it independently. `kailash-os` pins it via a flake input.
+- [kailash-website](https://github.com/kailash-os/kailash-website) — the Quarto-based public docs & governance site. The build deploys to GitHub Pages.
+- [kailash-references](https://github.com/kailash-os/kailash-references) — the 2023 submodules (RedNix, nix-security-box, kalinix). They stay frozen as historical reference.
 - The `kailash` CLI — the manifest-aware front-end (`list`, `search`, `info`, `shell`, `enable`, `doctor`, `report new`, `manifest validate`).
 - Desktop menu integration generated from the manifest.
 - ISO / OVA / AMI / Proxmox images via nixos-generators and disko, with CI-enforced size budgets.
@@ -591,7 +614,7 @@ The CLI derivation bakes `KAILASH_MANIFEST`/`KAILASH_CATEGORIES` to store paths 
 | proxmox-platform | platform | VMA | ≤12 GB | homelab |
 | rpi-ai-edge | minimal subset | aarch64 SD | ≤2 GB | edge |
 
-All images come via nixos-generators + disko; each target is a flake output. The landed matrix — qemu/ISO pairs over minimal/full/redteam-ai/headless-agent on x86_64 + aarch64; the OVA/AMI/Proxmox/RPi targets are still roadmap — lives in [`docs/guide/images.md`](https://github.com/kailash-os/kailash-os/blob/master/docs/guide/images.md). CI-enforced size budgets force the heavy packages (texlive, gnuradio, wordlists, SDR pack) into opt-in `kailash-data.*` derivations. **The C-7 SDR pack and the wordlist packs are excluded from every default ISO by construction.**
+All images come via nixos-generators + disko; each target is a flake output. The landed matrix — qemu/ISO pairs over minimal/full/redteam-ai/headless-agent on x86_64 + aarch64; the OVA/AMI/Proxmox/RPi targets are still roadmap — lives in [docs/guide/images.md](https://github.com/kailash-os/kailash-os/blob/master/docs/guide/images.md). CI-enforced size budgets force the heavy packages (texlive, gnuradio, wordlists, SDR pack) into opt-in `kailash-data.*` derivations. **The C-7 SDR pack and the wordlist packs are excluded from every default ISO by construction.**
 
 ## 7.2 The VM test harness
 
@@ -650,22 +673,22 @@ The public Cachix cache `kailash` holds everything nixpkgs does not already carr
 ## 7.6 Release versioning & cadence — how a release version is created
 
 - **The lockfile is the version.** A Kailash release is a **flake.lock commit** (the packages-repo tag + the OS-repo lock bump), a signed tag, and a CHANGELOG generated from the lock delta. No hand edits, no invented versions: the version is the calendar scheme below, applied to the reviewed lock state.
-- **The versioning scheme: calendar `YYYY.NN` — the RELEASE-INDEX form (`versionScheme: 2026.xx`), decided and recorded on [kailash-os#142](https://github.com/kailash-os/kailash-os/issues/142); stated canonically in this chapter, rendered for users in [`docs/guide/releases.md`](https://github.com/kailash-os/kailash-os/blob/master/docs/guide/releases.md).** NN is the release's index **within the year's train sequence**, not the calendar month. The year's first release is `2026.01`; the second is `2026.02`. `2026.02` still names the 2026 train even when it ships in January 2027. The tag says which train; the release date says when. No gaps, no renames: a slipping RC renumbers nothing, and the numbering never collides, however many releases a year holds.
+- **The versioning scheme: calendar `YYYY.NN` — the RELEASE-INDEX form (`versionScheme: 2026.xx`), decided and recorded on [kailash-os#142](https://github.com/kailash-os/kailash-os/issues/142); stated canonically in this chapter, rendered for users in [docs/guide/releases.md](https://github.com/kailash-os/kailash-os/blob/master/docs/guide/releases.md).** NN is the release's index **within the year's train sequence**, not the calendar month. The year's first release is `2026.01`; the second is `2026.02`. `2026.02` still names the 2026 train even when it ships in January 2027. The tag says which train; the release date says when. No gaps, no renames: a slipping RC renumbers nothing, and the numbering never collides, however many releases a year holds.
 - **The three-stage ladder (one scheme family):**
 
-  | Stage | Tag form | Meaning |
-  |---|---|---|
-  | Staged development cut | `2026.xx-<stage>.<n>` | pre-GA milestones off the main track (`2026.01-alpha.1`, `2026.01-rc.1`) — stage + increment visible in `git tag -v` output |
-  | GA | `2026.xx` (bare) | the general-availability release for that train index — **full Phase-8 acceptance** (two-machine reproducibility, golden-image diff, the complete artefact matrix, site deploy, release automation) |
-  | Material re-cut of a shipped GA | `2026.xx.1` | only when a shipped GA artefact actually changes; changelog-notes-only re-cuts keep the original tag |
+| Stage | Tag form | Meaning |
+|---|---|---|
+| Staged development cut | `2026.xx-<stage>.<n>` | pre-GA milestones off the main track (`2026.01-alpha.1`, `2026.01-rc.1`) — stage + increment visible in `git tag -v` output |
+| GA | `2026.xx` (bare) | the general-availability release for that train index — **full Phase-8 acceptance** (two-machine reproducibility, golden-image diff, the complete artefact matrix, site deploy, release automation) |
+| Material re-cut of a shipped GA | `2026.xx.1` | only when a shipped GA artefact actually changes; changelog-notes-only re-cuts keep the original tag |
 
-  **The bare tag is RESERVED:** `2026.01` exists only at GA. Staged cuts carry the suffix — a `2026.01-alpha.1` tag never reads as GA.
+**The bare tag is RESERVED:** `2026.01` exists only at GA. Staged cuts carry the suffix — a `2026.01-alpha.1` tag never reads as GA.
 - **The first staged cut is `2026.01-alpha.1`** — manifest-complete, flagship stack, safety gates, profiles, CLI, CI — with the ladder `alpha.1 → alpha.2 → … → rc.1` as waves land (cut only what is verifiable). GA (`2026.01`, bare) is the full §7.9 acceptance, not a date. **No `v0.x`-style tag ever lands anywhere in the repos** (package `pname`-version fields are packaging metadata, not tags).
 - **CHANGELOG organisation:** grouped by train — `## 2026.01 — <date>` — matching the pinned six-week release cadence. The changelog is generated from the lock delta between the previous train's lock and this one (no silent removals).
 - **Every 6 weeks** (Kali-like, deliberately paced away from the newest upstream state): tagged releases produce the artefact matrix (§7.9) + a signed changelog. The release PR (the lock bump) IS the release review — evaluated sizes + golden-image diff inline.
 - **Branch policy (standing rule):** never commit `master`/`main` directly — branch + conventional commits (`type(scope): subject`) + PR + squash-merge. PRs require green CI + one approval. nvfetcher and renovate PRs also require one approval (the standing approval-gated-auto-merge preference). Both repos enforce signed commits.
 - **Rolling `main` between releases:** merges land daily if needed. The lock only moves monthly (inputs) or on reviewed tool-update PRs. The ISO a user booted last month keeps rebuilding reproducibly until the user deliberately pulls the new lock.
-- **Where the scheme is stated (single-source discipline):** the canonical statement is §7.6 of this chapter. The user-facing rendering is [`docs/guide/releases.md`](https://github.com/kailash-os/kailash-os/blob/master/docs/guide/releases.md) — one URL for the whole release story. README `versionScheme` lines and GitHub Release-notes templates cite it. No other surface derives a scheme of its own.
+- **Where the scheme is stated (single-source discipline):** the canonical statement is §7.6 of this chapter. The user-facing rendering is [docs/guide/releases.md](https://github.com/kailash-os/kailash-os/blob/master/docs/guide/releases.md) — one URL for the whole release story. README `versionScheme` lines and GitHub Release-notes templates cite it. No other surface derives a scheme of its own.
 
 **The consequence:** a Kailash install does not "update nix" on its own, ever. A user's system updates at the user's own cadence: a `nixos-rebuild switch` to a newer lock, or a release upgrade. This is the anti-churn posture: **the lockfile is the product.**
 
@@ -773,7 +796,7 @@ Kailash OS ships offensive AI-security tooling for **authorised security work on
 - **Distro variants.** There is no separate "lab-mode distro". The same image carries both postures. The gate, not the package set, is what differs. Exp tooling is absent from any default-profile PATH regardless. A non-lab (default-safe) install is simply `kailash.labMode = false` — the default. The host operator who wants the lab posture makes the deliberate, reviewable configuration change and rebuilds. The per-invocation shell key remains the second, in-the-moment opt-in. (The image-variant axis that DOES matter is the artefact matrix in §7.9.)
 - **No auto-starting services** ([kailash-os#145, KA-18.2](https://github.com/kailash-os/kailash-os/pull/145)). Every D-layer service module is `mkEnableOption`-off. The standing audit scans every host's declarative `systemd.services` for exp-tool auto-starts or pre-set lab keys. The hostile-fixture negative case is proven in CI on every PR. The docs record the lab-default weaknesses (never defaults). The hardening appendix carries the production posture.
 - **Secrets hygiene** ([kailash-os#145, KA-18.2](https://github.com/kailash-os/kailash-os/pull/145)). sops-nix manages keys (`kailash.secrets.sopsFile`, explicitly wired, nothing defaulted). Model API keys read at runtime from `~/.config/kailash/keys/`, never from the store (store paths are world-readable). The posture is stated store-side at `/etc/kailash/secrets-policy`.
-- **Responsible-use statement as data** ([kailash-os#145, KA-18.2](https://github.com/kailash-os/kailash-os/pull/145)). [`docs/responsible-use.md`](https://github.com/kailash-os/kailash-os/blob/master/docs/responsible-use.md) carries the authorised-work-only framing. The Australian provisions are named (Cyber Security Act 2024 (Cth); Criminal Code Act 1995 (Cth) Division 474; IRAP/ISM governance mapping). The file carries no legal text beyond the names and a neutral description. Profiles, gates and site pages render from the file.
+- **Responsible-use statement as data** ([kailash-os#145, KA-18.2](https://github.com/kailash-os/kailash-os/pull/145)). [docs/responsible-use.md](https://github.com/kailash-os/kailash-os/blob/master/docs/responsible-use.md) carries the authorised-work-only framing. The Australian provisions are named (Cyber Security Act 2024 (Cth); Criminal Code Act 1995 (Cth) Division 474; IRAP/ISM governance mapping). The file carries no legal text beyond the names and a neutral description. Profiles, gates and site pages render from the file.
 - **Agent capability grants.** Autonomous operator sessions hold short-lived human-minted grants. The grants scope the enable-able categories, service start, exp execution, and the live-target query budget. Unsupervised agents can list/search/read only. The log records grant-scoped actions. The A-3 scanner suite runs against kailash-mcp itself in CI — the in-distro dogfood loop.
 
 ## 9.3 Licence posture
