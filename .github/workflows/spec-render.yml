@@ -1,0 +1,72 @@
+name: spec-render
+
+# Renders docs/spec.md (mmark dialect) to RFCXML, then to text, HTML and PDF.
+# Rendered files stay build outputs. They are never committed.
+
+on:
+  push:
+    paths:
+      - "docs/spec.md"
+      - ".github/workflows/spec-render.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  render:
+    name: Render spec (text, HTML, PDF)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Install mmark 2.2.48
+        run: |
+          MMARK_VERSION=2.2.48
+          install_dir="$(mktemp -d)"
+          curl -fsSL "https://github.com/mmarkdown/mmark/releases/download/v${MMARK_VERSION}/mmark_${MMARK_VERSION}_linux_amd64.tgz" \
+            | tar -xz -C "$install_dir"
+          sudo install -m 0755 "$install_dir/mmark" /usr/local/bin/mmark
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install xml2rfc and PDF support
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -qy libpango-1.0-0 libpangoft2-1.0-0 libpangocairo-1.0-0 fonts-dejavu-core
+          pip install --upgrade pip
+          pip install xml2rfc==3.35.0 weasyprint
+
+      - name: Render the spec to RFCXML
+        run: mmark docs/spec.md > spec.xml
+
+      - name: Normalize the mmark anchors
+        run: |
+          python3 - <<'EOF'
+          import re
+          p = "spec.xml"
+          s = open(p).read()
+          s = re.sub(
+              r'( anchor| pn| derivedAnchor)="(\d|table-|figure-|section-|iref-|u-)',
+              lambda m: f'{m.group(1)}="spec-{m.group(2)}',
+              s)
+          open(p, "w").write(s)
+          EOF
+      - name: Render text, HTML and PDF
+        run: |
+          xml2rfc --text spec.xml --out spec.txt
+          xml2rfc --html spec.xml --out spec.html
+          xml2rfc --pdf spec.xml --out spec.pdf
+
+      - name: Upload rendered artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: spec-rendered
+          retention-days: 14
+          path: |
+            spec.txt
+            spec.html
+            spec.pdf
